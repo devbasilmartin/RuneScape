@@ -1,0 +1,32 @@
+# Copy to config.yaml and adjust. All coordinates are fixed-mode canvas pixels.
+
+# drop | bank | cook_drop | cook_bank
+mode: bank
+
+# RuneLite highlight colors (RGB). Set the plugin colors to exactly these, fully opaque.
+fishing_color: [0, 255, 255]   # NPC Indicators -> fishing spots
+bank_color: [255, 0, 255]      # Object Markers -> Draynor bank booth
+cook_color: [255, 255, 0]      # Object Markers -> range (or your fire)
+color_tolerance: 25
+
+tool_slots: [0]                # slots holding your net / tinderbox; never dropped or banked
+
+# Item templates in data/items/<name>.png, used by the cook modes.
+raw_items: [raw_shrimps, raw_anchovies]
+
+idle_timeout: 25               # seconds with no new fish before clicking a spot again
+max_runtime_minutes: 60
+
+# Minimap clicks (offsets from the minimap center, camera facing north) used when the
+# target is not visible on screen. Draynor bank <-> net spots is short: at max zoom-out
+# both are usually visible and these are only a fallback.
+routes:
+  to_bank: [[0, -45]]
+  to_spot: [[0, 45]]
+  to_cook: []
+
+# Override fixed-mode geometry if `python -m fishbot debug` shows boxes out of place.
+# layout:
+#   inv_origin: [563, 213]
+#   slot_step: [42, 36]
+#   minimap_center: [643, 84]
