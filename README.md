@@ -7,8 +7,8 @@ levels go up.
 
 It covers the gathering and processing skills (Woodcutting, Mining, Fishing, Firemaking,
 Cooking, Smithing and Crafting: anything that is "use item on station, pick from a menu")
-and combat (Attack, Strength, Defence, Hitpoints, Ranged, Magic, and Prayer from burying
-bones). Runecrafting comes next.
+combat (Attack, Strength, Defence, Hitpoints, Ranged, Magic, and Prayer from burying
+bones), and Runecrafting.
 
 ## Install
 
@@ -89,6 +89,28 @@ examples.
 | `process` | withdraw inputs, (optionally `use_item` on) the `target` station, send `confirm` keys/clicks, wait until the inputs are used up | Cooking, Smelting, Smithing, Crafting |
 | `firemaking` | stand on the `target` tile, light every log with the tinderbox in `tool_slot` | Firemaking |
 | `combat` | attack the nearest free `target`, eat `food` below `eat_below` HP, pick up `loot`, bury `bury` | Attack, Strength, Defence, Hitpoints, Ranged, Magic, Prayer |
+| `runecraft` | bank → `ruins` → craft at the `target` altar → `portal` → bank | Runecraft |
+
+### Runecrafting
+
+Fastest F2P route with only one change of method (after Rune Mysteries). XP values are
+from OSRS; your server may differ.
+
+| method | levels | XP per trip | notes |
+|---|---|---|---|
+| earth runes, Varrock east bank | 9–14 | 28 × 6.5 = 182 | |
+| fire runes, Al Kharid bank | 14–99 | 28 × 7 = 196 | standard F2P method |
+| air tiaras, Falador | 1–14 | 14 × 25 = 350 | uses a tiara + talisman each |
+| fire tiaras, Al Kharid | 14–99 | 14 × 35 = 490 | ~2.5× fire runes; needs supplies in bulk |
+
+- Mark the ruins, the altar and the exit portal with Object Markers, and the walk with Ground
+  Markers roughly every 10 tiles. Colors within one route must differ. The bot always heads
+  for the furthest route tile it can see, so it can pick up the route from anywhere.
+- Runes: tag the talisman and list it in both `enter_with` and `keep` (or wear the tiara and
+  leave both out). Tiaras: `items: [tiara]`, `use_item: tiara`, withdraw tiaras and talismans.
+- The task works out where it is from what's on screen (outside with essence, in the altar
+  with essence, in the altar without), so it resumes cleanly after an error or a re-login.
+- Turn run on before starting; the bot doesn't manage run energy yet.
 
 ### Combat
 
@@ -113,9 +135,9 @@ early when the bank runs out of its inputs. After the last step the plan starts 
 top, and the bot stops once every step is done or none can make progress.
 
 Each step's `walk:` names routes to use when its bank, target or start isn't on screen. Routes
-are chains of Ground Marker tiles, so they work for walks within one area. Moving between
-distant areas (e.g. Draynor → Varrock) isn't supported well yet: order the plan so each area's
-steps run together, and move the character yourself between areas.
+are chains of Ground Marker tiles (about one every 10 squares, distinct colors within a route),
+and the bot always clicks the furthest one it can see. Moving between towns for a new step still
+needs you to move the character, or a route that covers the whole way.
 
 ## Running unattended
 
@@ -142,6 +164,7 @@ python -m skillbot run
 - `game.py`: shared actions: clicking highlights, walking routes, banking, dropping, tabs.
 - `tasks.py`: `GatherTask`, `ProcessTask`, `FiremakingTask`.
 - `combat.py`: `CombatTask`.
+- `runecraft.py`: `RunecraftTask`.
 - `planner.py`: step selection, level refresh, error recovery.
 - `session.py`: logout detection and re-login.
 

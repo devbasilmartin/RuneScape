@@ -31,6 +31,11 @@ items:
   bones:           [255, 255, 255]
   cowhide:         [120, 60, 0]
   trout:           [128, 0, 255]
+  rune_essence:    [255, 0, 128]
+  earth_rune:      [0, 255, 160]
+  fire_rune:       [255, 64, 255]
+  earth_talisman:  [64, 0, 128]
+  fire_talisman:   [0, 64, 64]
 
 # Ground Markers: tiles clicked in order when a target isn't on screen. Reusing a
 # color is fine as long as only one tile of that color is visible at a time.
@@ -41,6 +46,11 @@ routes:
   fish_to_bank:     [[255, 255, 255]]
   cows_to_bank:     [[64, 64, 255], [255, 255, 255]]
   bank_to_cows:     [[64, 64, 255], [128, 128, 255]]
+  # Runecrafting: one tile every ~10 squares; tile colors within a route must differ.
+  varrock_to_earth: [[255, 96, 0], [96, 255, 0], [0, 96, 255]]
+  earth_to_varrock: [[0, 96, 255], [96, 255, 0], [255, 96, 0]]
+  alkharid_to_fire: [[255, 96, 0], [96, 255, 0], [0, 96, 255], [255, 255, 96]]
+  fire_to_alkharid: [[255, 255, 96], [0, 96, 255], [96, 255, 0], [255, 96, 0]]
 
 # The plan runs top to bottom. A step is skipped once its skill reaches until_level.
 # max_minutes rotates to the next step after that long (useful to gather supplies,
@@ -123,6 +133,29 @@ plan:
     skill: defence
     style: 3
 
+  # --- Runecrafting (after Rune Mysteries): earth runes 9-14, then fire runes to 99.
+  # Rune essence in bank slot 0 (quantity All); talisman tagged and kept in the
+  # inventory, or wear the tiara and drop enter_with/keep. Turn run on before starting.
+  - &runes
+    name: earth runes (Varrock east)
+    skill: runecraft
+    task: runecraft
+    until_level: 14
+    target: [0, 200, 120]          # Object Markers: the altar
+    ruins: [255, 160, 0]           # Object Markers: Mysterious ruins
+    portal: [120, 0, 200]          # Object Markers: the exit portal
+    items: [rune_essence]
+    enter_with: earth_talisman
+    keep: [earth_talisman]
+    withdraw: [0]
+    walk: {bank: earth_to_varrock, target: varrock_to_earth}
+  - <<: *runes
+    name: fire runes (Al Kharid)
+    until_level: 99
+    enter_with: fire_talisman
+    keep: [fire_talisman]
+    walk: {bank: fire_to_alkharid, target: alkharid_to_fire}
+
 # More methods, same building blocks:
 #
 #  - name: mine copper and tin           # Object Markers on the rocks; drop or bank
@@ -173,6 +206,18 @@ plan:
 #    style: 1                            # rapid
 #    loot: [255, 200, 0]
 #    food: [trout]
+#
+#  - name: fire tiaras                   # ~2.5x the XP per trip of fire runes, costs supplies
+#    skill: runecraft                    # bank slot 0: tiaras (X = 14), slot 1: fire talismans (X = 14)
+#    task: runecraft
+#    target: [0, 200, 120]
+#    ruins: [255, 160, 0]
+#    portal: [120, 0, 200]
+#    items: [tiara]
+#    use_item: tiara                     # each use on the altar binds one tiara
+#    enter_with: fire_talisman           # talismans are used up, so not in `keep`
+#    withdraw: [0, 1]
+#    walk: {bank: fire_to_alkharid, target: alkharid_to_fire}
 #
 #  - name: fish and cook on a fire       # gather step that cooks each load, then drops it
 #    skill: fishing

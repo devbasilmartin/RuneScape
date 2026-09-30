@@ -7,7 +7,7 @@ import yaml
 from .layout import Layout
 from .skills import SKILLS
 
-TASKS = ("gather", "process", "firemaking", "combat")
+TASKS = ("gather", "process", "firemaking", "combat", "runecraft")
 
 
 def _color(v):
@@ -44,6 +44,12 @@ class Step:
     cast: tuple | None = None          # spell position in the magic tab, cast on every attack
     kills_per_batch: int = 10          # check levels after this many kills
 
+    # runecraft
+    ruins: tuple | None = None         # Object Markers: the Mysterious ruins
+    portal: tuple | None = None        # Object Markers: the exit portal inside the altar
+    enter_with: str | None = None      # tagged talisman to use on the ruins (None: wear a tiara)
+    keep: tuple = ()                   # tagged items never deposited (e.g. that talisman)
+
     @classmethod
     def from_dict(cls, d: dict) -> "Step":
         names = {f.name for f in fields(cls)}
@@ -54,7 +60,9 @@ class Step:
         d["target"] = _color(d.get("target"))
         d["loot"] = _color(d.get("loot"))
         d["cast"] = _color(d.get("cast"))
-        for key in ("items", "confirm", "withdraw", "food", "bury"):
+        d["ruins"] = _color(d.get("ruins"))
+        d["portal"] = _color(d.get("portal"))
+        for key in ("items", "confirm", "withdraw", "food", "bury", "keep"):
             if key in d:
                 d[key] = tuple(d[key])
         step = cls(**d)
@@ -68,6 +76,8 @@ class Step:
             raise ValueError(f"step {step.name!r}: when_full must be drop or bank")
         if step.when_out_of_food not in ("bank", "stop"):
             raise ValueError(f"step {step.name!r}: when_out_of_food must be bank or stop")
+        if step.task == "runecraft" and (step.ruins is None or step.portal is None):
+            raise ValueError(f"step {step.name!r}: runecraft needs ruins and portal colors")
         if step.style is not None and step.style not in range(4):
             raise ValueError(f"step {step.name!r}: style must be 0-3")
         return step
@@ -128,7 +138,8 @@ class Config:
                     raise ValueError(f"item colors for {a} and {b} are too similar; make them "
                                      f"differ by more than {2 * self.color_tolerance} on a channel")
         for step in self.plan:
-            names = list(step.items) + list(step.food) + list(step.bury)
+            names = list(step.items) + list(step.food) + list(step.bury) + list(step.keep)
+            names += [step.enter_with] if step.enter_with else []
             names += [step.use_item] if step.use_item not in (None, "any") else []
             names += list((step.process or {}).get("items", []))
             missing = [n for n in names if n not in self.items]

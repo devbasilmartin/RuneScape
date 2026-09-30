@@ -64,18 +64,44 @@ class Game:
         return False
 
     # ---- walking -------------------------------------------------------------------------
+    ARRIVED_PX = 30     # a route tile this close to the player means we're standing on it
+
     def walk(self, route: str | None, color) -> None:
-        """Make ``color`` visible: if it isn't, click the route's Ground Marker tiles in order."""
+        """Make ``color`` visible by following a route of Ground Marker tiles.
+
+        Always clicks the furthest tile of the route that is on screen, so the bot can
+        start anywhere along the route and never walks back to earlier tiles. Tile colors
+        within one route must be distinct.
+        """
         if self.blobs(self.grab(), color):
             return
-        for tile in self.cfg.routes.get(route, []) if route else []:
-            if not self.click_nearest(self.grab(), tile):
-                raise BotError(f"route {route!r}: no tile marked {tile} on screen")
-            log.info("walking (%s) to tile %s", route, tile)
-            if self.wait_until(lambda img: bool(self.blobs(img, color)), self.cfg.walk_timeout):
+        tiles = self.cfg.routes.get(route, []) if route else []
+        clicked, clicked_at, retries = -1, self.now(), 0
+        deadline = self.now() + self.cfg.walk_timeout * max(1, len(tiles))
+        while self.now() < deadline:
+            img = self.grab()
+            if self.blobs(img, color):
                 return
-        raise BotError(f"highlight {color} not on screen (route {route!r}); "
-                       "check the color or mark more route tiles")
+            visible = [i for i, t in enumerate(tiles) if self.blobs(img, t)]
+            furthest = max(visible, default=-1)
+            if furthest > clicked:
+                self.click_nearest(img, tiles[furthest])
+                log.info("walking (%s) to tile %d/%d", route, furthest + 1, len(tiles))
+                clicked, clicked_at, retries = furthest, self.now(), 0
+            elif clicked >= 0 and self.highlight_near(img, tiles[clicked], self.player,
+                                                      self.ARRIVED_PX):
+                raise BotError(f"route {route!r}: reached tile {clicked + 1} but can see "
+                               f"neither the next tile nor the target {color}")
+            elif clicked >= 0 and self.now() - clicked_at > self.cfg.walk_timeout:
+                if retries or clicked not in visible:
+                    raise BotError(f"route {route!r}: stuck walking to tile {clicked + 1}")
+                self.click_nearest(img, tiles[clicked])      # misclick or blocked; once more
+                clicked_at, retries = self.now(), 1
+            elif clicked < 0:
+                raise BotError(f"highlight {color} not on screen and no tile of route "
+                               f"{route!r} is visible")
+            self.wait(0.6, 0.9)
+        raise BotError(f"route {route!r}: timed out")
 
     # ---- interface -----------------------------------------------------------------------
     def open_tab(self, name: str) -> None:
@@ -115,15 +141,16 @@ class Game:
         self.wait(self.cfg.bank_open_wait, self.cfg.bank_open_wait + 1.0)
         return before
 
-    def deposit(self, before: dict[int, str]) -> None:
+    def deposit(self, before: dict[int, str], keep=()) -> None:
         """Left-click one slot per item; with bank quantity "All" that deposits the stack.
 
         If Inventory Tags are drawn inside the bank, re-read them after each click;
         otherwise click every remembered slot (clicking an emptied slot does nothing).
         """
+        before = {i: n for i, n in before.items() if n not in keep}
         if self.inv.any_tag_visible(self.grab()):
             for _ in range(len(before) + 1):
-                tagged = self.inv.tags(self.grab())
+                tagged = {i: n for i, n in self.inv.tags(self.grab()).items() if n not in keep}
                 if not tagged:
                     return
                 self.controls.click_rect(self.layout.slot(min(tagged)))
@@ -138,8 +165,8 @@ class Game:
             self.controls.click_rect(self.layout.bank_slot(i))
             self.wait(0.5, 0.9)
 
-    def bank(self, route: str | None, withdraw=()) -> None:
+    def bank(self, route: str | None, withdraw=(), keep=()) -> None:
         before = self.open_bank(route)
-        self.deposit(before)
+        self.deposit(before, keep)
         self.withdraw(withdraw)
         self.close_interfaces()

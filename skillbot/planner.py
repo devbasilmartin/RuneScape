@@ -6,11 +6,12 @@ from pathlib import Path
 from .config import Step
 from .game import BotError, Game, StopBot
 from .combat import CombatTask
+from .runecraft import RunecraftTask
 from .skills import SkillReader
 from .tasks import FiremakingTask, GatherTask, ProcessTask
 
 TASK_TYPES = {"gather": GatherTask, "process": ProcessTask, "firemaking": FiremakingTask,
-              "combat": CombatTask}
+              "combat": CombatTask, "runecraft": RunecraftTask}
 
 
 def make_task(game: Game, step: Step):
