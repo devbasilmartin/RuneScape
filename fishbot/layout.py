@@ -31,7 +31,6 @@ class Layout:
     inv_origin: tuple[int, int] = (563, 213)   # top-left of slot 0
     slot_step: tuple[int, int] = (42, 36)      # distance between slot origins
     slot_size: tuple[int, int] = (32, 32)
-    minimap_center: tuple[int, int] = (643, 84)
     compass: tuple[int, int] = (561, 20)
 
     def slot(self, i: int) -> Rect:
@@ -51,7 +50,7 @@ class Layout:
         d = dict(d or {})
         if "viewport" in d:
             d["viewport"] = Rect(*d["viewport"])
-        for k in ("inv_origin", "slot_step", "slot_size", "minimap_center", "compass"):
+        for k in ("inv_origin", "slot_step", "slot_size", "compass"):
             if k in d:
                 d[k] = tuple(d[k])
         return cls(**d)

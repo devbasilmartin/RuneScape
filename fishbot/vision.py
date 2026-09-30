@@ -1,4 +1,4 @@
-"""Pixel-level detection: highlight colors, blobs and templates. Images are RGB uint8."""
+"""Pixel-level detection: highlight colors and blobs. Images are RGB uint8."""
 from dataclasses import dataclass
 
 import cv2
@@ -58,15 +58,6 @@ def nearest(blobs: list[Blob], point) -> Blob | None:
         return None
     px, py = point
     return min(blobs, key=lambda b: (b.center[0] - px) ** 2 + (b.center[1] - py) ** 2)
-
-
-def match_score(img: np.ndarray, template: np.ndarray) -> tuple[float, tuple[int, int]]:
-    """Best normalized-correlation match of ``template`` inside ``img``."""
-    if img.shape[0] < template.shape[0] or img.shape[1] < template.shape[1]:
-        return 0.0, (0, 0)
-    res = cv2.matchTemplate(img[..., :3], template[..., :3], cv2.TM_CCOEFF_NORMED)
-    _, score, _, loc = cv2.minMaxLoc(res)
-    return float(score), loc
 
 
 def load_png(path) -> np.ndarray:

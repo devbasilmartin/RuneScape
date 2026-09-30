@@ -14,18 +14,17 @@ class BotError(RuntimeError):
 
 
 class FishingBot:
-    def __init__(self, cfg: Config, screen, controls, inventory: Inventory,
-                 bank_template=None, now=time.monotonic):
+    def __init__(self, cfg: Config, screen, controls, inventory: Inventory, now=time.monotonic):
         self.cfg = cfg
         self.screen = screen
         self.controls = controls
         self.inv = inventory
-        self.bank_template = bank_template   # screenshot region proving the bank is open
         self.now = now
         self.layout = cfg.layout
         self.fishing = False
         self.last_count = -1
         self.last_progress = 0.0
+        self.failed_clicks = 0
         self.stats = {"trips": 0, "fish": 0}
 
     # ---- helpers -------------------------------------------------------------------------
@@ -44,23 +43,21 @@ class FishingBot:
         return True
 
     def walk_until_visible(self, route: str, color) -> None:
-        """Click minimap waypoints of ``route`` until ``color`` shows up in the viewport."""
-        waypoints = self.cfg.routes.get(route) or []
-        cx, cy = self.layout.minimap_center
-        for dx, dy in waypoints:
-            log.info("walking (%s) via minimap offset %+d,%+d", route, dx, dy)
-            self.controls.click((cx + dx + self.controls.rng.randint(-2, 2),
-                                 cy + dy + self.controls.rng.randint(-2, 2)))
+        """Click the Ground Marker tiles of ``route`` in order until ``color`` is on screen."""
+        for tile_color in self.cfg.routes.get(route) or []:
+            if not self.click_nearest(self.screen.grab(), tile_color):
+                raise BotError(f"route {route!r}: no tile marked {tile_color} on screen")
+            log.info("walking (%s) to tile %s", route, tile_color)
             deadline = self.now() + self.cfg.walk_timeout
             while self.now() < deadline:
                 self.controls.wait(0.6, 0.9)
                 if self.blobs(self.screen.grab(), color):
                     return
         raise BotError(f"route {route!r} ended without finding the highlight {color}; "
-                       "check the highlight color or add waypoints in config.yaml")
+                       "check the highlight color or mark more route tiles")
 
     def setup_camera(self) -> None:
-        self.controls.click(self.layout.compass)   # face north so minimap routes line up
+        self.controls.click(self.layout.compass)   # face north for a consistent view
         self.controls.wait(0.4, 0.7)
         self.controls.hold("up", self.controls.rng.uniform(1.5, 2.0))  # max camera pitch
 
@@ -72,27 +69,33 @@ class FishingBot:
                    for b in self.blobs(img, self.cfg.fishing_color))
 
     def step_fish(self, img) -> None:
-        count = len(self.inv.new_slots(img))
+        count = len(self.inv.tags(img))
         t = self.now()
         if count != self.last_count:
             if count > self.last_count >= 0:
                 self.stats["fish"] += count - self.last_count
+                self.failed_clicks = 0
             self.last_count, self.last_progress = count, t
         if (self.fishing and t - self.last_progress < self.cfg.idle_timeout
                 and self.spot_nearby(img)):
             self.controls.wait(0.8, 1.4)
             return
+        if self.failed_clicks >= self.cfg.max_failed_clicks:
+            raise BotError(f"clicked a fishing spot {self.failed_clicks} times without a catch; "
+                           "is every fish tagged in Inventory Tags, and is the inventory full "
+                           "of something untagged?")
         if not self.click_nearest(img, self.cfg.fishing_color):
             self.walk_until_visible("to_spot", self.cfg.fishing_color)
             return
+        if self.fishing:
+            self.failed_clicks += 1
         log.info("clicked fishing spot (%d fish in inventory)", count)
         self.fishing, self.last_progress = True, self.now()
         self.controls.wait(2.5, 4.0)   # walk to the spot and start the animation
 
     # ---- inventory full ------------------------------------------------------------------
     def drop_all(self) -> None:
-        img = self.screen.grab()
-        slots = self.inv.new_slots(img)
+        slots = sorted(self.inv.tags(self.screen.grab()))
         log.info("dropping %d items", len(slots))
         self.controls.key_down("shift")
         try:
@@ -134,33 +137,36 @@ class FishingBot:
 
     def bank(self) -> None:
         img = self.screen.grab()
+        before = self.inv.tags(img)   # item positions don't change when the bank opens
         if not self.click_nearest(img, self.cfg.bank_color):
             self.walk_until_visible("to_bank", self.cfg.bank_color)
             if not self.click_nearest(self.screen.grab(), self.cfg.bank_color):
                 raise BotError("bank highlight disappeared")
         self.wait_for_bank()
-        # Left-click deposits the whole stack when the bank quantity is set to "All".
-        for _ in range(30):
-            slots = self.inv.new_slots(self.screen.grab(), in_bank=True)
-            if not slots:
-                break
-            self.controls.click_rect(self.layout.slot(slots[0]))
-            self.controls.wait(0.5, 0.9)
-        else:
-            raise BotError("could not empty the inventory in the bank")
+        self.deposit(before)
         self.controls.press("esc")
         self.controls.wait(0.5, 0.9)
 
     def wait_for_bank(self) -> None:
-        tmpl = self.bank_template
-        deadline = self.now() + self.cfg.bank_open_wait + (6 if tmpl is not None else 0)
-        while self.now() < deadline:
-            self.controls.wait(0.5, 0.8)
-            if tmpl is not None and vision.match_score(self.screen.grab(), tmpl)[0] > 0.85:
-                self.controls.wait(0.3, 0.6)
-                return
-        if tmpl is not None:
-            raise BotError("bank did not open")
+        self.controls.wait(self.cfg.bank_open_wait, self.cfg.bank_open_wait + 1.0)
+
+    def deposit(self, before: dict[int, str]) -> None:
+        """Left-click one slot per item; with bank quantity "All" that deposits the stack.
+
+        If Inventory Tags are drawn inside the bank, re-read them after each click;
+        otherwise fall back to one click per remembered item type position.
+        """
+        if self.inv.any_tag_visible(self.screen.grab()):
+            for _ in range(len(before) + 1):
+                tagged = self.inv.tags(self.screen.grab())
+                if not tagged:
+                    return
+                self.controls.click_rect(self.layout.slot(min(tagged)))
+                self.controls.wait(0.5, 0.9)
+            raise BotError("could not empty the inventory in the bank")
+        for i in sorted(before):
+            self.controls.click_rect(self.layout.slot(i))
+            self.controls.wait(0.3, 0.6)
 
     def handle_full(self) -> None:
         log.info("inventory full")
@@ -172,16 +178,11 @@ class FishingBot:
         else:
             self.bank()
         self.stats["trips"] += 1
-        self.fishing, self.last_count = False, -1
+        self.fishing, self.last_count, self.failed_clicks = False, -1, 0
         log.info("trip %d done, %d fish caught so far", self.stats["trips"], self.stats["fish"])
 
     # ---- main loop -----------------------------------------------------------------------
     def run(self) -> None:
-        if self.cfg.mode.startswith("cook"):
-            missing = [n for n in self.cfg.raw_items if n not in self.inv.templates]
-            if missing:
-                raise BotError(f"cook mode needs item templates for {missing}; "
-                               "use `python -m fishbot capture-item NAME SLOT`")
         end = self.now() + self.cfg.max_runtime_minutes * 60
         self.setup_camera()
         while self.now() < end:

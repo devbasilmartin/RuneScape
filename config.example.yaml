@@ -1,32 +1,38 @@
-# Copy to config.yaml and adjust. All coordinates are fixed-mode canvas pixels.
+# Copy to config.yaml and adjust. Colors are RGB and must match the RuneLite plugin
+# colors exactly (fully opaque). Use bright colors that don't occur in the game.
 
 # drop | bank | cook_drop | cook_bank
 mode: bank
 
-# RuneLite highlight colors (RGB). Set the plugin colors to exactly these, fully opaque.
-fishing_color: [0, 255, 255]   # NPC Indicators -> fishing spots
-bank_color: [255, 0, 255]      # Object Markers -> Draynor bank booth
-cook_color: [255, 255, 0]      # Object Markers -> range (or your fire)
+# Things in the game world
+fishing_color: [0, 255, 255]   # NPC Indicators: Fishing spot
+bank_color: [255, 0, 255]      # Object Markers: Draynor bank booth
+cook_color: [255, 255, 0]      # Object Markers: range (or your fire)
 color_tolerance: 25
 
-tool_slots: [0]                # slots holding your net / tinderbox; never dropped or banked
-
-# Item templates in data/items/<name>.png, used by the cook modes.
-raw_items: [raw_shrimps, raw_anchovies]
+# Inventory Tags: one color per item. Every fish you can end up holding must be
+# tagged, or the bot can't see it (and will stop rather than guess).
+items:
+  raw_shrimps: [0, 255, 0]
+  raw_anchovies: [0, 128, 255]
+  shrimps: [255, 128, 0]
+  anchovies: [160, 0, 255]
+  burnt_fish: [255, 0, 0]      # burnt shrimps and burnt anchovies share one tag
+raw_items: [raw_shrimps, raw_anchovies]   # what the cook modes cook
+tools: 1                       # untagged slots you always carry (small fishing net)
 
 idle_timeout: 25               # seconds with no new fish before clicking a spot again
 max_runtime_minutes: 60
 
-# Minimap clicks (offsets from the minimap center, camera facing north) used when the
-# target is not visible on screen. Draynor bank <-> net spots is short: at max zoom-out
-# both are usually visible and these are only a fallback.
+# Ground Markers: tiles the bot clicks, in order, when its target isn't on screen.
+# At Draynor, zoomed out, the bank and spots are usually both visible, so one
+# halfway tile per direction is plenty.
 routes:
-  to_bank: [[0, -45]]
-  to_spot: [[0, 45]]
+  to_bank: [[255, 255, 255]]
+  to_spot: [[128, 255, 128]]
   to_cook: []
 
 # Override fixed-mode geometry if `python -m fishbot debug` shows boxes out of place.
 # layout:
 #   inv_origin: [563, 213]
 #   slot_step: [42, 36]
-#   minimap_center: [643, 84]

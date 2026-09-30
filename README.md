@@ -19,44 +19,39 @@ and Accessibility permissions. Multiple monitors work: capture uses absolute scr
 
 ## RuneLite setup
 
-1. **Fixed mode** (Settings → Display → Game client layout: *Fixed - Classic layout*). Don't resize it.
-2. **NPC Indicators**: add `Fishing spot` to "NPCs to highlight". Set the highlight style to *Outline*
-   or *Hull*, the color to exactly the value in config (default cyan `#00FFFF`),
-   and turn off names/minimap drawing so text doesn't pollute the color.
-3. **Object Markers**: shift + right-click the Draynor bank booth → *Mark object*, and set the marker
-   color to magenta `#FF00FF`. For cooking, mark a range (or fire) in yellow `#FFFF00`.
-4. In game: zoom the camera **all the way out**, enable **Shift-click drop**, enable
-   **Esc closes the current interface**, and in the bank set the quantity to **All**.
+Everything the bot sees comes from RuneLite highlights, so there are no images to capture.
+Use the exact colors from `config.yaml` (defaults below), fully opaque.
 
-Draynor has no range. For the cook modes, either light a fire and mark it, or run the bot at
-the Lumbridge castle range (set `to_cook` / `to_bank` routes accordingly).
+| Plugin | What to mark | Default color |
+|---|---|---|
+| NPC Indicators | add `Fishing spot` to "NPCs to highlight" (outline or hull; turn names off) | cyan `#00FFFF` |
+| Object Markers | shift + right-click the Draynor bank booth → Mark object | magenta `#FF00FF` |
+| Object Markers | a range, or the fire you cook on | yellow `#FFFF00` |
+| Inventory Tags | shift + right-click each item → Tag (outline style) | one color per item, see `items:` |
+| Ground Markers | shift + right-click a tile → Mark tile; one halfway tile each way | `routes:` colors |
+
+With Inventory Tags, tag raw shrimps, raw anchovies, the cooked fish and the burnt fish. Leave
+your net untagged: the bot ignores untagged items and never drops or banks them.
+Pick highlight colors that don't appear on the game map, the interface or item sprites.
+
+In game: run RuneLite in **fixed mode** (Settings → Display → *Fixed - Classic layout*), zoom the
+camera **all the way out**, enable **Shift-click drop** and **Esc closes the current interface**,
+and set the bank quantity to **All**.
+
+Draynor has no range. For the cook modes, either light a fire and mark it, or run the bot at the
+Lumbridge castle range and mark tiles for the `to_cook` / `to_bank` routes.
 
 ## Calibrate
 
 ```sh
-python -m fishbot calibrate          # hover top-left of the game canvas, then baseline with only your net
-python -m fishbot calibrate --bank   # optional: baseline while the bank is open
-python -m fishbot debug              # writes debug.png
+python -m fishbot calibrate   # hover the top-left pixel of the game canvas, press Enter
+python -m fishbot debug       # writes debug.png
 ```
 
-Open `debug.png`: grey boxes should sit exactly on the inventory slots, orange marks tool slots,
-red marks new items, and green boxes should surround each highlighted spot/booth. If the slot grid
-is off, adjust `layout:` in `config.yaml`. These default fixed-mode offsets are still unconfirmed,
-so check them against your client before running.
-
-For the cook modes, capture templates while those items are in your inventory:
-
-```sh
-python -m fishbot capture-item raw_shrimps 1      # slot index 0-27
-python -m fishbot capture-item raw_anchovies 2
-```
-
-Optionally capture part of the bank window so the bot can confirm the bank opened
-(pick coordinates from a `debug.png` taken with the bank open):
-
-```sh
-python -m fishbot capture-region bank_open X Y W H
-```
+Open `debug.png`. The grey boxes should sit on the inventory slots, tagged items should show up
+red with their names, and green boxes should surround every highlighted spot, booth and tile.
+If the slot grid is off, adjust `layout:` in `config.yaml`. The default fixed-mode offsets are
+still unconfirmed, so check them before running.
 
 ## Run
 
@@ -78,13 +73,13 @@ Modes (`mode:` in config):
 
 ## How it works
 
-- `layout.py`: fixed-mode positions of the viewport, inventory slots, minimap and compass.
-- `vision.py`: color masks → dilated connected components → blob boxes; template matching.
-- `inventory.py`: a slot is "new" when it differs from the calibrated baseline, so tools are
-  ignored. Templates identify items for cooking.
+- `layout.py`: fixed-mode positions of the viewport, inventory slots and compass.
+- `vision.py`: color masks → dilated connected components → blob boxes.
+- `inventory.py`: reads which Inventory Tags color is drawn in each slot.
 - `bot.py`: the loop. While fishing, it waits as long as fish keep arriving and a spot is next
-  to the player; otherwise it clicks the nearest highlighted spot. Minimap `routes` are a fallback
-  when a target isn't on screen.
+  to the player; otherwise it clicks the nearest highlighted spot. Ground Marker `routes` are a
+  fallback when a target isn't on screen. It stops if several spot clicks in a row catch nothing
+  it can see (usually an untagged fish).
 
 ## Tests
 
