@@ -2,7 +2,7 @@ import pytest
 
 from skillbot.config import Step
 from skillbot.game import BotError
-from skillbot.tasks import make_task
+from skillbot.planner import make_task
 
 from fakes import BANK, LAYOUT, RANGE, TREE, blank, config, make_game, outline, put_item, slot_at
 

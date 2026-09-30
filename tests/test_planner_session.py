@@ -1,9 +1,9 @@
 import pytest
 
 from skillbot.game import BotError, StopBot
-from skillbot.planner import Planner
+from skillbot.planner import TASK_TYPES, Planner
 from skillbot.session import Session, sample
-from skillbot.tasks import TASK_TYPES, Task
+from skillbot.tasks import Task
 
 from fakes import LAYOUT, TREE, blank, config, make_game
 

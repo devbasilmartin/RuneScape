@@ -39,7 +39,15 @@ class Layout:
     slot_size: tuple[int, int] = (32, 32)
 
     # side panel tab buttons
-    tabs: dict = field(default_factory=lambda: {"skills": (571, 186), "inventory": (637, 186)})
+    tabs: dict = field(default_factory=lambda: {
+        "combat": (538, 186), "skills": (571, 186), "inventory": (637, 186),
+        "magic": (736, 186)})
+
+    # combat options tab: the four attack style buttons, in game order
+    combat_styles: tuple = ((603, 270), (683, 270), (603, 322), (683, 322))
+
+    # RuneLite Status Bars plugin: the health bar beside the inventory
+    hp_bar: Rect = field(default_factory=lambda: Rect(547, 212, 8, 250))
 
     # skills tab: 3 columns x 8 rows; level_box is where the base level is drawn in a cell
     skill_origin: tuple[int, int] = (550, 210)
@@ -92,11 +100,11 @@ class Layout:
         for key, value in d.items():
             if key not in names:
                 raise ValueError(f"unknown layout key: {key}")
-            if key == "viewport":
+            if key in ("viewport", "hp_bar"):
                 d[key] = Rect(*value)
             elif key == "tabs":
                 d[key] = {**cls().tabs, **{k: tuple(v) for k, v in value.items()}}
-            elif key == "fingerprint_points":
+            elif key in ("fingerprint_points", "combat_styles"):
                 d[key] = tuple(tuple(p) for p in value)
             elif isinstance(value, list):
                 d[key] = tuple(value)

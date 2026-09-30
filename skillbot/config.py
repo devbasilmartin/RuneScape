@@ -7,7 +7,7 @@ import yaml
 from .layout import Layout
 from .skills import SKILLS
 
-TASKS = ("gather", "process", "firemaking")
+TASKS = ("gather", "process", "firemaking", "combat")
 
 
 def _color(v):
@@ -34,6 +34,16 @@ class Step:
     idle_timeout: float = 20.0         # seconds without progress before clicking again
     walk: dict = field(default_factory=dict)   # "bank"/"target"/"start" -> route name
 
+    # combat
+    food: tuple = ()                   # tagged food, eaten when HP drops below eat_below
+    eat_below: float = 0.5             # fraction of max HP (Status Bars health bar)
+    when_out_of_food: str = "bank"     # bank (restock with `withdraw`) | stop
+    loot: tuple | None = None          # Ground Items tile highlight color; None = no looting
+    bury: tuple = ()                   # tagged bones to bury (Prayer)
+    style: int | None = None           # attack style button 0-3 to select at the start
+    cast: tuple | None = None          # spell position in the magic tab, cast on every attack
+    kills_per_batch: int = 10          # check levels after this many kills
+
     @classmethod
     def from_dict(cls, d: dict) -> "Step":
         names = {f.name for f in fields(cls)}
@@ -42,7 +52,9 @@ class Step:
             raise ValueError(f"step {d.get('name')!r}: unknown keys {sorted(unknown)}")
         d = dict(d)
         d["target"] = _color(d.get("target"))
-        for key in ("items", "confirm", "withdraw"):
+        d["loot"] = _color(d.get("loot"))
+        d["cast"] = _color(d.get("cast"))
+        for key in ("items", "confirm", "withdraw", "food", "bury"):
             if key in d:
                 d[key] = tuple(d[key])
         step = cls(**d)
@@ -54,6 +66,10 @@ class Step:
             raise ValueError(f"step {step.name!r}: needs a target highlight color")
         if step.when_full not in ("drop", "bank"):
             raise ValueError(f"step {step.name!r}: when_full must be drop or bank")
+        if step.when_out_of_food not in ("bank", "stop"):
+            raise ValueError(f"step {step.name!r}: when_out_of_food must be bank or stop")
+        if step.style is not None and step.style not in range(4):
+            raise ValueError(f"step {step.name!r}: style must be 0-3")
         return step
 
 
@@ -62,6 +78,8 @@ class Config:
     data_dir: Path = Path("data")
     color_tolerance: int = 25
     bank_color: tuple = (255, 0, 255)
+    health_bar_colors: tuple = ((0, 255, 0), (255, 0, 0))   # the game's own bars over NPCs
+    hp_bar_color: tuple = (255, 0, 0)                        # Status Bars health fill
     items: dict = field(default_factory=dict)      # Inventory Tags: name -> RGB
     routes: dict = field(default_factory=dict)     # name -> Ground Marker colors in order
     plan: list = field(default_factory=list)       # list[Step]
@@ -90,6 +108,8 @@ class Config:
                 cfg.data_dir = Path(value)
             elif not hasattr(cfg, key):
                 raise ValueError(f"unknown config key: {key}")
+            elif key == "health_bar_colors":
+                cfg.health_bar_colors = tuple(tuple(c) for c in value)
             elif isinstance(getattr(cfg, key), tuple):
                 setattr(cfg, key, tuple(value))
             else:
@@ -108,11 +128,19 @@ class Config:
                     raise ValueError(f"item colors for {a} and {b} are too similar; make them "
                                      f"differ by more than {2 * self.color_tolerance} on a channel")
         for step in self.plan:
-            names = list(step.items) + ([step.use_item] if step.use_item else [])
+            names = list(step.items) + list(step.food) + list(step.bury)
+            names += [step.use_item] if step.use_item not in (None, "any") else []
             names += list((step.process or {}).get("items", []))
             missing = [n for n in names if n not in self.items]
             if missing:
                 raise ValueError(f"step {step.name!r}: items {missing} have no tag color")
+            if step.task == "combat":
+                for color in (step.target, step.loot):
+                    if color and any(max(abs(x - y) for x, y in zip(color, bar))
+                                     <= 2 * self.color_tolerance
+                                     for bar in self.health_bar_colors):
+                        raise ValueError(f"step {step.name!r}: {color} is too close to the "
+                                         "game's green/red health bars")
             for route in step.walk.values():
                 if route not in self.routes:
                     raise ValueError(f"step {step.name!r}: unknown route {route!r}")

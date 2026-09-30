@@ -5,8 +5,16 @@ from pathlib import Path
 
 from .config import Step
 from .game import BotError, Game, StopBot
+from .combat import CombatTask
 from .skills import SkillReader
-from .tasks import make_task
+from .tasks import FiremakingTask, GatherTask, ProcessTask
+
+TASK_TYPES = {"gather": GatherTask, "process": ProcessTask, "firemaking": FiremakingTask,
+              "combat": CombatTask}
+
+
+def make_task(game: Game, step: Step):
+    return TASK_TYPES[step.task](game, step)
 
 log = logging.getLogger("skillbot")
 

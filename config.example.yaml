@@ -4,6 +4,7 @@
 color_tolerance: 25
 
 bank_color: [255, 0, 255]      # Object Markers on every bank booth you use
+hp_bar_color: [255, 0, 0]      # Status Bars plugin: health fill color (combat)
 
 # What to do when the game logs you out (6-hour logout, disconnect, server restart):
 #   stop    - stop the bot
@@ -27,6 +28,9 @@ items:
   copper_ore:      [200, 100, 0]
   tin_ore:         [180, 180, 255]
   bronze_bar:      [255, 255, 128]
+  bones:           [255, 255, 255]
+  cowhide:         [120, 60, 0]
+  trout:           [128, 0, 255]
 
 # Ground Markers: tiles clicked in order when a target isn't on screen. Reusing a
 # color is fine as long as only one tile of that color is visible at a time.
@@ -35,6 +39,8 @@ routes:
   bank_to_willows:  [[128, 128, 255]]
   bank_to_fish:     [[255, 128, 255]]
   fish_to_bank:     [[255, 255, 255]]
+  cows_to_bank:     [[64, 64, 255], [255, 255, 255]]
+  bank_to_cows:     [[64, 64, 255], [128, 128, 255]]
 
 # The plan runs top to bottom. A step is skipped once its skill reaches until_level.
 # max_minutes rotates to the next step after that long (useful to gather supplies,
@@ -90,6 +96,33 @@ plan:
     withdraw: [0]
     tool_slot: 0
 
+  # --- Melee on cows (Lumbridge east field). Rotates styles so all three rise together;
+  # Hitpoints comes along for free. Food and loot bank at Lumbridge castle. ---
+  - &cows
+    name: cows - attack
+    skill: attack
+    task: combat
+    until_level: 40
+    max_minutes: 60
+    style: 0                       # Combat Options tab: 0 accurate, 1 aggressive, 3 defensive
+    target: [255, 128, 255]        # NPC Indicators: Cow
+    loot: [255, 200, 0]            # Ground Items: highlight bones + cowhide, tiles on
+    items: [cowhide]
+    bury: [bones]                  # Prayer from bones
+    food: [trout]
+    eat_below: 0.5
+    withdraw: [0]                  # trout in bank slot 0, bank quantity X = 10
+    when_full: bank
+    walk: {bank: cows_to_bank, target: bank_to_cows}
+  - <<: *cows
+    name: cows - strength
+    skill: strength
+    style: 1
+  - <<: *cows
+    name: cows - defence
+    skill: defence
+    style: 3
+
 # More methods, same building blocks:
 #
 #  - name: mine copper and tin           # Object Markers on the rocks; drop or bank
@@ -124,6 +157,23 @@ plan:
 #    use_item: any
 #    withdraw: [0, 1]
 #
+#  - name: magic on chickens            # cast from the magic tab each attack
+#    skill: magic                        # (or set autocast on a staff and omit `cast`)
+#    task: combat
+#    target: [255, 128, 255]
+#    cast: [566, 222]                    # Wind Strike's position in the magic tab
+#    loot: [255, 200, 0]
+#    bury: [bones]
+#    food: [trout]
+#
+#  - name: ranged on cows                # like melee; add arrows to Ground Items to reclaim them
+#    skill: ranged
+#    task: combat
+#    target: [255, 128, 255]
+#    style: 1                            # rapid
+#    loot: [255, 200, 0]
+#    food: [trout]
+#
 #  - name: fish and cook on a fire       # gather step that cooks each load, then drops it
 #    skill: fishing
 #    task: gather
@@ -135,7 +185,9 @@ plan:
 # Override fixed-mode geometry if `python -m skillbot debug` shows boxes out of place.
 # layout:
 #   inv_origin: [563, 213]
-#   tabs: {skills: [571, 186], inventory: [637, 186]}
+#   tabs: {combat: [538, 186], skills: [571, 186], inventory: [637, 186], magic: [736, 186]}
+#   combat_styles: [[603, 270], [683, 270], [603, 322], [683, 322]]
+#   hp_bar: [547, 212, 8, 250]
 #   skill_origin: [550, 210]
 #   skill_level_box: [36, 15, 24, 13]
 #   bank_origin: [73, 83]

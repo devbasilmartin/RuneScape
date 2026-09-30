@@ -188,9 +188,3 @@ class FiremakingTask(Task):
         g.wait_until(lambda img: g.highlight_near(img, self.step.target, g.player, 25),
                      timeout=g.cfg.walk_timeout)
 
-
-TASK_TYPES = {"gather": GatherTask, "process": ProcessTask, "firemaking": FiremakingTask}
-
-
-def make_task(game: Game, step: Step) -> Task:
-    return TASK_TYPES[step.task](game, step)

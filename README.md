@@ -5,9 +5,10 @@ server that allows automation. Everything it sees comes from RuneLite highlights
 (exact colors), and it works through a plan of training steps, switching methods as
 levels go up.
 
-Phase 1 covers the gathering and processing skills: Woodcutting, Mining, Fishing,
-Firemaking, Cooking, Smithing (smelting and anvil) and Crafting (anything that is "use
-item on station, pick from a menu"). Combat, Prayer, Magic and Runecrafting come later.
+It covers the gathering and processing skills (Woodcutting, Mining, Fishing, Firemaking,
+Cooking, Smithing and Crafting: anything that is "use item on station, pick from a menu")
+and combat (Attack, Strength, Defence, Hitpoints, Ranged, Magic, and Prayer from burying
+bones). Runecrafting comes next.
 
 ## Install
 
@@ -27,7 +28,9 @@ Use the exact colors from `config.yaml`, fully opaque, and keep them well apart.
 | Plugin | What to mark | Config key |
 |---|---|---|
 | Object Markers | trees, rocks, furnace, anvil, range, bank booths (shift + right-click → Mark object) | step `target`, `bank_color` |
-| NPC Indicators | `Fishing spot` (outline or hull, names off) | step `target` |
+| NPC Indicators | `Fishing spot`, or the monsters to fight (outline or hull, names off) | step `target` |
+| Ground Items | loot to pick up, with **Highlight tiles** on, in one color | combat `loot` |
+| Status Bars | on, showing Hitpoints on the left of the inventory | `hp_bar_color`, `layout.hp_bar` |
 | Inventory Tags | every item the bot gathers, uses or makes (shift + right-click → Tag) | `items:` |
 | Ground Markers | route tiles, and the first tile of a firemaking lane | `routes:`, firemaking `target` |
 | Key Remapping | on, so pressing space for dialogs doesn't type into chat | |
@@ -85,6 +88,24 @@ examples.
 | `gather` | click the nearest `target` until full, then `drop` or `bank`; optional inline `process` (e.g. cook each load on a fire) | Woodcutting, Mining, Fishing |
 | `process` | withdraw inputs, (optionally `use_item` on) the `target` station, send `confirm` keys/clicks, wait until the inputs are used up | Cooking, Smelting, Smithing, Crafting |
 | `firemaking` | stand on the `target` tile, light every log with the tinderbox in `tool_slot` | Firemaking |
+| `combat` | attack the nearest free `target`, eat `food` below `eat_below` HP, pick up `loot`, bury `bury` | Attack, Strength, Defence, Hitpoints, Ranged, Magic, Prayer |
+
+### Combat
+
+- It never attacks an NPC that already shows the game's green/red health bar (someone else's
+  fight), and it treats a target as dead when its highlight disappears.
+- `style` (0-3) picks the attack style button in the Combat Options tab when the step starts:
+  alternate Attack/Strength/Defence steps with `max_minutes` to train them together. Hitpoints
+  rises on its own. A step can also name `hitpoints` or `prayer` as its skill.
+- Magic: set `cast` to the spell's position in the magic tab (find it with `debug`), or
+  autocast from a staff and leave `cast` out.
+- HP is the fill of the Status Bars health bar, so no numbers are read. Check it with `debug`,
+  which prints the HP it sees. When food runs out it banks for more (`withdraw`), or ends the
+  step with `when_out_of_food: stop`.
+- Keep enemy and loot colors away from pure green and red, which the game uses for health bars;
+  the config check rejects colors that are too close.
+- If your character dies, the respawn point has no highlights, so after a few failed recoveries
+  the bot stops rather than wandering.
 
 A step is skipped once `skill` reaches `until_level`. With `max_minutes` it hands over to the
 next step after that long, so you can alternate e.g. mining and smelting. A process step ends
@@ -120,6 +141,7 @@ python -m skillbot run
 - `skills.py`: digit segmentation and learning for the skills tab.
 - `game.py`: shared actions: clicking highlights, walking routes, banking, dropping, tabs.
 - `tasks.py`: `GatherTask`, `ProcessTask`, `FiremakingTask`.
+- `combat.py`: `CombatTask`.
 - `planner.py`: step selection, level refresh, error recovery.
 - `session.py`: logout detection and re-login.
 
@@ -130,4 +152,5 @@ pip install pytest && python -m pytest
 ```
 
 Tests drive the tasks against a simulated game (trees that deplete, a bank, a range whose
-cooking is interrupted by a level-up, a login screen), so they don't need a display.
+cooking is interrupted by a level-up, cows that fight back and drop loot, a login screen), so
+they don't need a display.

@@ -85,11 +85,16 @@ def cmd_debug(cfg: Config, args) -> None:
             box(lay.bank_slot(i), (255, 0, 255), str(i))
     for name, pt in lay.tabs.items():
         cv2.circle(out, pt, 4, (255, 255, 0), 1)
+    for i, pt in enumerate(lay.combat_styles):
+        cv2.putText(out, str(i), pt, cv2.FONT_HERSHEY_SIMPLEX, 0.35, (255, 255, 0), 1)
+    box(lay.hp_bar, (0, 128, 255), "hp")
     for pt in lay.fingerprint_points:
         cv2.circle(out, pt, 3, (0, 128, 255), 1)
     cv2.circle(out, lay.compass, 4, (255, 255, 0), 1)
     cv2.imwrite(args.out, out)
-    print(f"wrote {args.out}\ntagged slots: {tags}")
+    from .combat import CombatTask
+    hp = CombatTask.hp_fraction(img, lay.hp_bar, cfg.hp_bar_color, cfg.color_tolerance)
+    print(f"wrote {args.out}\ntagged slots: {tags}\nhp bar: {hp:.0%}")
 
 
 def cmd_run(cfg: Config, args) -> None:

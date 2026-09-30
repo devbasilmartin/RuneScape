@@ -13,7 +13,8 @@ LAYOUT = Layout()
 BG = (62, 53, 41)
 SPRITE = (140, 110, 90)
 ITEMS = {"logs": (0, 255, 0), "raw_shrimps": (0, 128, 255), "shrimps": (255, 128, 0),
-         "burnt_fish": (255, 0, 0), "copper_ore": (200, 100, 0)}
+         "burnt_fish": (255, 0, 0), "copper_ore": (200, 100, 0), "bones": (255, 255, 255),
+         "trout": (128, 0, 255), "cowhide": (100, 60, 20)}
 TREE = (0, 255, 255)
 BANK = (255, 0, 255)
 RANGE = (255, 255, 0)
