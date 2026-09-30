@@ -1,38 +1,141 @@
-# Copy to config.yaml and adjust. Colors are RGB and must match the RuneLite plugin
-# colors exactly (fully opaque). Use bright colors that don't occur in the game.
-
-# drop | bank | cook_drop | cook_bank
-mode: bank
-
-# Things in the game world
-fishing_color: [0, 255, 255]   # NPC Indicators: Fishing spot
-bank_color: [255, 0, 255]      # Object Markers: Draynor bank booth
-cook_color: [255, 255, 0]      # Object Markers: range (or your fire)
+# Copy to config.yaml and adjust. Colors are RGB and must match RuneLite's plugin
+# colors exactly (fully opaque). Pick bright colors that don't occur in the game and
+# keep them well apart (more than color_tolerance on some channel).
 color_tolerance: 25
 
-# Inventory Tags: one color per item. Every fish you can end up holding must be
-# tagged, or the bot can't see it (and will stop rather than guess).
+bank_color: [255, 0, 255]      # Object Markers on every bank booth you use
+
+# What to do when the game logs you out (6-hour logout, disconnect, server restart):
+#   stop    - stop the bot
+#   relogin - log back in with SKILLBOT_USERNAME / SKILLBOT_PASSWORD from the environment
+on_logout: relogin
+login_attempts: 0              # 0 = keep retrying, with backoff up to 15 min
+max_consecutive_errors: 5      # stop after this many failed recoveries in a row
+max_runtime_hours: 0           # 0 = until the plan is done
+
+# Inventory Tags: one color per item the bot needs to see. Untagged items (axe,
+# pickaxe, net, tinderbox, hammer...) are never dropped or banked.
 items:
-  raw_shrimps: [0, 255, 0]
-  raw_anchovies: [0, 128, 255]
-  shrimps: [255, 128, 0]
-  anchovies: [160, 0, 255]
-  burnt_fish: [255, 0, 0]      # burnt shrimps and burnt anchovies share one tag
-raw_items: [raw_shrimps, raw_anchovies]   # what the cook modes cook
-tools: 1                       # untagged slots you always carry (small fishing net)
+  logs:            [0, 255, 0]
+  oak_logs:        [0, 160, 0]
+  willow_logs:     [128, 255, 128]
+  raw_shrimps:     [0, 128, 255]
+  raw_anchovies:   [0, 0, 255]
+  shrimps:         [255, 128, 0]
+  anchovies:       [255, 200, 100]
+  burnt_fish:      [255, 0, 0]
+  copper_ore:      [200, 100, 0]
+  tin_ore:         [180, 180, 255]
+  bronze_bar:      [255, 255, 128]
 
-idle_timeout: 25               # seconds with no new fish before clicking a spot again
-max_runtime_minutes: 60
-
-# Ground Markers: tiles the bot clicks, in order, when its target isn't on screen.
-# At Draynor, zoomed out, the bank and spots are usually both visible, so one
-# halfway tile per direction is plenty.
+# Ground Markers: tiles clicked in order when a target isn't on screen. Reusing a
+# color is fine as long as only one tile of that color is visible at a time.
 routes:
-  to_bank: [[255, 255, 255]]
-  to_spot: [[128, 255, 128]]
-  to_cook: []
+  willows_to_bank:  [[255, 255, 255]]
+  bank_to_willows:  [[128, 128, 255]]
+  bank_to_fish:     [[255, 128, 255]]
+  fish_to_bank:     [[255, 255, 255]]
 
-# Override fixed-mode geometry if `python -m fishbot debug` shows boxes out of place.
+# The plan runs top to bottom. A step is skipped once its skill reaches until_level.
+# max_minutes rotates to the next step after that long (useful to gather supplies,
+# then use them). A process step ends early when the bank runs out of its inputs.
+# After the last step it starts again from the top, until everything is done.
+plan:
+  # --- Woodcutting at Draynor (axe untagged in slot 0) ---
+  - name: normal trees
+    skill: woodcutting
+    task: gather
+    until_level: 15
+    target: [0, 255, 255]          # Object Markers on the trees
+    items: [logs]
+    when_full: drop
+
+  - name: oaks
+    skill: woodcutting
+    task: gather
+    until_level: 30
+    target: [0, 200, 200]
+    items: [oak_logs]
+    when_full: drop
+
+  - name: willows
+    skill: woodcutting
+    task: gather
+    until_level: 99
+    max_minutes: 120               # then give fishing a turn
+    target: [0, 150, 150]
+    items: [willow_logs]
+    when_full: bank
+    walk: {bank: willows_to_bank, target: bank_to_willows}
+
+  # --- Fishing at Draynor (net untagged in slot 0) ---
+  - name: net fishing
+    skill: fishing
+    task: gather
+    until_level: 99
+    max_minutes: 120
+    target: [0, 255, 128]          # NPC Indicators: Fishing spot
+    items: [raw_shrimps, raw_anchovies, shrimps, anchovies, burnt_fish]
+    when_full: bank
+    walk: {bank: fish_to_bank, target: bank_to_fish}
+
+  # --- Firemaking willows from the bank (tinderbox untagged in slot 0) ---
+  # Put willow logs in bank slot 0 with the bank quantity set to All.
+  - name: burn willows
+    skill: firemaking
+    task: firemaking
+    until_level: 99
+    target: [255, 255, 0]          # Ground Marker on the first tile of a clear east-west lane
+    items: [willow_logs]
+    withdraw: [0]
+    tool_slot: 0
+
+# More methods, same building blocks:
+#
+#  - name: mine copper and tin           # Object Markers on the rocks; drop or bank
+#    skill: mining
+#    task: gather
+#    target: [255, 64, 0]
+#    items: [copper_ore, tin_ore]
+#    when_full: bank
+#
+#  - name: smelt bronze                  # furnace marked; bank quantity X = 14
+#    skill: smithing
+#    task: process
+#    target: [64, 255, 0]
+#    items: [copper_ore, tin_ore]
+#    withdraw: [0, 1]                    # copper in bank slot 0, tin in slot 1
+#    confirm: [{key: "1"}]               # first option in the smelting menu
+#
+#  - name: smith bronze                  # anvil marked, hammer untagged
+#    skill: smithing
+#    task: process
+#    target: [64, 0, 255]
+#    items: [bronze_bar]
+#    use_item: bronze_bar
+#    withdraw: [0]
+#    confirm: [{click: [300, 150]}]      # the item in the smithing interface
+#
+#  - name: cook at a range               # range marked; cook each raw type in turn
+#    skill: cooking
+#    task: process
+#    target: [255, 64, 128]
+#    items: [raw_shrimps, raw_anchovies]
+#    use_item: any
+#    withdraw: [0, 1]
+#
+#  - name: fish and cook on a fire       # gather step that cooks each load, then drops it
+#    skill: fishing
+#    task: gather
+#    target: [0, 255, 128]
+#    items: [raw_shrimps, raw_anchovies, shrimps, anchovies, burnt_fish]
+#    when_full: drop
+#    process: {target: [255, 64, 128], items: [raw_shrimps, raw_anchovies], use_item: any}
+
+# Override fixed-mode geometry if `python -m skillbot debug` shows boxes out of place.
 # layout:
 #   inv_origin: [563, 213]
-#   slot_step: [42, 36]
+#   tabs: {skills: [571, 186], inventory: [637, 186]}
+#   skill_origin: [550, 210]
+#   skill_level_box: [36, 15, 24, 13]
+#   bank_origin: [73, 83]

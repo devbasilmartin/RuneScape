@@ -47,8 +47,8 @@ class Inventory:
     def slots_with(self, img, name: str) -> list[int]:
         return [i for i, n in self.tags(img).items() if n == name]
 
-    def is_full(self, img) -> bool:
-        return len(self.tags(img)) >= SLOTS - self.tools
+    def is_full(self, img, tools: int | None = None) -> bool:
+        return len(self.tags(img)) >= SLOTS - (self.tools if tools is None else tools)
 
     def any_tag_visible(self, img) -> bool:
         inv = self.layout.inventory

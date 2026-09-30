@@ -17,7 +17,7 @@ class Screen:
     def load(cls, data_dir: Path) -> "Screen":
         path = data_dir / "origin.json"
         if not path.exists():
-            raise SystemExit("Not calibrated yet: run `python -m fishbot calibrate` first.")
+            raise SystemExit("Not calibrated yet: run `python -m skillbot calibrate` first.")
         return cls(tuple(json.loads(path.read_text())["origin"]))
 
     def grab(self) -> np.ndarray:

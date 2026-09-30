@@ -35,8 +35,11 @@ class Controls:
     def click_rect(self, rect: Rect, button: str = "left") -> None:
         self.click(self.point_in(rect), button)
 
-    def press(self, key: str) -> None:
-        self._pg.press(key)
+    def press(self, key: str, presses: int = 1) -> None:
+        self._pg.press(key, presses=presses, interval=0.03)
+
+    def type_text(self, text: str) -> None:
+        self._pg.write(text, interval=self.rng.uniform(0.05, 0.1))
 
     def hold(self, key: str, seconds: float) -> None:
         self._pg.keyDown(key)
