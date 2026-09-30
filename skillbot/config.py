@@ -97,6 +97,8 @@ class Config:
     login_attempts: int = 0                        # 0 = keep trying (server restarts)
     max_consecutive_errors: int = 5
     max_runtime_hours: float = 0                   # 0 = run until the plan is done
+    run: str = "always"                            # always | off
+    run_retry_seconds: float = 60.0                # wait after running out of energy
     walk_timeout: float = 12.0
     bank_open_wait: float = 4.0
     layout: Layout = field(default_factory=Layout)
@@ -128,6 +130,8 @@ class Config:
         return cfg
 
     def validate(self) -> None:
+        if self.run not in ("always", "off"):
+            raise ValueError("run must be always or off")
         if self.on_logout not in ("stop", "relogin"):
             raise ValueError("on_logout must be stop or relogin")
         names = list(self.items)

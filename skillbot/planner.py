@@ -122,6 +122,7 @@ class Planner:
         if self.session:
             self.session.ensure()
         try:
+            self.game.keep_running()
             result = action()
         except BotError as e:
             self.errors += 1

@@ -14,6 +14,11 @@ login_attempts: 0              # 0 = keep retrying, with backoff up to 15 min
 max_consecutive_errors: 5      # stop after this many failed recoveries in a row
 max_runtime_hours: 0           # 0 = until the plan is done
 
+# Run energy, for every step: keep run on, and after running out wait this long
+# before switching it back on. Needs `python -m skillbot calibrate-run` once.
+run: always                    # always | off
+run_retry_seconds: 60
+
 # Inventory Tags: one color per item the bot needs to see. Untagged items (axe,
 # pickaxe, net, tinderbox, hammer...) are never dropped or banked.
 items:
@@ -135,7 +140,7 @@ plan:
 
   # --- Runecrafting (after Rune Mysteries): earth runes 9-14, then fire runes to 99.
   # Rune essence in bank slot 0 (quantity All); talisman tagged and kept in the
-  # inventory, or wear the tiara and drop enter_with/keep. Turn run on before starting.
+  # inventory, or wear the tiara and drop enter_with/keep.
   - &runes
     name: earth runes (Varrock east)
     skill: runecraft
@@ -233,6 +238,7 @@ plan:
 #   tabs: {combat: [538, 186], skills: [571, 186], inventory: [637, 186], magic: [736, 186]}
 #   combat_styles: [[603, 270], [683, 270], [603, 322], [683, 322]]
 #   hp_bar: [547, 212, 8, 250]
+#   run_orb: [557, 129]
 #   skill_origin: [550, 210]
 #   skill_level_box: [36, 15, 24, 13]
 #   bank_origin: [73, 83]

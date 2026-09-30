@@ -12,6 +12,7 @@ from .config import Config
 from .game import Game, StopBot
 from .inventory import SLOTS, Inventory
 from .planner import Levels, Planner
+from .run import RunManager, orb_sample
 from .screen import Screen
 from .session import Session, sample
 from .skills import SKILLS, SkillReader
@@ -32,6 +33,20 @@ def cmd_calibrate(cfg: Config, args) -> None:
     (cfg.data_dir / "fingerprint.json").write_text(json.dumps(fp))
     print(f"canvas origin = {origin}; logged-in fingerprint saved. "
           "Run `python -m skillbot debug` to check it.")
+
+
+def cmd_calibrate_run(cfg: Config, args) -> None:
+    screen = Screen.load(cfg.data_dir)
+    samples = {}
+    for state in ("on", "off"):
+        input(f"Turn run {state.upper()} (click the run orb), then press Enter...")
+        samples[state] = orb_sample(screen.grab(), cfg.layout.run_orb)
+    gap = max(abs(a - b) for a, b in zip(samples["on"], samples["off"]))
+    if gap < 30:
+        raise SystemExit(f"on/off look almost the same ({samples}); check layout.run_orb "
+                         "with `python -m skillbot debug`")
+    (cfg.data_dir / "run_orb.json").write_text(json.dumps(samples))
+    print(f"saved run orb colors: {samples}")
 
 
 def cmd_learn_digits(cfg: Config, args) -> None:
@@ -91,6 +106,7 @@ def cmd_debug(cfg: Config, args) -> None:
     for pt in lay.fingerprint_points:
         cv2.circle(out, pt, 3, (0, 128, 255), 1)
     cv2.circle(out, lay.compass, 4, (255, 255, 0), 1)
+    cv2.circle(out, lay.run_orb, 5, (0, 255, 255), 1)
     cv2.imwrite(args.out, out)
     from .combat import CombatTask
     hp = CombatTask.hp_fraction(img, lay.hp_bar, cfg.hp_bar_color, cfg.color_tolerance)
@@ -108,6 +124,8 @@ def cmd_run(cfg: Config, args) -> None:
     screen = Screen.load(cfg.data_dir)
     game = Game(cfg, screen, Controls(screen), Inventory(cfg.layout, cfg.items,
                                                          tolerance=cfg.color_tolerance))
+    if cfg.run == "always":
+        game.run = RunManager.load(game, cfg.data_dir)
     levels = Levels.load(game, SkillReader.load(cfg.layout, cfg.data_dir), cfg.data_dir)
     planner = Planner(game, levels, Session.load(game, cfg.data_dir))
     logging.info("starting; move the mouse to a screen corner to stop")
@@ -120,6 +138,8 @@ def cmd_run(cfg: Config, args) -> None:
     except KeyboardInterrupt:
         logging.info("stopped")
     logging.info("levels: %s", levels.levels)
+    if game.run:
+        logging.info("run: %s", game.run.stats)
 
 
 def main(argv=None) -> None:
@@ -128,6 +148,7 @@ def main(argv=None) -> None:
     sub = p.add_subparsers(dest="cmd", required=True)
     c = sub.add_parser("calibrate", help="record where the game is and what logged in looks like")
     c.add_argument("--origin", type=int, nargs=2, metavar=("X", "Y"))
+    sub.add_parser("calibrate-run", help="record the run orb's on/off colors")
     sub.add_parser("learn-digits", help="teach the level font from the open skills tab")
     sub.add_parser("levels", help="print the levels read from the open skills tab")
     c = sub.add_parser("debug", help="write an annotated screenshot")
@@ -140,7 +161,7 @@ def main(argv=None) -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s", datefmt="%H:%M:%S")
     cfg = Config.load(args.config) if Path(args.config).exists() else Config()
     cfg.data_dir.mkdir(parents=True, exist_ok=True)
-    {"calibrate": cmd_calibrate, "learn-digits": cmd_learn_digits, "levels": cmd_levels,
+    {"calibrate": cmd_calibrate, "calibrate-run": cmd_calibrate_run, "learn-digits": cmd_learn_digits, "levels": cmd_levels,
      "debug": cmd_debug, "run": cmd_run}[args.cmd](cfg, args)
 
 

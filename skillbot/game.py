@@ -25,6 +25,11 @@ class Game:
         self.inv = inventory
         self.now = now
         self.layout = cfg.layout
+        self.run = None        # RunManager, when run: always
+
+    def keep_running(self) -> None:
+        if self.run is not None:
+            self.run.maintain()
 
     def grab(self):
         return self.screen.grab()
@@ -47,6 +52,7 @@ class Game:
         blob = self.nearest(img, color)
         if blob is None:
             return False
+        self.keep_running()    # clicking a highlight usually means walking to it
         self.controls.click_rect(blob.rect)
         return True
 
@@ -79,6 +85,7 @@ class Game:
         clicked, clicked_at, retries = -1, self.now(), 0
         deadline = self.now() + self.cfg.walk_timeout * max(1, len(tiles))
         while self.now() < deadline:
+            self.keep_running()
             img = self.grab()
             if self.blobs(img, color):
                 return

@@ -57,6 +57,20 @@ detect logouts). Open `debug.png`: the grey boxes should sit on the inventory sl
 items should be labeled in red, and green boxes should surround every highlight. If anything is
 off, adjust `layout:` in `config.yaml`. The default fixed-mode offsets are still unconfirmed.
 
+### Run energy
+
+With `run: always` (the default) the bot keeps run switched on during every step. Record
+what the run orb looks like once:
+
+```sh
+python -m skillbot debug              # the cyan circle must sit on the run orb's boot icon
+python -m skillbot calibrate-run      # toggle run on, Enter; toggle run off, Enter
+```
+
+It checks the orb every few seconds while walking or clicking targets. When energy runs out
+and the game switches run off, it walks for `run_retry_seconds` (default 60) before switching
+it back on. If run still won't turn on, it waits the same time again, so it never spams the orb.
+
 ### Levels
 
 The bot reads levels from the skills tab by learning the shapes of the digits:
@@ -110,7 +124,6 @@ from OSRS; your server may differ.
   leave both out). Tiaras: `items: [tiara]`, `use_item: tiara`, withdraw tiaras and talismans.
 - The task works out where it is from what's on screen (outside with essence, in the altar
   with essence, in the altar without), so it resumes cleanly after an error or a re-login.
-- Turn run on before starting; the bot doesn't manage run energy yet.
 
 ### Combat
 
@@ -167,6 +180,7 @@ python -m skillbot run
 - `runecraft.py`: `RunecraftTask`.
 - `planner.py`: step selection, level refresh, error recovery.
 - `session.py`: logout detection and re-login.
+- `run.py`: keeps run on (orb color samples, retry after running out).
 
 ## Tests
 
