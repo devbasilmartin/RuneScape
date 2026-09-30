@@ -12,7 +12,8 @@ from .config import Config
 from .game import Game, StopBot
 from .inventory import SLOTS, Inventory
 from .planner import Levels, Planner
-from .run import RunManager, orb_sample
+from .digits import GlyphBook
+from .run import EnergyReader, RunManager, orb_sample
 from .screen import Screen
 from .session import Session, sample
 from .skills import SKILLS, SkillReader
@@ -47,6 +48,35 @@ def cmd_calibrate_run(cfg: Config, args) -> None:
                          "with `python -m skillbot debug`")
     (cfg.data_dir / "run_orb.json").write_text(json.dumps(samples))
     print(f"saved run orb colors: {samples}")
+
+
+def cmd_learn_energy(cfg: Config, args) -> None:
+    screen = Screen.load(cfg.data_dir)
+    book = GlyphBook.load(cfg.data_dir / "energy_digits.json")
+    reader = EnergyReader(cfg.layout.run_energy_box, book)
+    import time
+    value = None
+    print("Run around (or stand still with run off) so the energy keeps changing. "
+          "Ctrl+C to finish.")
+    try:
+        while not book.complete():
+            img = screen.grab()
+            if value is not None:
+                value = reader.read(img, value, window=1)
+            if value is None:
+                text = input("  type the run energy shown next to the orb: ").strip()
+                if not text.isdigit() or not reader.learn(screen.grab(), int(text)):
+                    print("    could not split the number into that many digits; "
+                          "check layout.run_energy_box with `debug`")
+                    continue
+                value = int(text)
+                print(f"  watching... known digits: {book.known_digits()}")
+            book.save()
+            time.sleep(0.2)          # faster than the game changes the number
+    except KeyboardInterrupt:
+        pass
+    book.save()
+    print(f"\nknown digits: {book.known_digits() or 'none'}")
 
 
 def cmd_learn_digits(cfg: Config, args) -> None:
@@ -107,6 +137,9 @@ def cmd_debug(cfg: Config, args) -> None:
         cv2.circle(out, pt, 3, (0, 128, 255), 1)
     cv2.circle(out, lay.compass, 4, (255, 255, 0), 1)
     cv2.circle(out, lay.run_orb, 5, (0, 255, 255), 1)
+    energy = EnergyReader(lay.run_energy_box,
+                          GlyphBook.load(cfg.data_dir / "energy_digits.json")).read(img)
+    box(lay.run_energy_box, (0, 255, 255), f"run {energy if energy is not None else '?'}")
     cv2.imwrite(args.out, out)
     from .combat import CombatTask
     hp = CombatTask.hp_fraction(img, lay.hp_bar, cfg.hp_bar_color, cfg.color_tolerance)
@@ -149,6 +182,7 @@ def main(argv=None) -> None:
     c = sub.add_parser("calibrate", help="record where the game is and what logged in looks like")
     c.add_argument("--origin", type=int, nargs=2, metavar=("X", "Y"))
     sub.add_parser("calibrate-run", help="record the run orb's on/off colors")
+    sub.add_parser("learn-energy", help="teach the run energy number's digits")
     sub.add_parser("learn-digits", help="teach the level font from the open skills tab")
     sub.add_parser("levels", help="print the levels read from the open skills tab")
     c = sub.add_parser("debug", help="write an annotated screenshot")
@@ -161,7 +195,8 @@ def main(argv=None) -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s", datefmt="%H:%M:%S")
     cfg = Config.load(args.config) if Path(args.config).exists() else Config()
     cfg.data_dir.mkdir(parents=True, exist_ok=True)
-    {"calibrate": cmd_calibrate, "calibrate-run": cmd_calibrate_run, "learn-digits": cmd_learn_digits, "levels": cmd_levels,
+    {"calibrate": cmd_calibrate, "calibrate-run": cmd_calibrate_run,
+     "learn-energy": cmd_learn_energy, "learn-digits": cmd_learn_digits, "levels": cmd_levels,
      "debug": cmd_debug, "run": cmd_run}[args.cmd](cfg, args)
 
 

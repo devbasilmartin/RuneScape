@@ -14,9 +14,11 @@ login_attempts: 0              # 0 = keep retrying, with backoff up to 15 min
 max_consecutive_errors: 5      # stop after this many failed recoveries in a row
 max_runtime_hours: 0           # 0 = until the plan is done
 
-# Run energy, for every step: keep run on, and after running out wait this long
-# before switching it back on. Needs `python -m skillbot calibrate-run` once.
+# Run energy, for every step: keep run on, and after running out switch it back on
+# once energy reaches run_min_energy. Needs `calibrate-run` and `learn-energy` once;
+# while the energy number can't be read it waits run_retry_seconds instead.
 run: always                    # always | off
+run_min_energy: 50
 run_retry_seconds: 60
 
 # Inventory Tags: one color per item the bot needs to see. Untagged items (axe,
@@ -239,6 +241,7 @@ plan:
 #   combat_styles: [[603, 270], [683, 270], [603, 322], [683, 322]]
 #   hp_bar: [547, 212, 8, 250]
 #   run_orb: [557, 129]
+#   run_energy_box: [519, 122, 24, 12]
 #   skill_origin: [550, 210]
 #   skill_level_box: [36, 15, 24, 13]
 #   bank_origin: [73, 83]

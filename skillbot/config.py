@@ -98,7 +98,8 @@ class Config:
     max_consecutive_errors: int = 5
     max_runtime_hours: float = 0                   # 0 = run until the plan is done
     run: str = "always"                            # always | off
-    run_retry_seconds: float = 60.0                # wait after running out of energy
+    run_min_energy: int = 50                       # switch run back on at this energy %
+    run_retry_seconds: float = 60.0                # fallback wait when energy can't be read
     walk_timeout: float = 12.0
     bank_open_wait: float = 4.0
     layout: Layout = field(default_factory=Layout)
@@ -132,6 +133,8 @@ class Config:
     def validate(self) -> None:
         if self.run not in ("always", "off"):
             raise ValueError("run must be always or off")
+        if not 1 <= self.run_min_energy <= 100:
+            raise ValueError("run_min_energy must be 1-100")
         if self.on_logout not in ("stop", "relogin"):
             raise ValueError("on_logout must be stop or relogin")
         names = list(self.items)

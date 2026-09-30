@@ -59,17 +59,22 @@ off, adjust `layout:` in `config.yaml`. The default fixed-mode offsets are still
 
 ### Run energy
 
-With `run: always` (the default) the bot keeps run switched on during every step. Record
-what the run orb looks like once:
+With `run: always` (the default) the bot keeps run switched on during every step. Set it up once:
 
 ```sh
-python -m skillbot debug              # the cyan circle must sit on the run orb's boot icon
+python -m skillbot debug              # cyan circle on the run orb's boot icon, cyan box around the number
 python -m skillbot calibrate-run      # toggle run on, Enter; toggle run off, Enter
+python -m skillbot learn-energy       # type the energy once, then run around until all digits are known
 ```
 
-It checks the orb every few seconds while walking or clicking targets. When energy runs out
-and the game switches run off, it walks for `run_retry_seconds` (default 60) before switching
-it back on. If run still won't turn on, it waits the same time again, so it never spams the orb.
+`learn-energy` watches the number several times a second, so each change is one point and every
+new digit is learned without guessing. Stop it with Ctrl+C at any time; digits it hasn't seen yet
+are learned later only when that's unambiguous. `debug` shows the energy it reads.
+
+While running, it checks the orb every few seconds during walks and before clicking targets.
+When energy runs out, it walks until energy is back to `run_min_energy` (default 50%) and then
+switches run on. If the number can't be read, it falls back to waiting `run_retry_seconds`
+between attempts, so it never spams the orb.
 
 ### Levels
 
@@ -180,7 +185,8 @@ python -m skillbot run
 - `runecraft.py`: `RunecraftTask`.
 - `planner.py`: step selection, level refresh, error recovery.
 - `session.py`: logout detection and re-login.
-- `run.py`: keeps run on (orb color samples, retry after running out).
+- `digits.py`: learned digit shapes, shared by skill levels and run energy.
+- `run.py`: keeps run on (orb color samples, energy reading, minimum energy).
 
 ## Tests
 

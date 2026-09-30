@@ -33,6 +33,7 @@ class Layout:
     viewport: Rect = field(default_factory=lambda: Rect(4, 4, 512, 334))
     compass: tuple[int, int] = (561, 20)
     run_orb: tuple[int, int] = (557, 129)    # centre of the boot icon next to the minimap
+    run_energy_box: Rect = field(default_factory=lambda: Rect(519, 122, 24, 12))  # the number
 
     # inventory: 4 columns x 7 rows
     inv_origin: tuple[int, int] = (563, 213)
@@ -101,7 +102,7 @@ class Layout:
         for key, value in list(d.items()):
             if key not in names:
                 raise ValueError(f"unknown layout key: {key}")
-            if key in ("viewport", "hp_bar"):
+            if key in ("viewport", "hp_bar", "run_energy_box"):
                 d[key] = Rect(*value)
             elif key == "tabs":
                 d[key] = {**cls().tabs, **{k: tuple(v) for k, v in value.items()}}
