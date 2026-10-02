@@ -113,7 +113,7 @@ class Registry:
         return problems
 
 
-STEP_COLOR_KEYS = ("target", "loot", "ruins", "portal")
+STEP_COLOR_KEYS = ("target", "loot", "ruins", "portal", "stand_on", "reset_spot")
 
 
 def resolve_config(raw: dict, registry: Registry) -> dict:

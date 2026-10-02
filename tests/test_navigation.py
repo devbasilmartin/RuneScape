@@ -186,3 +186,12 @@ def test_planner_travels_to_a_step_location_first(monkeypatch):
                                items=["logs"], location="varrock trees"))
     Planner(game, levels).run_step(step)
     assert calls == [("varrock trees", TREE)]
+
+
+def test_hub_only_destination_just_teleports():
+    game, fake, world = setup()
+    world.place = "varrock"
+    calls = []
+    game.nav.teleport = lambda hub: (calls.append(hub), world.draw())
+    game.nav.travel("hub:varrock", MARKER)
+    assert calls == ["varrock"]

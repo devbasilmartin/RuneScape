@@ -125,6 +125,8 @@ examples.
 | `combat` | attack the nearest free `target`, eat `food` below `eat_below` HP, pick up `loot`, bury `bury` | Attack, Strength, Defence, Hitpoints, Ranged, Magic, Prayer |
 | `cast` | cast `spell` (a position in the magic tab) repeatedly, optionally `on_item`; stops when tagged `runes` run out | Magic (teleports, High Alchemy) |
 | `agility` | click `obstacles` (Object Marker colors in course order), pick up `loot` (marks of grace), restart the lap after a fall | Agility |
+| `construction` | in build mode: click the hotspot, press `build_key`, right-click → `remove_option`, confirm; restock at `bank_location` | Construction (and Farming via bagged plants) |
+| `combat` + `stand_on` | stand on a marked tile, let aggressive monsters come, eat, walk to `reset_spot` and back when they stop | Melee at crabs |
 | `runecraft` | bank → `ruins` → craft at the `target` altar → `portal` → bank | Runecraft |
 
 ### Runecrafting

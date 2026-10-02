@@ -54,6 +54,9 @@ Then give steps a location:
     ...
 ```
 
+A location of the form `hub:NAME` just teleports to that hub: use it for your house
+(teleport to house tablet), where the world map can't help.
+
 Try a trip any time: `python -m skillbot travel "varrock trees" --until tree`.
 
 ## 4. First-run checks (please report back)

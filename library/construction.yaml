@@ -1,0 +1,54 @@
+# Construction in your house (build mode on, planks/plants in a Bank Tags tab). The house
+# is reached with a house teleport hub (location "hub:house"); restocking travels to
+# bank_location and back. build_key is the furniture's number in the build menu;
+# remove_option the "Remove" row when right-clicking it. Check both on your client.
+# Rates are rough and assume bank trips (no butler yet).
+
+bagged_plants:
+  name: "bagged plants (garden)"
+  skills: [construction, farming]
+  levels: [1, 34]
+  xp_per_hour: 25000
+  reliability: 4
+  location: "hub:house"
+  trade: {inputs: {bagged_plant_1: 800}}
+  step: {task: construction, target: build_spot, items: [bagged_plant_1], build_key: "1",
+         remove_option: 2, keep: [watering_can], tools: 1, bank_location: "falador bank",
+         bank_tab: construction, withdraw: [{slot: 0, item: bagged_plant_1, quantity: all}]}
+
+oak_larders:
+  name: "oak larders (kitchen)"
+  skills: [construction]
+  levels: [33, 74]
+  xp_per_hour: 50000
+  reliability: 4
+  location: "hub:house"
+  trade: {inputs: {oak_plank: 830}}
+  step: {task: construction, target: build_spot, items: [oak_plank], build_key: "2",
+         remove_option: 2, tools: 2, bank_location: "rimmington bank",
+         bank_tab: construction, withdraw: [{slot: 1, item: oak_plank, quantity: all}]}
+
+oak_dungeon_doors:
+  name: "oak dungeon doors"
+  skills: [construction]
+  levels: [74, 99]
+  xp_per_hour: 60000
+  reliability: 4
+  location: "hub:house"
+  trade: {inputs: {oak_plank: 1000}}
+  step: {task: construction, target: build_spot, items: [oak_plank], build_key: "1",
+         remove_option: 2, tools: 2, bank_location: "rimmington bank",
+         bank_tab: construction, withdraw: [{slot: 1, item: oak_plank, quantity: all}]}
+
+mahogany_tables:
+  name: "mahogany tables (dining room)"
+  skills: [construction]
+  levels: [52, 99]
+  xp_per_hour: 90000
+  profit_per_hour: -900000
+  reliability: 4
+  location: "hub:house"
+  trade: {inputs: {mahogany_plank: 640}}
+  step: {task: construction, target: build_spot, items: [mahogany_plank], build_key: "6",
+         remove_option: 2, tools: 2, bank_location: "rimmington bank",
+         bank_tab: construction, withdraw: [{slot: 2, item: mahogany_plank, quantity: all}]}

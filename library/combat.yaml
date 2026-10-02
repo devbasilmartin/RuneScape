@@ -1,0 +1,39 @@
+# Melee ladder after cows: giants (bank the big bones for Prayer later), then crabs.
+# Styles follow the skill being trained. Rates are rough.
+
+hill_giants_edgeville:
+  name: "hill giants (Edgeville dungeon)"
+  skills: [attack, strength, defence]
+  levels: [30, 45]
+  xp_per_hour: 20000
+  reliability: 3
+  location: "edgeville hill giants"
+  trade: {inputs: {trout: 40}, outputs: {big_bones: 60}}
+  step: {task: combat, target: enemy, loot: loot, items: [big_bones], food: [trout],
+         eat_below: 0.5, when_full: bank, bank_tab: food,
+         withdraw: [{slot: 0, item: trout, quantity: x}]}
+
+sand_crabs:
+  name: "sand crabs (Hosidius)"
+  skills: [attack, strength, defence]
+  levels: [40, 75]
+  xp_per_hour: 45000
+  reliability: 4
+  location: "hosidius sand crabs"
+  trade: {inputs: {shark: 15}}
+  step: {task: combat, target: enemy, stand_on: afk_spot, reset_spot: reset_spot,
+         reset_after: 90, items: [shark], food: [shark], eat_below: 0.4,
+         bank_tab: food, withdraw: [{slot: 1, item: shark, quantity: x}]}
+
+ammonite_crabs:
+  name: "ammonite crabs (Fossil Island)"
+  skills: [attack, strength, defence]
+  levels: [75, 99]
+  requires: {quests: ["Bone Voyage"]}
+  xp_per_hour: 75000
+  reliability: 4
+  location: "fossil island ammonite crabs"
+  trade: {inputs: {shark: 20}}
+  step: {task: combat, target: enemy, stand_on: afk_spot, reset_spot: reset_spot,
+         reset_after: 90, items: [shark], food: [shark], eat_below: 0.4,
+         bank_tab: food, withdraw: [{slot: 1, item: shark, quantity: x}]}

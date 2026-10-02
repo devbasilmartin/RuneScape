@@ -8,7 +8,8 @@ from .colors import Registry, collisions, resolve_config
 from .layout import Layout
 from .skills import SKILLS
 
-TASKS = ("gather", "process", "firemaking", "combat", "runecraft", "cast", "agility")
+TASKS = ("gather", "process", "firemaking", "combat", "runecraft", "cast", "agility",
+         "construction")
 
 
 def _color(v):
@@ -67,6 +68,18 @@ class Step:
     # agility
     obstacles: tuple = ()              # Object Marker colors in course order
     laps_per_batch: int = 5
+
+    # construction (build mode in your house)
+    build_key: str = "1"               # the furniture's number in the build menu
+    remove_option: int = 2             # "Remove" row in the right-click menu on built furniture
+    hotspot: tuple | None = None       # fixed screen point instead of a target color
+    bank_location: str | None = None   # destination with a bank, for restocking
+    builds_per_batch: int = 20
+
+    # combat while standing still (crabs)
+    stand_on: tuple | None = None      # Ground Marker to stand on
+    reset_spot: tuple | None = None    # Ground Marker far enough away to reset aggression
+    reset_after: float = 60.0          # seconds without being attacked before resetting
     process: dict | None = None        # gather: process the load before dropping/banking
     tools: int = 1                     # untagged slots always carried
     tool_slot: int = 0                 # firemaking: tinderbox slot
@@ -103,6 +116,11 @@ class Step:
         d["portal"] = _color(d.get("portal"))
         if d.get("spell") is not None:
             d["spell"] = tuple(d["spell"])
+        for key in ("hotspot", "stand_on", "reset_spot"):
+            if d.get(key) is not None:
+                d[key] = tuple(d[key])
+        if "build_key" in d:
+            d["build_key"] = str(d["build_key"])
         if "obstacles" in d:
             d["obstacles"] = tuple(tuple(c) for c in d["obstacles"])
         for key in ("items", "confirm", "withdraw", "food", "bury", "keep", "gear", "runes"):
@@ -121,7 +139,10 @@ class Step:
             raise ValueError(f"step {step.name!r}: cast needs the spell's position")
         if step.task == "agility" and len(step.obstacles) < 2:
             raise ValueError(f"step {step.name!r}: agility needs the obstacle colors in order")
-        if step.target is None and not step.with_item and step.task not in ("cast", "agility"):
+        if step.task == "construction" and step.target is None and step.hotspot is None:
+            raise ValueError(f"step {step.name!r}: construction needs a target color or hotspot")
+        if step.target is None and not step.with_item and step.task not in (
+                "cast", "agility", "construction"):
             raise ValueError(f"step {step.name!r}: needs a target highlight color")
         if step.when_full not in ("drop", "bank"):
             raise ValueError(f"step {step.name!r}: when_full must be drop or bank")
@@ -210,7 +231,8 @@ class Config:
         scene = {"target": step.target, "bank": self.bank_color, "loot": step.loot,
                  "ruins": step.ruins, "portal": step.portal, "danger": self.danger_color,
                  "genie": self.genie_color, "grave": self.grave_color,
-                 "respawn": self.respawn_color, "other players": self.other_player_color}
+                 "respawn": self.respawn_color, "other players": self.other_player_color,
+                 "stand on": step.stand_on, "reset spot": step.reset_spot}
         if step.process and step.process.get("target"):
             scene["process target"] = tuple(step.process["target"])
         for i, color in enumerate(dict.fromkeys(step.obstacles)):

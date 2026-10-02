@@ -8,6 +8,7 @@ burying the bones it loots.
 - Food and bones: Inventory Tags.
 """
 import logging
+import math
 
 import numpy as np
 
@@ -184,3 +185,64 @@ class CombatTask(Task):
             g.drop(names=set(step.items))
         else:
             self.bank_and_restock()
+
+
+class StandingCombatTask(CombatTask):
+    """Crabs and other aggressive monsters: stand on a marked tile and let them come.
+    Eats as usual. When nothing has fought you for `reset_after` seconds, walks to the
+    reset tile and back so they become aggressive again."""
+
+    STAND_PX = 25
+    BATCH_MINUTES = 10
+
+    def in_combat(self, img) -> bool:
+        g = self.game
+        return any(self.has_health_bar(img, b) for b in g.blobs(img, self.step.target)
+                   if math.dist(b.center, g.player) <= 120)
+
+    def go(self, color, timeout: float = 25) -> bool:
+        g = self.game
+        img = g.grab()
+        if g.highlight_near(img, color, g.player, self.STAND_PX):
+            return True
+        if not g.click_nearest(img, color):
+            return False
+        return g.wait_until(lambda im: g.highlight_near(im, color, g.player, self.STAND_PX),
+                            timeout=timeout)
+
+    def reset(self) -> None:
+        log.info("%s: resetting aggression", self.step.name)
+        if not self.go(self.step.reset_spot):
+            raise BotError(f"{self.step.name}: reset tile not reachable")
+        self.game.wait(2, 3)
+        if not self.go(self.step.stand_on):
+            raise BotError(f"{self.step.name}: can't get back to the standing tile")
+        self.stats["resets"] = self.stats.get("resets", 0) + 1
+
+    def run_batch(self) -> str:
+        g, step = self.game, self.step
+        self.select_style()
+        if step.stand_on and not self.go(step.stand_on):
+            g.walk(step.walk.get("target"), step.stand_on)
+            if not self.go(step.stand_on):
+                raise BotError(f"{step.name}: standing tile not reachable")
+        start = last_fight = g.now()
+        fighting = False
+        while g.now() - start < self.BATCH_MINUTES * 60:
+            img = g.grab()
+            if self.hp(img) < step.eat_below and not self.eat(img):
+                if step.when_out_of_food == "stop" or not self.restock():
+                    return "exhausted"
+                continue
+            if self.in_combat(img):
+                if not fighting:
+                    self.progressed(1)
+                fighting, last_fight = True, g.now()
+            else:
+                fighting = False
+                if step.reset_spot and g.now() - last_fight > step.reset_after:
+                    self.reset()
+                    last_fight = g.now()
+            g.wait(1.5, 2.5)
+        self.stats["batches"] += 1
+        return "ok"

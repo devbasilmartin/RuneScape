@@ -169,6 +169,12 @@ class Navigator:
         g = self.game
         if until_color is not None and g.blobs(g.grab(), until_color):
             return
+        if dest.startswith("hub:"):                 # e.g. your house: the teleport is the trip
+            self.teleport(dest[4:])
+            if until_color is not None and not g.wait_until(
+                    lambda img: bool(g.blobs(img, until_color)), timeout=10):
+                raise BotError(f"teleported to {dest[4:]} but {until_color} isn't in sight")
+            return
         spot = self.destinations.data.get(dest)
         if spot is None:
             raise BotError(f"unknown destination {dest!r}; record it with "

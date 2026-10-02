@@ -115,7 +115,8 @@ Helper follower.
 ### Phase 2: Simple, high-value methods (the unlocks first)
 - [x] Magic (teleports → alching): `cast` task + library
 - [x] Agility (gnome course → all rooftops): `agility` task + library
-- [ ] Construction (bagged plants → larders/doors), combat (giants → crabs)
+- [x] Construction (bagged plants → larders/doors, mahogany tables): `construction` task + library (butler later)
+- [x] Combat (cows → hill giants → sand/ammonite crabs): standing-combat mode + library
 - [ ] Woodcutting (Guild), Fishing (Catherby → Guild), Cooking (Hosidius), Fletching, Crafting, Herblore, Thieving (knights), Firemaking lines, Runecraft (fire, ZMI)
 
 ### Phase 3: Minigames and special mechanics

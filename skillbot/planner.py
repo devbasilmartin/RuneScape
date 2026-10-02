@@ -5,7 +5,8 @@ from pathlib import Path
 
 from .config import Step
 from .game import BotError, Game, StopBot
-from .combat import CombatTask
+from .combat import CombatTask, StandingCombatTask
+from .construction import ConstructionTask
 from .agility import AgilityTask
 from .magic import CastTask
 from .runecraft import RunecraftTask
@@ -17,11 +18,14 @@ from .tasks import FiremakingTask, GatherTask, ProcessTask
 
 TASK_TYPES = {"gather": GatherTask, "process": ProcessTask, "firemaking": FiremakingTask,
               "combat": CombatTask, "runecraft": RunecraftTask, "cast": CastTask,
-              "agility": AgilityTask}
+              "agility": AgilityTask, "construction": ConstructionTask}
 
 
 def make_task(game: Game, step: Step):
+    if step.task == "combat" and step.stand_on is not None:
+        return StandingCombatTask(game, step)
     return TASK_TYPES[step.task](game, step)
+
 
 log = logging.getLogger("skillbot")
 
