@@ -10,6 +10,8 @@ Cooking, Smithing and Crafting: anything that is "use item on station, pick from
 combat (Attack, Strength, Defence, Hitpoints, Ranged, Magic, and Prayer from burying
 bones), and Runecrafting.
 
+See [ROADMAP.md](ROADMAP.md) for the full plan and build order.
+
 ## Install
 
 ```sh
