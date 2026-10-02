@@ -3,7 +3,6 @@ import argparse
 import json
 import logging
 import logging.handlers
-from pathlib import Path
 
 import cv2
 
@@ -23,7 +22,6 @@ from .skills import SKILLS, SkillReader
 
 def cmd_calibrate(cfg: Config, args) -> None:
     cfg.data_dir.mkdir(parents=True, exist_ok=True)
-    notify_setup(cfg.data_dir)
     if args.origin:
         origin = tuple(args.origin)
     else:
@@ -161,7 +159,8 @@ def cmd_supervise(cfg: Config, args) -> None:
     handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
     logging.getLogger().addHandler(handler)
     sup_cfg = SupervisorConfig.from_dict(cfg.supervisor)
-    raise SystemExit(Supervisor(sup_cfg, Host(args.config, cfg.data_dir), cfg.data_dir).run())
+    host = Host(args.config, cfg.data_dir, profile=args.selected.name)
+    raise SystemExit(Supervisor(sup_cfg, host, cfg.data_dir).run())
 
 
 def cmd_discord(cfg: Config, args) -> None:
@@ -170,7 +169,8 @@ def cmd_discord(cfg: Config, args) -> None:
                                                    maxBytes=2_000_000, backupCount=2)
     handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
     logging.getLogger().addHandler(handler)
-    run(cfg.data_dir, summary_hour=int(cfg.discord.get("summary_hour", 9)))
+    run(args.profiles, cfg.data_dir if args.selected.name is None else None,
+        summary_hour=int(cfg.discord.get("summary_hour", 9)))
 
 
 def cmd_ask(cfg: Config, args) -> None:
@@ -178,12 +178,37 @@ def cmd_ask(cfg: Config, args) -> None:
     import time
 
     from .messages import Mailbox
-    box = Mailbox(cfg.data_dir)
+    box = Mailbox(args.mailbox_dir)
     ask_id = box.ask(args.question, args.options or ["Yes", "No"])
     print("asked; answer it in Discord (Ctrl+C to give up)...")
     while (answer := box.answer(ask_id)) is None:
         time.sleep(2)
     print(f"answer: {answer}")
+
+
+def cmd_profile(cfg: Config, args) -> None:
+    import subprocess
+    profiles = args.profiles
+    if args.action == "list":
+        active = profiles.active()
+        for name in profiles.names():
+            print(("* " if name == active else "  ") + name)
+        if not profiles.names():
+            print("no profiles yet: python -m skillbot profile create NAME")
+    elif args.action == "create":
+        folder = profiles.create(args.name)
+        env = profiles.env_dir / f"{args.name}.env"
+        print(f"created {folder}. Put this account's login in {env}:\n"
+              f'  SKILLBOT_USERNAME="..."\n  SKILLBOT_PASSWORD="..."\n'
+              f"Then calibrate it: python -m skillbot --profile {args.name} calibrate")
+    elif args.action == "use":
+        profiles.use(args.name)
+        print(f"active profile: {args.name}")
+        state = subprocess.run(["systemctl", "--user", "is-active", "skillbot.service"],
+                               capture_output=True, text=True).stdout.strip()
+        if state == "active":
+            subprocess.run(["systemctl", "--user", "restart", "skillbot.service"], check=False)
+            print("restarted the supervisor with this profile")
 
 
 def cmd_pause(cfg: Config, args) -> None:
@@ -234,6 +259,7 @@ def cmd_run(cfg: Config, args) -> None:
 def main(argv=None) -> None:
     p = argparse.ArgumentParser(prog="skillbot")
     p.add_argument("-c", "--config", default="config.yaml")
+    p.add_argument("-p", "--profile", help="account profile (default: the active one)")
     sub = p.add_subparsers(dest="cmd", required=True)
     c = sub.add_parser("calibrate", help="record where the game is and what logged in looks like")
     c.add_argument("--origin", type=int, nargs=2, metavar=("X", "Y"))
@@ -252,17 +278,34 @@ def main(argv=None) -> None:
     c = sub.add_parser("ask", help="send a test question through Discord")
     c.add_argument("question")
     c.add_argument("options", nargs="*")
+    c = sub.add_parser("profile", help="list, create or switch account profiles")
+    c.add_argument("action", choices=["list", "create", "use"])
+    c.add_argument("name", nargs="?")
     sub.add_parser("pause", help="stop the bot (supervisor keeps it stopped) so you can play")
     sub.add_parser("resume", help="hand control back to the bot")
     sub.add_parser("run", help="work through the plan")
     args = p.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s", datefmt="%H:%M:%S")
-    cfg = Config.load(args.config) if Path(args.config).exists() else Config()
+    from .profiles import Profiles
+    args.profiles = profiles = Profiles()
+    if args.cmd == "profile" and args.action != "list" and not args.name:
+        p.error(f"profile {args.action} needs a NAME")
+    try:
+        args.selected = sel = profiles.select(args.profile, args.config)
+    except ValueError as e:
+        p.error(str(e))
+    args.config = str(sel.config_path)
+    cfg = Config.load(sel.config_path) if sel.config_path.exists() else Config()
+    if sel.data_dir is not None:
+        cfg.data_dir = sel.data_dir
+        profiles.load_env(sel.name)
     cfg.data_dir.mkdir(parents=True, exist_ok=True)
+    args.mailbox_dir = profiles.shared_data if sel.name else cfg.data_dir
+    notify_setup(args.mailbox_dir, tag=sel.name)
     {"calibrate": cmd_calibrate, "calibrate-run": cmd_calibrate_run,
      "learn-energy": cmd_learn_energy, "learn-digits": cmd_learn_digits, "levels": cmd_levels,
      "debug": cmd_debug, "doctor": cmd_doctor, "supervise": cmd_supervise, "discord": cmd_discord, "ask": cmd_ask,
-     "pause": cmd_pause,
+     "profile": cmd_profile, "pause": cmd_pause,
      "resume": cmd_resume, "run": cmd_run}[args.cmd](cfg, args)
 
 

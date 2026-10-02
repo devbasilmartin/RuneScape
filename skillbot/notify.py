@@ -10,16 +10,20 @@ from pathlib import Path
 log = logging.getLogger("skillbot")
 
 _data_dir: Path | None = None
+_tag: str | None = None
 
 
-def setup(data_dir: Path) -> None:
-    """Called once at startup so notifications know where the mailbox is."""
-    global _data_dir
+def setup(data_dir: Path, tag: str | None = None) -> None:
+    """Called once at startup: where the (shared) mailbox is, and which profile we are."""
+    global _data_dir, _tag
     _data_dir = Path(data_dir)
+    _tag = tag
 
 
 def notify(message: str, image: str | None = None) -> None:
     log.warning("NOTIFY: %s", message)
+    if _tag:
+        message = f"[{_tag}] {message}"
     if os.environ.get("SKILLBOT_DISCORD_TOKEN") and _data_dir is not None:
         from .messages import Mailbox
         Mailbox(_data_dir).post(message, image=image)

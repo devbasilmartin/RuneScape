@@ -61,9 +61,10 @@ class GiveUp(RuntimeError):
 class Host:
     """The real machine: processes, the client window, the screen."""
 
-    def __init__(self, config_path: str, data_dir: Path):
+    def __init__(self, config_path: str, data_dir: Path, profile: str | None = None):
         self.config_path = config_path
         self.data_dir = data_dir
+        self.profile = profile
 
     def now(self) -> float:
         return time.time()
@@ -76,7 +77,8 @@ class Host:
                                 start_new_session=True)
 
     def start_bot(self):
-        return subprocess.Popen([sys.executable, "-m", "skillbot", "-c", self.config_path, "run"],
+        target = ["--profile", self.profile] if self.profile else ["-c", str(self.config_path)]
+        return subprocess.Popen([sys.executable, "-m", "skillbot", *target, "run"],
                                 cwd=REPO_DIR, start_new_session=True)
 
     def stop(self, proc) -> None:

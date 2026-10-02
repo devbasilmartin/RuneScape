@@ -99,7 +99,7 @@ Helper follower.
 - [ ] Replay test harness built from real screenshots
 
 ### Phase 0.5: Running unattended
-- [ ] Profiles, pause/resume with re-sync, separate RuneLite profiles (basic `pause`/`resume` done; re-sync and profiles to do)
+- [x] Profiles, pause/resume with re-sync (location re-sync comes with navigation), RuneLite profile reminders
 - [x] Supervisor and watchdog, VM autostart: [docs/unattended.md](docs/unattended.md)
 - [x] Discord two-way bot, notifications, questions, commands, daily summary: [docs/discord.md](docs/discord.md) (price alerts come with the price service in Phase 1)
 - [ ] Trust levels, color registry, `setup` / `check-setup`

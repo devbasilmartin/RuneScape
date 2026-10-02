@@ -19,6 +19,7 @@ It runs as its own service in the VM, separate from the supervisor, so `/status`
 | `/pause`, `/resume` | hand over to yourself and back |
 | `/start`, `/stop` | start or stop the supervisor (RuneLite and the bot) |
 | `/questions` | questions still waiting for you |
+| `/profile`, `/switch NAME` | which account is active; switch to another (restarts the supervisor) |
 
 **Only you can use it:** commands, buttons and replies from anyone other than the account in
 `SKILLBOT_DISCORD_OWNER` are refused. Keep the bot in a private server anyway.

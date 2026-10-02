@@ -63,13 +63,17 @@ class AskButton(discord.ui.DynamicItem[discord.ui.Button], template=r"ask:(?P<as
                                                 view=None)
 
 
-def run(data_dir: Path, summary_hour: int = 9) -> None:
+def run(profiles, legacy_data_dir: Path | None, summary_hour: int = 9) -> None:
+    """``legacy_data_dir`` when no profiles are in use, otherwise None."""
     token = os.environ.get("SKILLBOT_DISCORD_TOKEN", "").strip()
     if not token:
         raise SystemExit("SKILLBOT_DISCORD_TOKEN is not set (see docs/discord.md)")
     channel_id = _env_int("SKILLBOT_DISCORD_CHANNEL")
     owner_id = _env_int("SKILLBOT_DISCORD_OWNER")
-    core = DiscordCore(data_dir, summary_hour=summary_hour)
+    if legacy_data_dir is not None:
+        core = DiscordCore(legacy_data_dir, summary_hour=summary_hour)
+    else:
+        core = DiscordCore(profiles.shared_data, summary_hour=summary_hour, profiles=profiles)
     AskButton.core, AskButton.owner_id = core, owner_id
 
     intents = discord.Intents.default()
@@ -97,6 +101,14 @@ def run(data_dir: Path, summary_hour: int = 9) -> None:
     simple("start", "Start the supervisor (RuneLite + bot)")
     simple("stop", "Stop the supervisor, RuneLite and the bot")
     simple("questions", "Open questions waiting for you")
+    simple("profile", "Account profiles and which one is active")
+
+    @tree.command(name="switch", description="Switch the bot to another account profile")
+    @app_commands.describe(name="profile name")
+    async def switch(interaction: discord.Interaction, name: str):
+        if await allowed(interaction):
+            text = await asyncio.to_thread(core.switch, name)
+            await interaction.response.send_message(text)
 
     @tree.command(name="screenshot", description="What the VM's screen looks like right now")
     async def screenshot(interaction: discord.Interaction):

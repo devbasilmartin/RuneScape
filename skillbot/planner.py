@@ -80,8 +80,7 @@ class Planner:
         if not plan:
             raise StopBot("the plan in config.yaml is empty")
         deadline = g.now() + g.cfg.max_runtime_hours * 3600 if g.cfg.max_runtime_hours else None
-        self._guard(g.setup_camera)
-        self._guard(lambda: self.levels.refresh({s.skill for s in plan}))
+        self._guard(lambda: self.resync({s.skill for s in plan}))
         while True:
             progressed = False
             for step in plan:
@@ -101,6 +100,18 @@ class Planner:
         write_status(self.status_dir, step=step.name, skill=step.skill,
                      level=self.levels.get(step.skill), target=step.until_level,
                      since=started, stats=dict(task.stats))
+
+    def resync(self, skills) -> None:
+        """Get back to a known state when starting, including after you played
+        (`resume`): close whatever is open, inventory tab, camera, fresh levels.
+        Where the character stands is handled by each task (and, once navigation
+        exists, by teleporting to a hub when the location is unknown)."""
+        g = self.game
+        g.close_interfaces()
+        g.close_interfaces()
+        g.open_tab("inventory")
+        g.setup_camera()
+        self.levels.refresh(skills)
 
     def run_step(self, step: Step, deadline=None) -> int:
         g = self.game

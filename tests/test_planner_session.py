@@ -133,3 +133,15 @@ def test_relogin_without_credentials_stops(monkeypatch):
     session = Session(game, sample(logged_in_screen(), LAYOUT.fingerprint_points))
     with pytest.raises(StopBot, match="SKILLBOT_USERNAME"):
         session.ensure()
+
+
+def test_resync_resets_the_client_before_training(scripted):
+    cfg = config(steps(("trees", "woodcutting", 2)))
+    game, fake = make_game(cfg)
+    levels = FakeLevels({"woodcutting": 1})
+    scripted.levels = levels
+    with pytest.raises(StopBot):
+        Planner(game, levels).run()
+    assert fake.keys[:2] == ["esc", "esc"]               # closed whatever was open
+    assert fake.clicks[0][0] == LAYOUT.tabs["inventory"]  # then the inventory tab
+    assert levels.refreshes >= 1

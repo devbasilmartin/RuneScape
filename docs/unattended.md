@@ -93,6 +93,32 @@ Two Windows settings decide how well this survives restarts:
   at every boot is possible too, but it means anyone with physical access to the PC gets in,
   so only do that if you're comfortable with it.
 
+## Several accounts
+
+Each account gets a **profile**: its own config, plan, calibration, learned digits, levels
+and login. One account runs at a time.
+
+```sh
+python -m skillbot profile create main      # then put its login in the file it names
+python -m skillbot profile create alt
+python -m skillbot profile use main         # the account the services run (restarts them)
+python -m skillbot profile list
+```
+
+Every command works on the active profile, or on another one with `--profile NAME`, e.g.
+`python -m skillbot --profile alt calibrate`. Each profile needs its own calibration and
+learned digits the first time. The login goes in `~/.config/skillbot/profiles/NAME.env`
+(`SKILLBOT_USERNAME`, `SKILLBOT_PASSWORD`). Discord stays one channel for all accounts:
+messages are tagged with the profile, and `/switch NAME` changes account from your phone.
+
+Without any profiles, the top-level `config.yaml` and `data/` are used as before.
+
+**Handing over and back:** `pause` stops the bot; play as much as you like, anywhere. On
+`resume` the bot starts fresh: it closes open interfaces, opens the inventory, resets the
+camera and re-reads all levels before continuing. (Walking back from wherever you left the
+character comes with the navigation work in Phase 1; until then, park the character near
+the current activity before resuming.)
+
 ## Tuning
 
 The defaults can be changed in `config.yaml`:

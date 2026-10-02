@@ -32,8 +32,9 @@ def count_log_lines(path: Path, needle: str, since: float) -> int:
 
 class DiscordCore:
     def __init__(self, data_dir: Path, summary_hour: int = 9, run=subprocess.run,
-                 clock=time.time):
-        self.data_dir = Path(data_dir)
+                 clock=time.time, profiles=None):
+        self.data_dir = Path(data_dir)      # shared: the mailbox and this service's state
+        self.profiles = profiles
         self.mailbox = Mailbox(self.data_dir, clock=clock)
         self.summary_hour = summary_hour
         self.run = run
@@ -41,6 +42,13 @@ class DiscordCore:
         self.state_path = self.data_dir / "discord" / "state.json"
         self.state = _read(self.state_path) or {"online": [], "asks_by_message": {},
                                                  "last_summary": None, "levels_then": {}}
+
+    @property
+    def status_dir(self) -> Path:
+        """The data folder of the account being run (the active profile, if any)."""
+        if self.profiles is not None and (name := self.profiles.active()):
+            return self.profiles.dir / name / "data"
+        return self.data_dir
 
     def save(self) -> None:
         _write(self.state_path, self.state)
@@ -56,7 +64,7 @@ class DiscordCore:
 
     def command(self, name: str) -> str:
         """Handle a slash command (except /screenshot, which needs the screen)."""
-        data = self.data_dir
+        data = self.status_dir
         if name == "status":
             return format_status(snapshot(data, self.clock()), self.supervisor_state())
         if name == "levels":
@@ -73,12 +81,33 @@ class DiscordCore:
             if out.returncode != 0:
                 return f"`systemctl --user {name}` failed: {out.stderr.strip()[:300]}"
             return f"Supervisor {'started' if name == 'start' else 'stopped'}."
+        if name == "profile":
+            if self.profiles is None or not self.profiles.names():
+                return "No profiles set up (single account)."
+            active = self.profiles.active()
+            return "\n".join(("**→ " + n + "**") if n == active else n
+                             for n in self.profiles.names())
         if name == "questions":
             asks = self.mailbox.open_asks()
             if not asks:
                 return "No open questions."
             return "\n".join(f"• {a['question']}" for a in asks)
         return f"Unknown command {name!r}."
+
+    def switch(self, name: str) -> str:
+        """Make ``name`` the active profile and restart the supervisor with it."""
+        if self.profiles is None:
+            return "No profiles set up (single account)."
+        try:
+            self.profiles.use(name)
+        except ValueError as e:
+            return str(e)
+        state = self.supervisor_state()
+        if state == "active":
+            self.run(["systemctl", "--user", "restart", SERVICE],
+                     capture_output=True, text=True, timeout=60)
+            return f"Switched to **{name}** and restarted the supervisor."
+        return f"Switched to **{name}**. The supervisor isn't running; /start to start it."
 
     # ---- questions ---------------------------------------------------------------------
     def remember_ask_message(self, message_id: int, ask_id: str) -> None:
@@ -110,7 +139,7 @@ class DiscordCore:
     def tick(self) -> str | None:
         """Call about once a minute. Records uptime; returns the daily summary when due."""
         now = self.clock()
-        snap = snapshot(self.data_dir, now)
+        snap = snapshot(self.status_dir, now)
         online = [t for t in self.state["online"] if t > now - 86400]
         if snap["heartbeat_age"] is not None and snap["heartbeat_age"] < 180:
             online.append(now)
@@ -123,8 +152,8 @@ class DiscordCore:
             summary = build_summary(
                 snap["levels"], self.state["levels_then"] or snap["levels"],
                 online_minutes=len(online),
-                restarts=count_log_lines(self.data_dir / "supervisor.log", "restarting:", since),
-                stops=count_log_lines(self.data_dir / "skillbot.log", "stopped", since),
+                restarts=count_log_lines(self.status_dir / "supervisor.log", "restarting:", since),
+                stops=count_log_lines(self.status_dir / "skillbot.log", "stopped", since),
                 step=snap["status"].get("step"))
             self.state["last_summary"] = today
             self.state["levels_then"] = snap["levels"]
