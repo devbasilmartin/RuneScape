@@ -33,15 +33,13 @@ Edit `~/.config/skillbot/env` (created in VM setup step 7) so it holds:
 CLIENT_CMD="java -jar $HOME/client/RuneLite.jar"
 SKILLBOT_USERNAME="your login"
 SKILLBOT_PASSWORD="your password"
-# optional, until the two-way Discord bot exists:
-SKILLBOT_DISCORD_WEBHOOK="https://discord.com/api/webhooks/..."
 ```
+
+For notifications, questions and phone commands, set up the Discord bot in
+[discord.md](discord.md); it adds three more lines to this file.
 
 The install script makes this file readable only by you. In `config.yaml`, set
 `on_logout: relogin` so the bot logs back in after restarts and disconnects.
-
-A Discord webhook: in your Discord server, Server Settings → Integrations → Webhooks →
-New Webhook → pick a channel → Copy Webhook URL.
 
 ## 2. Install the service
 

@@ -6,12 +6,13 @@ set -euo pipefail
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 UNIT_DIR="$HOME/.config/systemd/user"
 UNIT="$UNIT_DIR/skillbot.service"
+DISCORD_UNIT="$UNIT_DIR/skillbot-discord.service"
 AUTOSTART="$HOME/.config/autostart/skillbot.desktop"
 ENV_FILE="$HOME/.config/skillbot/env"
 
 if [[ "${1:-}" == "--remove" ]]; then
-    systemctl --user stop skillbot.service 2>/dev/null || true
-    rm -f "$UNIT" "$AUTOSTART"
+    systemctl --user stop skillbot.service skillbot-discord.service 2>/dev/null || true
+    rm -f "$UNIT" "$DISCORD_UNIT" "$AUTOSTART"
     systemctl --user daemon-reload
     echo "removed"
     exit 0
@@ -39,12 +40,29 @@ Restart=on-failure
 RestartSec=60
 UNIT
 
+# The Discord service runs independently of the supervisor, so /start, /status and
+# /screenshot keep working from your phone even when the supervisor has stopped.
+cat > "$DISCORD_UNIT" <<UNIT
+[Unit]
+Description=skillbot Discord service
+PartOf=graphical-session.target
+After=graphical-session.target
+
+[Service]
+Type=simple
+WorkingDirectory=$REPO_DIR
+EnvironmentFile=-$ENV_FILE
+ExecStart=$REPO_DIR/.venv/bin/python -m skillbot discord
+Restart=always
+RestartSec=30
+UNIT
+
 # Started from the desktop session so it gets the session's DISPLAY and XAUTHORITY.
 cat > "$AUTOSTART" <<DESKTOP
 [Desktop Entry]
 Type=Application
 Name=skillbot
-Exec=sh -c 'sleep 20; systemctl --user import-environment DISPLAY XAUTHORITY; systemctl --user start skillbot.service'
+Exec=sh -c 'sleep 20; systemctl --user import-environment DISPLAY XAUTHORITY; grep -q "^SKILLBOT_DISCORD_TOKEN=" $ENV_FILE && systemctl --user start skillbot-discord.service; systemctl --user start skillbot.service'
 X-GNOME-Autostart-enabled=true
 NoDisplay=true
 DESKTOP
@@ -52,5 +70,6 @@ DESKTOP
 systemctl --user daemon-reload
 echo "installed. It starts 20s after every login."
 echo "  start now:   systemctl --user start skillbot"
+echo "  discord:     systemctl --user start skillbot-discord   (once docs/discord.md is done)"
 echo "  stop:        systemctl --user stop skillbot"
 echo "  status/logs: systemctl --user status skillbot; tail -f $REPO_DIR/data/supervisor.log"

@@ -104,6 +104,7 @@ class Config:
     bank_open_wait: float = 4.0
     layout: Layout = field(default_factory=Layout)
     supervisor: dict = field(default_factory=dict)   # see supervisor.SupervisorConfig
+    discord: dict = field(default_factory=dict)      # summary_hour (local time, default 9)
 
     @classmethod
     def load(cls, path) -> "Config":

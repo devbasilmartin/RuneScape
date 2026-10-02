@@ -1,15 +1,29 @@
-"""Notifications. For now: the log, plus a Discord webhook if SKILLBOT_DISCORD_WEBHOOK is
-set. (The two-way Discord bot from the roadmap will replace this.)"""
+"""Notifications: always the log; plus Discord, through the two-way Discord service's
+mailbox when SKILLBOT_DISCORD_TOKEN is set (see docs/discord.md), or a plain webhook
+when only SKILLBOT_DISCORD_WEBHOOK is set."""
 import json
 import logging
 import os
 import urllib.request
+from pathlib import Path
 
 log = logging.getLogger("skillbot")
 
+_data_dir: Path | None = None
 
-def notify(message: str) -> None:
+
+def setup(data_dir: Path) -> None:
+    """Called once at startup so notifications know where the mailbox is."""
+    global _data_dir
+    _data_dir = Path(data_dir)
+
+
+def notify(message: str, image: str | None = None) -> None:
     log.warning("NOTIFY: %s", message)
+    if os.environ.get("SKILLBOT_DISCORD_TOKEN") and _data_dir is not None:
+        from .messages import Mailbox
+        Mailbox(_data_dir).post(message, image=image)
+        return
     url = os.environ.get("SKILLBOT_DISCORD_WEBHOOK")
     if not url:
         return

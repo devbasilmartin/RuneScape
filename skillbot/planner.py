@@ -8,6 +8,7 @@ from .game import BotError, Game, StopBot
 from .combat import CombatTask
 from .runecraft import RunecraftTask
 from .skills import SkillReader
+from .status import write_status
 from .tasks import FiremakingTask, GatherTask, ProcessTask
 
 TASK_TYPES = {"gather": GatherTask, "process": ProcessTask, "firemaking": FiremakingTask,
@@ -63,8 +64,9 @@ class Levels:
 
 
 class Planner:
-    def __init__(self, game: Game, levels: Levels, session=None):
+    def __init__(self, game: Game, levels: Levels, session=None, status_dir=None):
         self.game = game
+        self.status_dir = status_dir
         self.levels = levels
         self.session = session
         self.errors = 0
@@ -93,6 +95,13 @@ class Planner:
             if not progressed:
                 raise StopBot("no step could make progress (out of supplies everywhere?)")
 
+    def report(self, step: Step, task, started: float) -> None:
+        if self.status_dir is None:
+            return
+        write_status(self.status_dir, step=step.name, skill=step.skill,
+                     level=self.levels.get(step.skill), target=step.until_level,
+                     since=started, stats=dict(task.stats))
+
     def run_step(self, step: Step, deadline=None) -> int:
         g = self.game
         log.info("step %r: %s %d -> %d", step.name, step.skill,
@@ -102,6 +111,7 @@ class Planner:
         task.on_progress = lambda: (None if self.levels.reader.complete()
                                     else self.levels.refresh([step.skill]))
         started, batches = g.now(), 0
+        self.report(step, task, started)
         while not self.done(step):
             if step.max_minutes and g.now() - started >= step.max_minutes * 60:
                 log.info("step %r: time slice over", step.name)
@@ -114,6 +124,7 @@ class Planner:
             if result == "ok":
                 batches += 1
                 self._guard(lambda: self.levels.refresh([step.skill]))
+                self.report(step, task, started)
         log.info("step %r: %d batches, %s", step.name, batches, task.stats)
         return batches
 

@@ -12,6 +12,7 @@ from .config import Config
 from .game import Game, StopBot
 from .inventory import SLOTS, Inventory
 from .notify import notify
+from .notify import setup as notify_setup
 from .planner import Levels, Planner
 from .digits import GlyphBook
 from .run import EnergyReader, RunManager, orb_sample
@@ -22,6 +23,7 @@ from .skills import SKILLS, SkillReader
 
 def cmd_calibrate(cfg: Config, args) -> None:
     cfg.data_dir.mkdir(parents=True, exist_ok=True)
+    notify_setup(cfg.data_dir)
     if args.origin:
         origin = tuple(args.origin)
     else:
@@ -162,6 +164,28 @@ def cmd_supervise(cfg: Config, args) -> None:
     raise SystemExit(Supervisor(sup_cfg, Host(args.config, cfg.data_dir), cfg.data_dir).run())
 
 
+def cmd_discord(cfg: Config, args) -> None:
+    from .discord_bot import run
+    handler = logging.handlers.RotatingFileHandler(cfg.data_dir / "discord.log",
+                                                   maxBytes=2_000_000, backupCount=2)
+    handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
+    logging.getLogger().addHandler(handler)
+    run(cfg.data_dir, summary_hour=int(cfg.discord.get("summary_hour", 9)))
+
+
+def cmd_ask(cfg: Config, args) -> None:
+    """Send a test question through Discord and wait for the answer."""
+    import time
+
+    from .messages import Mailbox
+    box = Mailbox(cfg.data_dir)
+    ask_id = box.ask(args.question, args.options or ["Yes", "No"])
+    print("asked; answer it in Discord (Ctrl+C to give up)...")
+    while (answer := box.answer(ask_id)) is None:
+        time.sleep(2)
+    print(f"answer: {answer}")
+
+
 def cmd_pause(cfg: Config, args) -> None:
     (cfg.data_dir / "paused").write_text("")
     print("paused: the supervisor stops the bot within ~15s. Switch RuneLite to your own "
@@ -191,7 +215,7 @@ def cmd_run(cfg: Config, args) -> None:
     if cfg.run == "always":
         game.run = RunManager.load(game, cfg.data_dir)
     levels = Levels.load(game, SkillReader.load(cfg.layout, cfg.data_dir), cfg.data_dir)
-    planner = Planner(game, levels, Session.load(game, cfg.data_dir))
+    planner = Planner(game, levels, Session.load(game, cfg.data_dir), status_dir=cfg.data_dir)
     logging.info("starting; move the mouse to a screen corner to stop")
     try:
         planner.run()
@@ -224,6 +248,10 @@ def main(argv=None) -> None:
     c.add_argument("--out", default="debug.png")
     sub.add_parser("doctor", help="check this machine is ready for the bot")
     sub.add_parser("supervise", help="run the client and the bot, restarting them as needed")
+    sub.add_parser("discord", help="run the Discord service (notifications, questions, commands)")
+    c = sub.add_parser("ask", help="send a test question through Discord")
+    c.add_argument("question")
+    c.add_argument("options", nargs="*")
     sub.add_parser("pause", help="stop the bot (supervisor keeps it stopped) so you can play")
     sub.add_parser("resume", help="hand control back to the bot")
     sub.add_parser("run", help="work through the plan")
@@ -233,7 +261,8 @@ def main(argv=None) -> None:
     cfg.data_dir.mkdir(parents=True, exist_ok=True)
     {"calibrate": cmd_calibrate, "calibrate-run": cmd_calibrate_run,
      "learn-energy": cmd_learn_energy, "learn-digits": cmd_learn_digits, "levels": cmd_levels,
-     "debug": cmd_debug, "doctor": cmd_doctor, "supervise": cmd_supervise, "pause": cmd_pause,
+     "debug": cmd_debug, "doctor": cmd_doctor, "supervise": cmd_supervise, "discord": cmd_discord, "ask": cmd_ask,
+     "pause": cmd_pause,
      "resume": cmd_resume, "run": cmd_run}[args.cmd](cfg, args)
 
 

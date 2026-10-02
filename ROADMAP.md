@@ -101,7 +101,7 @@ Helper follower.
 ### Phase 0.5: Running unattended
 - [ ] Profiles, pause/resume with re-sync, separate RuneLite profiles (basic `pause`/`resume` done; re-sync and profiles to do)
 - [x] Supervisor and watchdog, VM autostart: [docs/unattended.md](docs/unattended.md)
-- [ ] Discord two-way bot, alerts, daily summary
+- [x] Discord two-way bot, notifications, questions, commands, daily summary: [docs/discord.md](docs/discord.md) (price alerts come with the price service in Phase 1)
 - [ ] Trust levels, color registry, `setup` / `check-setup`
 
 ### Phase 1: Engine
