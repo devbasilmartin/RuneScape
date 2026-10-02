@@ -107,7 +107,7 @@ Helper follower.
 
 ### Phase 1: Engine
 - [x] Bank v2 (tag tabs, quantities, out-of-stock checks) and item-on-item processing
-- [ ] Navigation (teleport hubs, Shortest Path via map offsets) and dialogs
+- [x] Navigation (teleport hubs, Shortest Path via map offsets) and dialogs: [docs/navigation.md](docs/navigation.md) (needs the first-run checks)
 - [ ] Death recovery, random-event avoidance and the Genie lamp, world hopping
 - [ ] Method library, goals file, planner with `--explain`
 - [ ] Price service, alerts, shopping lists, tool-upgrade notices

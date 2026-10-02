@@ -33,6 +33,15 @@ class Layout:
     viewport: Rect = field(default_factory=lambda: Rect(4, 4, 512, 334))
     compass: tuple[int, int] = (561, 20)
     run_orb: tuple[int, int] = (557, 129)    # centre of the boot icon next to the minimap
+    minimap_center: tuple[int, int] = (643, 84)
+    minimap_radius: int = 70
+    world_map_button: tuple[int, int] = (720, 140)   # the world map orb by the minimap
+    world_map_center: tuple[int, int] = (260, 170)   # where the map centres on the player
+    # right-click menus: header height, then one row per option
+    menu_header: int = 19
+    menu_row: int = 15
+    # chat box, for "Click here to continue" and numbered options
+    chatbox: Rect = field(default_factory=lambda: Rect(7, 345, 499, 130))
     run_energy_box: Rect = field(default_factory=lambda: Rect(519, 122, 24, 12))  # the number
 
     # inventory: 4 columns x 7 rows
@@ -105,7 +114,7 @@ class Layout:
         for key, value in list(d.items()):
             if key not in names:
                 raise ValueError(f"unknown layout key: {key}")
-            if key in ("viewport", "hp_bar", "run_energy_box"):
+            if key in ("viewport", "hp_bar", "run_energy_box", "chatbox"):
                 d[key] = Rect(*value)
             elif key in ("tabs", "bank_quantity"):
                 d[key] = {**getattr(cls(), key), **{str(k): tuple(v) for k, v in value.items()}}

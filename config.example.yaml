@@ -230,6 +230,13 @@ plan:
 #    when_full: drop
 #    process: {target: range, items: [raw_shrimps, raw_anchovies], use_item: any}
 
+# Navigation (docs/navigation.md): teleport hubs, then Shortest Path. Steps with
+# `location: NAME` travel there when their target isn't in sight.
+# hubs:
+#   varrock:  {teleport: {item: varrock_teleport}, marker: hub_marker}
+#   edgeville: {teleport: {item: amulet_of_glory, option: 1}, marker: hub_marker}
+# map_menu_option: 1          # which world-map right-click option is "Set target"
+
 # Supervisor (`python -m skillbot supervise`, see docs/unattended.md). Defaults shown.
 # supervisor:
 #   heartbeat_minutes: 3

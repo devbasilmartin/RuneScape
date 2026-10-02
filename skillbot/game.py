@@ -27,6 +27,7 @@ class Game:
         self.layout = cfg.layout
         self.run = None        # RunManager, when run: always
         self.reported = set()  # out-of-stock notices already sent
+        self.nav = None        # Navigator, when hubs are configured
 
     def keep_running(self) -> None:
         if self.run is not None:

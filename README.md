@@ -234,6 +234,7 @@ python -m skillbot run
 - `digits.py`: learned digit shapes, shared by skill levels and run energy.
 - `supervisor.py`, `heartbeat.py`: keep RuneLite and the bot running ([docs/unattended.md](docs/unattended.md)).
 - `notify.py`, `messages.py`, `status.py`, `discord_core.py`, `discord_bot.py`: notifications, questions and phone commands via Discord ([docs/discord.md](docs/discord.md)).
+- `navigation.py`, `dialog.py`: teleport hubs, world-map targets, path following, chat dialogs ([docs/navigation.md](docs/navigation.md)).
 - `run.py`: keeps run on (orb color samples, energy reading, minimum energy).
 
 ## Tests

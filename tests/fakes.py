@@ -80,7 +80,7 @@ class FakeClient:
     def __init__(self):
         self.t = 0.0
         self.img = blank()
-        self.clicks, self.keys = [], []
+        self.clicks, self.keys, self.right_clicks = [], [], []
         self.shift = False
         self.rng = random.Random(1)
         self.on_wait = []       # fn(fake) called on every wait
@@ -96,6 +96,9 @@ class FakeClient:
         self.click(rect.center)
 
     def click(self, pt, button="left"):
+        if button == "right":
+            self.right_clicks.append(tuple(pt))
+            return
         self.clicks.append((tuple(pt), self.shift))
         for fn in list(self.on_click):
             fn(self, pt)

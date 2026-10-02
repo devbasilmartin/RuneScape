@@ -54,6 +54,7 @@ class Step:
     withdraw: tuple = ()               # Withdraw entries (or plain bank slot numbers), in order
     bank_tab: str | None = None        # Bank Tags tag whose tab holds this step's items
     with_item: str | None = None       # process: use `use_item` on this item (no station)
+    location: str | None = None        # destination to travel to when the target isn't in sight
     process: dict | None = None        # gather: process the load before dropping/banking
     tools: int = 1                     # untagged slots always carried
     tool_slot: int = 0                 # firemaking: tinderbox slot
@@ -122,6 +123,9 @@ class Config:
     hp_bar_color: tuple = (255, 0, 0)                        # Status Bars health fill
     danger_color: tuple | None = None   # NPC Indicators on random-event NPCs: never clicked
     colors_file: Path | None = None     # the color registry (default: colors.yaml in the repo)
+    hubs: dict = field(default_factory=dict)        # name -> Hub (see navigation.py)
+    path_color: tuple = (255, 0, 128)              # Shortest Path's path color
+    map_menu_option: int = 1          # which right-click option on the world map is "Set target"
     items: dict = field(default_factory=dict)      # Inventory Tags: name -> RGB
     routes: dict = field(default_factory=dict)     # name -> Ground Marker colors in order
     plan: list = field(default_factory=list)       # list[Step]
@@ -159,6 +163,9 @@ class Config:
                 cfg.danger_color = tuple(value) if value else None
             elif not hasattr(cfg, key):
                 raise ValueError(f"unknown config key: {key}")
+            elif key == "hubs":
+                from .navigation import Hub
+                cfg.hubs = {n: Hub.from_dict(n, h) for n, h in (value or {}).items()}
             elif key == "health_bar_colors":
                 cfg.health_bar_colors = tuple(tuple(c) for c in value)
             elif isinstance(getattr(cfg, key), tuple):

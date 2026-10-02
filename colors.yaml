@@ -41,6 +41,10 @@ tile_rose:       {rgb: [255, 128, 192], category: route}
 tile_teal:       {rgb: [64, 255, 192],  category: route}
 fm_start:        {rgb: [255, 255, 0],   category: route}
 
+# --- navigation ---
+path:            {rgb: [255, 0, 128],   category: route}   # Shortest Path: path color (scene + minimap)
+hub_marker:      {rgb: [192, 192, 0],   category: route}   # Ground Marker on each hub's arrival tile
+
 # --- Inventory Tags ---
 logs:            {rgb: [0, 255, 0],     category: item}
 oak_logs:        {rgb: [0, 160, 0],     category: item}

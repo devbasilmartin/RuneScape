@@ -142,6 +142,9 @@ def cmd_debug(cfg: Config, args) -> None:
         cv2.circle(out, pt, 3, (0, 128, 255), 1)
     cv2.circle(out, lay.compass, 4, (255, 255, 0), 1)
     cv2.circle(out, lay.run_orb, 5, (0, 255, 255), 1)
+    cv2.circle(out, lay.minimap_center, lay.minimap_radius, (255, 0, 128), 1)
+    cv2.circle(out, lay.world_map_button, 5, (255, 0, 128), 1)
+    box(lay.chatbox, (200, 200, 0), "chatbox")
     energy = EnergyReader(lay.run_energy_box,
                           GlyphBook.load(cfg.data_dir / "energy_digits.json")).read(img)
     box(lay.run_energy_box, (0, 255, 255), f"run {energy if energy is not None else '?'}")
@@ -211,6 +214,46 @@ def cmd_colors(cfg: Config, args) -> None:
     print(colors_text(Registry.load(cfg.colors_file), cfg.color_tolerance))
 
 
+def make_navigator(cfg: Config, game):
+    from .navigation import Destinations, Navigator
+    return Navigator(game, cfg.hubs, Destinations.load(cfg.data_dir / "destinations.json"),
+                     cfg.path_color, cfg.map_menu_option)
+
+
+def live_game(cfg: Config):
+    from .controls import Controls
+    screen = Screen.load(cfg.data_dir)
+    game = Game(cfg, screen, Controls(screen), Inventory(cfg.layout, cfg.items,
+                                                         tolerance=cfg.color_tolerance))
+    game.nav = make_navigator(cfg, game)
+    return game
+
+
+def cmd_add_destination(cfg: Config, args) -> None:
+    import pyautogui
+    if args.hub not in cfg.hubs:
+        raise SystemExit(f"unknown hub {args.hub!r}; hubs in config.yaml: {', '.join(cfg.hubs)}")
+    game = live_game(cfg)
+    if not args.here:
+        game.nav.teleport(args.hub)
+    game.controls.click(cfg.layout.world_map_button)
+    game.wait(2.0)
+    input(f"World map open. Hover the mouse over {args.name!r} on the map (don't scroll or "
+          "zoom it) and press Enter...")
+    x, y = pyautogui.position()
+    cx, cy = game.screen.to_screen(cfg.layout.world_map_center)
+    game.nav.destinations.add(args.name, args.hub, (x - cx, y - cy))
+    game.close_interfaces()
+    print(f"saved {args.name}: from hub {args.hub}, offset {x - cx:+d},{y - cy:+d}")
+
+
+def cmd_travel(cfg: Config, args) -> None:
+    from .registry_lookup import resolve_color
+    game = live_game(cfg)
+    game.nav.travel(args.name, resolve_color(cfg, args.until) if args.until else None)
+    print("arrived")
+
+
 def cmd_trust(cfg: Config, args) -> None:
     from .planner import TASK_TYPES
     from .trust import TrustStore, fingerprint
@@ -278,6 +321,7 @@ def cmd_run(cfg: Config, args) -> None:
                                                  tolerance=cfg.color_tolerance))
     if cfg.run == "always":
         game.run = RunManager.load(game, cfg.data_dir)
+    game.nav = make_navigator(cfg, game)
     levels = Levels.load(game, SkillReader.load(cfg.layout, cfg.data_dir), cfg.data_dir)
     from .trust import TrustStore
     planner = Planner(game, levels, Session.load(game, cfg.data_dir), status_dir=cfg.data_dir,
@@ -327,6 +371,13 @@ def main(argv=None) -> None:
     c.add_argument("step", help="step name or number")
     c.add_argument("--image", help="check this PNG instead of the live screen")
     sub.add_parser("colors", help="the color registry and free colors")
+    c = sub.add_parser("add-destination", help="record a world-map destination from a hub")
+    c.add_argument("name")
+    c.add_argument("--hub", required=True)
+    c.add_argument("--here", action="store_true", help="you're already at the hub")
+    c = sub.add_parser("travel", help="travel to a destination now (test it)")
+    c.add_argument("name")
+    c.add_argument("--until", help="stop once this registry color is in sight")
     c = sub.add_parser("profile", help="list, create or switch account profiles")
     c.add_argument("action", choices=["list", "create", "use"])
     c.add_argument("name", nargs="?")
@@ -361,6 +412,7 @@ def main(argv=None) -> None:
     {"calibrate": cmd_calibrate, "calibrate-run": cmd_calibrate_run,
      "learn-energy": cmd_learn_energy, "learn-digits": cmd_learn_digits, "levels": cmd_levels,
      "debug": cmd_debug, "doctor": cmd_doctor, "supervise": cmd_supervise, "discord": cmd_discord, "ask": cmd_ask,
+     "add-destination": cmd_add_destination, "travel": cmd_travel,
      "trust": cmd_trust, "setup": cmd_setup, "check-setup": cmd_check_setup, "colors": cmd_colors,
      "profile": cmd_profile, "pause": cmd_pause,
      "resume": cmd_resume, "run": cmd_run}[args.cmd](cfg, args)

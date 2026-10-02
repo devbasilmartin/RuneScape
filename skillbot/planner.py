@@ -159,6 +159,9 @@ class Planner:
                                     else self.levels.refresh([step.skill]))
         started, batches = g.now(), 0
         self.report(step, task, started)
+        if step.location and getattr(g, "nav", None) is not None:
+            arrive = step.target if step.target is not None else g.cfg.bank_color
+            self._guard(lambda: g.nav.travel(step.location, arrive))
         try:
             batches = self._run_batches(step, task, started, slice_minutes, deadline)
         except StopBot:
