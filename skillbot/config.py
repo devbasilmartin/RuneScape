@@ -4,6 +4,7 @@ from pathlib import Path
 
 import yaml
 
+from .colors import Registry, collisions, resolve_config
 from .layout import Layout
 from .skills import SKILLS
 
@@ -90,6 +91,8 @@ class Config:
     bank_color: tuple = (255, 0, 255)
     health_bar_colors: tuple = ((0, 255, 0), (255, 0, 0))   # the game's own bars over NPCs
     hp_bar_color: tuple = (255, 0, 0)                        # Status Bars health fill
+    danger_color: tuple | None = None   # NPC Indicators on random-event NPCs: never clicked
+    colors_file: Path | None = None     # the color registry (default: colors.yaml in the repo)
     items: dict = field(default_factory=dict)      # Inventory Tags: name -> RGB
     routes: dict = field(default_factory=dict)     # name -> Ground Marker colors in order
     plan: list = field(default_factory=list)       # list[Step]
@@ -109,6 +112,8 @@ class Config:
     @classmethod
     def load(cls, path) -> "Config":
         raw = yaml.safe_load(Path(path).read_text()) or {}
+        registry = Registry.load(raw.get("colors_file"))
+        raw = resolve_config(raw, registry)
         cfg = cls()
         for key, value in raw.items():
             if key == "layout":
@@ -119,8 +124,10 @@ class Config:
                 cfg.items = {n: tuple(rgb) for n, rgb in value.items()}
             elif key == "routes":
                 cfg.routes = {n: [tuple(c) for c in cs] for n, cs in value.items()}
-            elif key == "data_dir":
-                cfg.data_dir = Path(value)
+            elif key in ("data_dir", "colors_file"):
+                setattr(cfg, key, Path(value))
+            elif key == "danger_color":
+                cfg.danger_color = tuple(value) if value else None
             elif not hasattr(cfg, key):
                 raise ValueError(f"unknown config key: {key}")
             elif key == "health_bar_colors":
@@ -131,6 +138,27 @@ class Config:
                 setattr(cfg, key, value)
         cfg.validate()
         return cfg
+
+    def scene(self, step: Step) -> dict:
+        """Every highlight color that can be on screen while ``step`` runs."""
+        scene = {"target": step.target, "bank": self.bank_color, "loot": step.loot,
+                 "ruins": step.ruins, "portal": step.portal, "danger": self.danger_color}
+        if step.process and step.process.get("target"):
+            scene["process target"] = tuple(step.process["target"])
+        for role, route in step.walk.items():
+            for i, tile in enumerate(self.routes.get(route, [])):
+                scene[f"route {route} tile {i + 1}"] = tile
+        # the same route tile used for two roles is one tile, not a clash
+        seen, unique = {}, {}
+        for label, color in scene.items():
+            if color is None:
+                continue
+            key = tuple(color)
+            if key in seen and seen[key].startswith("route") and label.startswith("route"):
+                continue
+            seen.setdefault(key, label)
+            unique[label] = key
+        return unique
 
     def validate(self) -> None:
         if self.run not in ("always", "off"):
@@ -161,6 +189,12 @@ class Config:
                                      for bar in self.health_bar_colors):
                         raise ValueError(f"step {step.name!r}: {color} is too close to the "
                                          "game's green/red health bars")
+            scene = self.scene(step)
+            clashes = collisions(scene, self.color_tolerance)
+            if clashes:
+                pairs = ", ".join(f"{a} / {b}" for a, b in clashes)
+                raise ValueError(f"step {step.name!r}: colors on screen together are too "
+                                 f"similar: {pairs}")
             for route in step.walk.values():
                 if route not in self.routes:
                     raise ValueError(f"step {step.name!r}: unknown route {route!r}")

@@ -186,6 +186,27 @@ def cmd_ask(cfg: Config, args) -> None:
     print(f"answer: {answer}")
 
 
+def cmd_setup(cfg: Config, args) -> None:
+    from .colors import Registry
+    from .setup_check import find_step, setup_text
+    print(setup_text(cfg, find_step(cfg, args.step), Registry.load(cfg.colors_file)))
+
+
+def cmd_check_setup(cfg: Config, args) -> None:
+    from .colors import Registry
+    from .doctor import report
+    from .setup_check import check_setup, find_step
+    img = vision.load_png(args.image) if args.image else Screen.load(cfg.data_dir).grab()
+    checks = check_setup(cfg, find_step(cfg, args.step), img, Registry.load(cfg.colors_file))
+    raise SystemExit(report(checks))
+
+
+def cmd_colors(cfg: Config, args) -> None:
+    from .colors import Registry
+    from .setup_check import colors_text
+    print(colors_text(Registry.load(cfg.colors_file), cfg.color_tolerance))
+
+
 def cmd_profile(cfg: Config, args) -> None:
     import subprocess
     profiles = args.profiles
@@ -278,6 +299,12 @@ def main(argv=None) -> None:
     c = sub.add_parser("ask", help="send a test question through Discord")
     c.add_argument("question")
     c.add_argument("options", nargs="*")
+    c = sub.add_parser("setup", help="what to mark in RuneLite for a plan step")
+    c.add_argument("step", help="step name or number")
+    c = sub.add_parser("check-setup", help="verify a step's highlights from a screenshot")
+    c.add_argument("step", help="step name or number")
+    c.add_argument("--image", help="check this PNG instead of the live screen")
+    sub.add_parser("colors", help="the color registry and free colors")
     c = sub.add_parser("profile", help="list, create or switch account profiles")
     c.add_argument("action", choices=["list", "create", "use"])
     c.add_argument("name", nargs="?")
@@ -305,6 +332,7 @@ def main(argv=None) -> None:
     {"calibrate": cmd_calibrate, "calibrate-run": cmd_calibrate_run,
      "learn-energy": cmd_learn_energy, "learn-digits": cmd_learn_digits, "levels": cmd_levels,
      "debug": cmd_debug, "doctor": cmd_doctor, "supervise": cmd_supervise, "discord": cmd_discord, "ask": cmd_ask,
+     "setup": cmd_setup, "check-setup": cmd_check_setup, "colors": cmd_colors,
      "profile": cmd_profile, "pause": cmd_pause,
      "resume": cmd_resume, "run": cmd_run}[args.cmd](cfg, args)
 

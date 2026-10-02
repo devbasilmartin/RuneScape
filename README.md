@@ -27,6 +27,17 @@ and Accessibility permissions. Multiple monitors work: capture uses absolute scr
 
 ## RuneLite setup
 
+Every highlight color has a name in **`colors.yaml`** (the color registry), and config.yaml
+uses those names. Two commands do the setup work for you:
+
+```sh
+python -m skillbot setup "willows"          # exactly what to mark, with which colors (hex)
+python -m skillbot check-setup "willows"    # stand where the step runs: verifies it from a screenshot
+python -m skillbot colors                   # the registry, and free colors for new highlights
+```
+
+The config check refuses colors that could be confused when they're on screen together.
+
 Use the exact colors from `config.yaml`, fully opaque, and keep them well apart.
 
 | Plugin | What to mark | Config key |

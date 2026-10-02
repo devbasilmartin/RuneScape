@@ -1,0 +1,66 @@
+# The color registry: one name, one color, one meaning. Shared by all accounts (they
+# share RuneLite's `bot` profile). Use these names in config.yaml instead of [r, g, b].
+# Set each plugin's color to exactly these values, fully opaque.
+#
+# Rules (checked automatically):
+# - world highlights (everything except category: item) must all differ from each other
+# - item colors (Inventory Tags) must all differ from each other
+# `python -m skillbot colors` lists the registry and free colors you can add.
+
+# --- banks and stations (Object Markers) ---
+bank:            {rgb: [255, 0, 255],   category: bank}
+altar:           {rgb: [0, 192, 128],   category: station}
+range:           {rgb: [255, 64, 128],  category: station}
+furnace:         {rgb: [192, 255, 64],  category: station}
+anvil:           {rgb: [64, 0, 255],    category: station}
+
+# --- resources (Object Markers / NPC Indicators) ---
+tree:            {rgb: [0, 255, 255],   category: resource}
+oak_tree:        {rgb: [0, 192, 192],   category: resource}
+willow_tree:     {rgb: [0, 128, 192],   category: resource}
+fishing_spot:    {rgb: [0, 255, 128],   category: resource}
+rock:            {rgb: [255, 64, 0],    category: resource}
+
+# --- combat (NPC Indicators, Ground Items) ---
+cow:             {rgb: [255, 128, 255], category: enemy}
+enemy:           {rgb: [192, 64, 255],  category: enemy}
+loot:            {rgb: [255, 192, 0],   category: loot}
+random_event:    {rgb: [128, 0, 0],     category: danger}
+
+# --- runecrafting (Object Markers) ---
+ruins:           {rgb: [255, 128, 0],   category: portal}
+altar_portal:    {rgb: [128, 0, 192],   category: portal}
+
+# --- route tiles (Ground Markers); a route uses each color at most once ---
+tile_white:      {rgb: [255, 255, 255], category: route}
+tile_lilac:      {rgb: [128, 128, 255], category: route}
+tile_blue:       {rgb: [0, 64, 255],    category: route}
+tile_lime:       {rgb: [128, 255, 0],   category: route}
+tile_lemon:      {rgb: [255, 255, 128], category: route}
+tile_rose:       {rgb: [255, 128, 192], category: route}
+tile_teal:       {rgb: [64, 255, 192],  category: route}
+fm_start:        {rgb: [255, 255, 0],   category: route}
+
+# --- Inventory Tags ---
+logs:            {rgb: [0, 255, 0],     category: item}
+oak_logs:        {rgb: [0, 160, 0],     category: item}
+willow_logs:     {rgb: [128, 255, 128], category: item}
+raw_shrimps:     {rgb: [0, 128, 255],   category: item}
+raw_anchovies:   {rgb: [0, 0, 255],     category: item}
+shrimps:         {rgb: [255, 128, 0],   category: item}
+anchovies:       {rgb: [255, 200, 100], category: item}
+burnt_fish:      {rgb: [255, 0, 0],     category: item}
+copper_ore:      {rgb: [200, 100, 0],   category: item}
+tin_ore:         {rgb: [180, 180, 255], category: item}
+bronze_bar:      {rgb: [255, 255, 128], category: item}
+bones:           {rgb: [255, 255, 255], category: item}
+cowhide:         {rgb: [120, 60, 0],    category: item}
+trout:           {rgb: [128, 0, 255],   category: item}
+rune_essence:    {rgb: [255, 0, 128],   category: item}
+earth_rune:      {rgb: [0, 255, 160],   category: item}
+fire_rune:       {rgb: [255, 64, 255],  category: item}
+earth_talisman:  {rgb: [64, 0, 128],    category: item}
+fire_talisman:   {rgb: [0, 64, 64],     category: item}
+
+# --- plugin colors that aren't highlights ---
+status_hp:       {rgb: [255, 0, 0],     category: other}

@@ -1,10 +1,12 @@
-# Copy to config.yaml and adjust. Colors are RGB and must match RuneLite's plugin
-# colors exactly (fully opaque). Pick bright colors that don't occur in the game and
-# keep them well apart (more than color_tolerance on some channel).
+# Copy to config.yaml and adjust. Colors are names from colors.yaml (the color registry);
+# [r, g, b] works too. RuneLite's plugin colors must match them exactly (fully opaque).
+# `python -m skillbot colors` shows the registry; `python -m skillbot setup STEP` prints
+# exactly what to mark for a step.
 color_tolerance: 25
 
-bank_color: [255, 0, 255]      # Object Markers on every bank booth you use
-hp_bar_color: [255, 0, 0]      # Status Bars plugin: health fill color (combat)
+bank_color: bank               # Object Markers on every bank booth you use
+hp_bar_color: status_hp        # Status Bars plugin: health fill color (combat)
+danger_color: random_event     # NPC Indicators on random-event NPCs: never clicked
 
 # What to do when the game logs you out (6-hour logout, disconnect, server restart):
 #   stop    - stop the bot
@@ -21,43 +23,26 @@ run: always                    # always | off
 run_min_energy: 50
 run_retry_seconds: 60
 
-# Inventory Tags: one color per item the bot needs to see. Untagged items (axe,
-# pickaxe, net, tinderbox, hammer...) are never dropped or banked.
-items:
-  logs:            [0, 255, 0]
-  oak_logs:        [0, 160, 0]
-  willow_logs:     [128, 255, 128]
-  raw_shrimps:     [0, 128, 255]
-  raw_anchovies:   [0, 0, 255]
-  shrimps:         [255, 128, 0]
-  anchovies:       [255, 200, 100]
-  burnt_fish:      [255, 0, 0]
-  copper_ore:      [200, 100, 0]
-  tin_ore:         [180, 180, 255]
-  bronze_bar:      [255, 255, 128]
-  bones:           [255, 255, 255]
-  cowhide:         [120, 60, 0]
-  trout:           [128, 0, 255]
-  rune_essence:    [255, 0, 128]
-  earth_rune:      [0, 255, 160]
-  fire_rune:       [255, 64, 255]
-  earth_talisman:  [64, 0, 128]
-  fire_talisman:   [0, 64, 64]
+# Inventory Tags: the items the bot needs to see, each tagged with its registry color.
+# Untagged items (axe, pickaxe, net, tinderbox, hammer...) are never dropped or banked.
+items: [logs, oak_logs, willow_logs, raw_shrimps, raw_anchovies, shrimps, anchovies,
+        burnt_fish, copper_ore, tin_ore, bronze_bar, bones, cowhide, trout, rune_essence,
+        earth_rune, fire_rune, earth_talisman, fire_talisman]
 
-# Ground Markers: tiles clicked in order when a target isn't on screen. Reusing a
-# color is fine as long as only one tile of that color is visible at a time.
+# Ground Markers: tiles clicked in order when a target isn't on screen. Each color is
+# used at most once within a route; the bot heads for the furthest one it can see.
 routes:
-  willows_to_bank:  [[255, 255, 255]]
-  bank_to_willows:  [[128, 128, 255]]
-  bank_to_fish:     [[255, 128, 255]]
-  fish_to_bank:     [[255, 255, 255]]
-  cows_to_bank:     [[64, 64, 255], [255, 255, 255]]
-  bank_to_cows:     [[64, 64, 255], [128, 128, 255]]
-  # Runecrafting: one tile every ~10 squares; tile colors within a route must differ.
-  varrock_to_earth: [[255, 96, 0], [96, 255, 0], [0, 96, 255]]
-  earth_to_varrock: [[0, 96, 255], [96, 255, 0], [255, 96, 0]]
-  alkharid_to_fire: [[255, 96, 0], [96, 255, 0], [0, 96, 255], [255, 255, 96]]
-  fire_to_alkharid: [[255, 255, 96], [0, 96, 255], [96, 255, 0], [255, 96, 0]]
+  willows_to_bank:  [tile_white]
+  bank_to_willows:  [tile_lilac]
+  bank_to_fish:     [tile_rose]
+  fish_to_bank:     [tile_white]
+  cows_to_bank:     [tile_blue, tile_white]
+  bank_to_cows:     [tile_blue, tile_lilac]
+  # Runecrafting: one tile every ~10 squares.
+  varrock_to_earth: [tile_lime, tile_teal, tile_blue]
+  earth_to_varrock: [tile_blue, tile_teal, tile_lime]
+  alkharid_to_fire: [tile_lime, tile_teal, tile_blue, tile_lemon]
+  fire_to_alkharid: [tile_lemon, tile_blue, tile_teal, tile_lime]
 
 # The plan runs top to bottom. A step is skipped once its skill reaches until_level.
 # max_minutes rotates to the next step after that long (useful to gather supplies,
@@ -69,7 +54,7 @@ plan:
     skill: woodcutting
     task: gather
     until_level: 15
-    target: [0, 255, 255]          # Object Markers on the trees
+    target: tree                   # Object Markers on the trees
     items: [logs]
     when_full: drop
 
@@ -77,7 +62,7 @@ plan:
     skill: woodcutting
     task: gather
     until_level: 30
-    target: [0, 200, 200]
+    target: oak_tree
     items: [oak_logs]
     when_full: drop
 
@@ -86,7 +71,7 @@ plan:
     task: gather
     until_level: 99
     max_minutes: 120               # then give fishing a turn
-    target: [0, 150, 150]
+    target: willow_tree
     items: [willow_logs]
     when_full: bank
     walk: {bank: willows_to_bank, target: bank_to_willows}
@@ -97,7 +82,7 @@ plan:
     task: gather
     until_level: 99
     max_minutes: 120
-    target: [0, 255, 128]          # NPC Indicators: Fishing spot
+    target: fishing_spot           # NPC Indicators: Fishing spot
     items: [raw_shrimps, raw_anchovies, shrimps, anchovies, burnt_fish]
     when_full: bank
     walk: {bank: fish_to_bank, target: bank_to_fish}
@@ -108,7 +93,7 @@ plan:
     skill: firemaking
     task: firemaking
     until_level: 99
-    target: [255, 255, 0]          # Ground Marker on the first tile of a clear east-west lane
+    target: fm_start               # Ground Marker on the first tile of a clear east-west lane
     items: [willow_logs]
     withdraw: [0]
     tool_slot: 0
@@ -122,8 +107,8 @@ plan:
     until_level: 40
     max_minutes: 60
     style: 0                       # Combat Options tab: 0 accurate, 1 aggressive, 3 defensive
-    target: [255, 128, 255]        # NPC Indicators: Cow
-    loot: [255, 200, 0]            # Ground Items: highlight bones + cowhide, tiles on
+    target: cow                    # NPC Indicators: Cow
+    loot: loot                     # Ground Items: highlight bones + cowhide, tiles on
     items: [cowhide]
     bury: [bones]                  # Prayer from bones
     food: [trout]
@@ -148,9 +133,9 @@ plan:
     skill: runecraft
     task: runecraft
     until_level: 14
-    target: [0, 200, 120]          # Object Markers: the altar
-    ruins: [255, 160, 0]           # Object Markers: Mysterious ruins
-    portal: [120, 0, 200]          # Object Markers: the exit portal
+    target: altar                  # Object Markers: the altar
+    ruins: ruins                   # Object Markers: Mysterious ruins
+    portal: altar_portal           # Object Markers: the exit portal
     items: [rune_essence]
     enter_with: earth_talisman
     keep: [earth_talisman]
@@ -168,14 +153,14 @@ plan:
 #  - name: mine copper and tin           # Object Markers on the rocks; drop or bank
 #    skill: mining
 #    task: gather
-#    target: [255, 64, 0]
+#    target: rock
 #    items: [copper_ore, tin_ore]
 #    when_full: bank
 #
 #  - name: smelt bronze                  # furnace marked; bank quantity X = 14
 #    skill: smithing
 #    task: process
-#    target: [64, 255, 0]
+#    target: furnace
 #    items: [copper_ore, tin_ore]
 #    withdraw: [0, 1]                    # copper in bank slot 0, tin in slot 1
 #    confirm: [{key: "1"}]               # first option in the smelting menu
@@ -183,7 +168,7 @@ plan:
 #  - name: smith bronze                  # anvil marked, hammer untagged
 #    skill: smithing
 #    task: process
-#    target: [64, 0, 255]
+#    target: anvil
 #    items: [bronze_bar]
 #    use_item: bronze_bar
 #    withdraw: [0]
@@ -192,7 +177,7 @@ plan:
 #  - name: cook at a range               # range marked; cook each raw type in turn
 #    skill: cooking
 #    task: process
-#    target: [255, 64, 128]
+#    target: range
 #    items: [raw_shrimps, raw_anchovies]
 #    use_item: any
 #    withdraw: [0, 1]
@@ -200,26 +185,26 @@ plan:
 #  - name: magic on chickens            # cast from the magic tab each attack
 #    skill: magic                        # (or set autocast on a staff and omit `cast`)
 #    task: combat
-#    target: [255, 128, 255]
+#    target: cow
 #    cast: [566, 222]                    # Wind Strike's position in the magic tab
-#    loot: [255, 200, 0]
+#    loot: loot
 #    bury: [bones]
 #    food: [trout]
 #
 #  - name: ranged on cows                # like melee; add arrows to Ground Items to reclaim them
 #    skill: ranged
 #    task: combat
-#    target: [255, 128, 255]
+#    target: cow
 #    style: 1                            # rapid
-#    loot: [255, 200, 0]
+#    loot: loot
 #    food: [trout]
 #
 #  - name: fire tiaras                   # ~2.5x the XP per trip of fire runes, costs supplies
 #    skill: runecraft                    # bank slot 0: tiaras (X = 14), slot 1: fire talismans (X = 14)
 #    task: runecraft
-#    target: [0, 200, 120]
-#    ruins: [255, 160, 0]
-#    portal: [120, 0, 200]
+#    target: altar
+#    ruins: ruins
+#    portal: altar_portal
 #    items: [tiara]
 #    use_item: tiara                     # each use on the altar binds one tiara
 #    enter_with: fire_talisman           # talismans are used up, so not in `keep`
@@ -229,10 +214,10 @@ plan:
 #  - name: fish and cook on a fire       # gather step that cooks each load, then drops it
 #    skill: fishing
 #    task: gather
-#    target: [0, 255, 128]
+#    target: fishing_spot
 #    items: [raw_shrimps, raw_anchovies, shrimps, anchovies, burnt_fish]
 #    when_full: drop
-#    process: {target: [255, 64, 128], items: [raw_shrimps, raw_anchovies], use_item: any}
+#    process: {target: range, items: [raw_shrimps, raw_anchovies], use_item: any}
 
 # Supervisor (`python -m skillbot supervise`, see docs/unattended.md). Defaults shown.
 # supervisor:
