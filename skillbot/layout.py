@@ -43,6 +43,8 @@ class Layout:
     # chat box, for "Click here to continue" and numbered options
     chatbox: Rect = field(default_factory=lambda: Rect(7, 345, 499, 130))
     run_energy_box: Rect = field(default_factory=lambda: Rect(519, 122, 24, 12))  # the number
+    # RuneLite Slayer plugin: the task infobox's count (first infobox, top left of the game)
+    slayer_box: Rect = field(default_factory=lambda: Rect(8, 26, 34, 14))
 
     # inventory: 4 columns x 7 rows
     inv_origin: tuple[int, int] = (563, 213)
@@ -114,7 +116,7 @@ class Layout:
         for key, value in list(d.items()):
             if key not in names:
                 raise ValueError(f"unknown layout key: {key}")
-            if key in ("viewport", "hp_bar", "run_energy_box", "chatbox"):
+            if key in ("viewport", "hp_bar", "run_energy_box", "chatbox", "slayer_box"):
                 d[key] = Rect(*value)
             elif key in ("tabs", "bank_quantity"):
                 d[key] = {**getattr(cls(), key), **{str(k): tuple(v) for k, v in value.items()}}

@@ -37,3 +37,14 @@ ammonite_crabs:
   step: {task: combat, target: enemy, stand_on: afk_spot, reset_spot: reset_spot,
          reset_after: 90, items: [shark], food: [shark], eat_below: 0.4,
          bank_tab: food, withdraw: [{slot: 1, item: shark, quantity: x}]}
+
+# Semi-automatic Slayer (docs/slayer.md): masters and monsters are in library/slayer/.
+slayer:
+  name: "Slayer (semi-automatic)"
+  skills: [slayer]
+  levels: [1, 99]
+  xp_per_hour: 15000
+  reliability: 2
+  trade: {inputs: {shark: 10}}
+  step: {task: slayer, loot: loot, items: [shark], food: [shark], eat_below: 0.5,
+         when_full: bank, bank_tab: food, withdraw: [{slot: 1, item: shark, quantity: x}]}

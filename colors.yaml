@@ -207,3 +207,4 @@ tithe_fruit:     {rgb: [192, 255, 192], category: item}
 quest_target:    {rgb: [64, 192, 0], category: other, area: everywhere}
 quest_dialog:    {rgb: [64, 192, 128], category: other, area: everywhere}
 quest_item:      {rgb: [192, 255, 255], category: item}
+slayer_master:   {rgb: [64, 192, 192], category: other, area: everywhere}

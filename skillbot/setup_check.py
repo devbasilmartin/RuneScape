@@ -66,7 +66,11 @@ def setup_text(cfg: Config, step: Step, registry: Registry) -> str:
         lines.append(f"  • Object Markers on the Mysterious ruins: {d(step.ruins)}")
     if step.portal:
         lines.append(f"  • Object Markers on the altar's exit portal: {d(step.portal)}")
-    if step.task == "combat":
+    if step.task == "slayer":
+        lines.append(f"  • NPC Indicators on the Slayer masters: {d(registry.resolve('slayer_master'))}")
+        lines.append(f"  • NPC Indicators on the current task's monster: {d(registry.resolve('enemy'))}")
+        lines.append("  • Slayer plugin: task infobox on (kept as the first infobox)")
+    if step.task in ("combat", "slayer"):
         lines.append(f"  • Status Bars: Hitpoints on the left of the inventory: "
                      f"{d(cfg.hp_bar_color)}")
     if cfg.danger_color:

@@ -1,0 +1,38 @@
+# Semi-automatic Slayer (docs/slayer.md). Not a method file: the planner's `slayer` task
+# reads this. Locations are navigation destinations (`skillbot add-destination`).
+
+# In order; the bot uses the last one your combat level (and quests) allow, unless the
+# slayer step names one with `vars: {master: ID}`. `option` is the "Assignment" row in
+# the master's right-click menu.
+masters:
+  turael:   {name: Turael,   location: "burthorpe turael",       combat: 3,   option: 2}
+  vannaka:  {name: Vannaka,  location: "edgeville dungeon vannaka", combat: 40, option: 2}
+  chaeldar: {name: Chaeldar, location: "zanaris chaeldar",       combat: 70,  option: 2,
+             quests: ["Lost City"]}
+  nieve:    {name: Nieve,    location: "gnome stronghold nieve", combat: 85,  option: 2}
+  duradel:  {name: Duradel,  location: "shilo village duradel",  combat: 100, option: 2,
+             slayer: 50, quests: ["Shilo Village"]}
+
+# Monsters the bot can fight. `aliases` are other words you might answer with. `step`
+# overrides the slayer step's combat settings (food, style, loot...) for this monster;
+# mark the monster with the registry's `enemy` color (NPC Indicators).
+monsters:
+  birds:          {name: Birds (chickens), aliases: [bird, chicken, chickens],
+                   location: "lumbridge chickens", step: {target: enemy}}
+  cows:           {name: Cows, aliases: [cow], location: "lumbridge cows", step: {target: enemy}}
+  goblins:        {name: Goblins, aliases: [goblin], location: "lumbridge goblins",
+                   step: {target: enemy}}
+  dwarves:        {name: Dwarves, aliases: [dwarf], location: "falador dwarven mine",
+                   step: {target: enemy}}
+  minotaurs:      {name: Minotaurs, aliases: [minotaur],
+                   location: "stronghold of security minotaurs", step: {target: enemy}}
+  hill_giants:    {name: Hill giants, aliases: [hill giant], location: "edgeville hill giants",
+                   step: {target: enemy}}
+  moss_giants:    {name: Moss giants, aliases: [moss giant],
+                   location: "varrock sewers moss giants", step: {target: enemy}}
+  lesser_demons:  {name: Lesser demons, aliases: [lesser demon],
+                   location: "karamja volcano lesser demons", step: {target: enemy}}
+  fire_giants:    {name: Fire giants, aliases: [fire giant], location: "brimhaven fire giants",
+                   step: {target: enemy}}
+  greater_demons: {name: Greater demons, aliases: [greater demon],
+                   location: "brimhaven greater demons", step: {target: enemy}}

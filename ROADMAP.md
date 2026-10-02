@@ -124,7 +124,7 @@ Helper follower.
 - [x] Motherlode Mine, Blast Furnace (gold), Tithe Farm, Wintertodt, Fishing Trawler, Hunter (chinchompas): routines in `library/minigames.yaml`
 - [x] Prayer (ensouled heads, public gilded altar), Arceuus blood runes: routines
 - [x] Quest Helper follower (`skillbot quest NAME`)
-- [ ] Semi-automatic Slayer
+- [x] Semi-automatic Slayer: `slayer` task, [docs/slayer.md](docs/slayer.md) (10 monsters to start)
 
 ### Phase 4: Later
 - [ ] GOTR, Hallowed Sepulchre, Mahogany Homes, minnows

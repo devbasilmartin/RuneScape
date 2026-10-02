@@ -9,7 +9,7 @@ from .layout import Layout
 from .skills import SKILLS
 
 TASKS = ("gather", "process", "firemaking", "combat", "runecraft", "cast", "agility",
-         "construction", "thieve", "routine", "quest")
+         "construction", "thieve", "routine", "quest", "slayer")
 
 
 def _color(v):
@@ -157,7 +157,7 @@ class Step:
         if step.task == "construction" and step.target is None and step.hotspot is None:
             raise ValueError(f"step {step.name!r}: construction needs a target color or hotspot")
         if step.target is None and not step.with_item and step.task not in (
-                "cast", "agility", "construction", "routine", "quest"):
+                "cast", "agility", "construction", "routine", "quest", "slayer"):
             raise ValueError(f"step {step.name!r}: needs a target highlight color")
         if step.when_full not in ("drop", "bank"):
             raise ValueError(f"step {step.name!r}: when_full must be drop or bank")

@@ -130,6 +130,7 @@ examples.
 | `combat` + `stand_on` | stand on a marked tile, let aggressive monsters come, eat, walk to `reset_spot` and back when they stop | Melee at crabs |
 | `thieve` | pickpocket the `target` NPC or steal from a stall; waits out stuns (HP drops), opens `pouch` every `open_every`, eats | Thieving |
 | `routine` | a scripted sequence of actions and conditions in YAML ([docs/minigames.md](docs/minigames.md)) | Minigames: Motherlode, Blast Furnace, Wintertodt, Trawler, chinchompas, ensouled heads, gilded altar, Arceuus runes, Tithe Farm |
+| `slayer` | get a task from a master, ask you which monster, fight it until the Slayer infobox is gone ([docs/slayer.md](docs/slayer.md)) | Slayer |
 | `quest` | follow Quest Helper's highlights | Quests (`skillbot quest NAME`) |
 | `runecraft` | bank → `ruins` → craft at the `target` altar → `portal` → bank | Runecraft |
 

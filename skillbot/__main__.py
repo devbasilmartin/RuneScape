@@ -149,6 +149,7 @@ def cmd_debug(cfg: Config, args) -> None:
     energy = EnergyReader(lay.run_energy_box,
                           GlyphBook.load(cfg.data_dir / "energy_digits.json")).read(img)
     box(lay.run_energy_box, (0, 255, 255), f"run {energy if energy is not None else '?'}")
+    box(lay.slayer_box, (0, 255, 255), "slayer")
     cv2.imwrite(args.out, out)
     from .combat import CombatTask
     hp = CombatTask.hp_fraction(img, lay.hp_bar, cfg.hp_bar_color, cfg.color_tolerance)
@@ -322,6 +323,47 @@ def cmd_quest(cfg: Config, args) -> None:
         print(f"stopped: {e}")
 
 
+def cmd_slayer_task(cfg: Config, args) -> None:
+    """Tell the bot which Slayer monster it was assigned (instead of Discord)."""
+    from .slayer import answer_from_cli
+    try:
+        print(answer_from_cli(cfg.data_dir, args.mailbox_dir, " ".join(args.monster),
+                              tag=args.selected.name))
+    except ValueError as e:
+        raise SystemExit(str(e))
+
+
+def cmd_learn_slayer(cfg: Config, args) -> None:
+    """Teach the Slayer infobox's digits: type the count, then kill monsters while it watches."""
+    import time
+
+    from .digits import GlyphBook
+    from .slayer import infobox_glyphs
+    screen = Screen.load(cfg.data_dir)
+    book = GlyphBook.load(cfg.data_dir / "slayer_digits.json")
+    value = None
+    print("With a Slayer task, keep killing so the count goes down. Ctrl+C to finish.")
+    try:
+        while not book.complete():
+            if value is not None:
+                glyphs = infobox_glyphs(cfg.layout, screen.grab())
+                value = book.read_among(glyphs, range(max(0, value - 1), value + 1))
+            if value is None:
+                text = input("  type the number in the Slayer infobox: ").strip()
+                glyphs = infobox_glyphs(cfg.layout, screen.grab())
+                if not text.isdigit() or not book.learn(glyphs, int(text)):
+                    print("    could not split it into that many digits; check "
+                          "layout.slayer_box with `debug`")
+                    continue
+                value = int(text)
+                print(f"  watching... known digits: {book.known_digits()}")
+            book.save()
+            time.sleep(0.3)
+    except KeyboardInterrupt:
+        pass
+    book.save()
+
+
 def cmd_quest_done(cfg: Config, args) -> None:
     from .goals import QuestLog
     QuestLog(cfg.data_dir / "quests.json").add(args.name)
@@ -487,6 +529,9 @@ def main(argv=None) -> None:
     c.add_argument("name", help="the quest's name, as Quest Helper shows it")
     c.add_argument("--idle", type=float, default=30,
                    help="seconds with nothing highlighted before asking you")
+    c = sub.add_parser("slayer-task", help="which monster your Slayer task is (or skip / mine)")
+    c.add_argument("monster", nargs="+")
+    sub.add_parser("learn-slayer", help="teach the Slayer infobox's digits")
     c = sub.add_parser("quest-done", help="mark a quest as completed (unlocks methods)")
     c.add_argument("name")
     c = sub.add_parser("trust", help="trust level of each plan step (or set one)")
@@ -516,7 +561,7 @@ def main(argv=None) -> None:
      "learn-energy": cmd_learn_energy, "learn-digits": cmd_learn_digits, "levels": cmd_levels,
      "debug": cmd_debug, "doctor": cmd_doctor, "supervise": cmd_supervise, "discord": cmd_discord, "ask": cmd_ask,
      "add-destination": cmd_add_destination, "travel": cmd_travel,
-     "trust": cmd_trust, "plan": cmd_plan, "sold": cmd_sold, "prices": cmd_prices, "quest-done": cmd_quest_done, "quest": cmd_quest, "setup": cmd_setup, "check-setup": cmd_check_setup, "colors": cmd_colors,
+     "trust": cmd_trust, "plan": cmd_plan, "sold": cmd_sold, "prices": cmd_prices, "quest-done": cmd_quest_done, "quest": cmd_quest, "slayer-task": cmd_slayer_task, "learn-slayer": cmd_learn_slayer, "setup": cmd_setup, "check-setup": cmd_check_setup, "colors": cmd_colors,
      "profile": cmd_profile, "pause": cmd_pause,
      "resume": cmd_resume, "run": cmd_run}[args.cmd](cfg, args)
 
