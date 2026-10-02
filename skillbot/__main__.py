@@ -1,4 +1,4 @@
-"""Command line: python -m skillbot {calibrate,learn-digits,levels,debug,run}."""
+"""Command line: python -m skillbot <command>; see --help."""
 import argparse
 import json
 import logging
@@ -146,6 +146,11 @@ def cmd_debug(cfg: Config, args) -> None:
     print(f"wrote {args.out}\ntagged slots: {tags}\nhp bar: {hp:.0%}")
 
 
+def cmd_doctor(cfg: Config, args) -> None:
+    from .doctor import report, run_checks
+    raise SystemExit(report(run_checks(cfg)))
+
+
 def cmd_run(cfg: Config, args) -> None:
     import pyautogui
 
@@ -190,6 +195,7 @@ def main(argv=None) -> None:
     c.add_argument("--skills", action="store_true", help="show skills-tab level boxes")
     c.add_argument("--bank", action="store_true", help="show bank slot numbers")
     c.add_argument("--out", default="debug.png")
+    sub.add_parser("doctor", help="check this machine is ready for the bot")
     sub.add_parser("run", help="work through the plan")
     args = p.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s", datefmt="%H:%M:%S")
@@ -197,7 +203,7 @@ def main(argv=None) -> None:
     cfg.data_dir.mkdir(parents=True, exist_ok=True)
     {"calibrate": cmd_calibrate, "calibrate-run": cmd_calibrate_run,
      "learn-energy": cmd_learn_energy, "learn-digits": cmd_learn_digits, "levels": cmd_levels,
-     "debug": cmd_debug, "run": cmd_run}[args.cmd](cfg, args)
+     "debug": cmd_debug, "doctor": cmd_doctor, "run": cmd_run}[args.cmd](cfg, args)
 
 
 if __name__ == "__main__":

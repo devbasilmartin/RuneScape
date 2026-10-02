@@ -93,7 +93,8 @@ Helper follower.
 ## Build order
 
 ### Phase 0: Real client
-- [ ] VM setup guide and scripts (Ubuntu 24.04 on Xorg, Java, RuneLite, the bot)
+- [x] VM setup guide and scripts (Ubuntu 24.04 on Xorg, Java, RuneLite, the bot): [docs/vm-setup.md](docs/vm-setup.md), `scripts/vm/`, `skillbot doctor`
+- [ ] You: set up the VM and send `debug.png` / `debug-skills.png`
 - [ ] Calibrate, then validate the existing tasks on the real client: Draynor fishing (bank) first, then woodcutting, cooking, combat, runecrafting and run energy
 - [ ] Replay test harness built from real screenshots
 

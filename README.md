@@ -14,6 +14,8 @@ See [ROADMAP.md](ROADMAP.md) for the full plan and build order.
 
 ## Install
 
+For the 24/7 setup in a VirtualBox VM, follow [docs/vm-setup.md](docs/vm-setup.md). To try it on any Linux desktop:
+
 ```sh
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
