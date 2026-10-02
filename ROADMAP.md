@@ -113,7 +113,9 @@ Helper follower.
 - [x] Price service, alerts, shopping lists, tool-upgrade notices: [docs/prices.md](docs/prices.md)
 
 ### Phase 2: Simple, high-value methods (the unlocks first)
-- [ ] Magic (teleports → alching), Agility (rooftops), Construction (bagged plants → larders/doors), combat (giants → crabs)
+- [x] Magic (teleports → alching): `cast` task + library
+- [x] Agility (gnome course → all rooftops): `agility` task + library
+- [ ] Construction (bagged plants → larders/doors), combat (giants → crabs)
 - [ ] Woodcutting (Guild), Fishing (Catherby → Guild), Cooking (Hosidius), Fletching, Crafting, Herblore, Thieving (knights), Firemaking lines, Runecraft (fire, ZMI)
 
 ### Phase 3: Minigames and special mechanics

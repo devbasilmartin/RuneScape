@@ -17,6 +17,8 @@ TARGET_PLUGIN = {
     "firemaking": "Ground Markers on the first tile of the lane",
     "combat": "NPC Indicators on the monster (outline or hull, names off)",
     "runecraft": "Object Markers on the altar",
+    "cast": "",
+    "agility": "",
 }
 
 
@@ -47,6 +49,11 @@ def setup_text(cfg: Config, step: Step, registry: Registry) -> str:
              "RuneLite `bot` profile, colors exact and fully opaque:"]
     if step.target is not None:
         lines.append(f"  • {TARGET_PLUGIN[step.task]}: {d(step.target)}")
+    if step.obstacles:
+        lines.append("  • Object Markers on each obstacle, in course order:")
+        lines += [f"      {i + 1}. {d(c)}" for i, c in enumerate(step.obstacles)]
+    if step.spell:
+        lines.append(f"  • Spell at {list(step.spell)} in the magic tab (check with debug)")
     if step.process and step.process.get("target"):
         lines.append(f"  • Object Markers on the station for processing each load: "
                      f"{d(tuple(step.process['target']))}")
@@ -75,7 +82,9 @@ def setup_text(cfg: Config, step: Step, registry: Registry) -> str:
     for role, route in step.walk.items():
         tiles = " → ".join(d(t) for t in cfg.routes.get(route, []))
         lines.append(f"  • Ground Markers for route {route!r} ({role}), in walking order: {tiles}")
-    tagged = list(dict.fromkeys(list(step.items) + list(step.food) + list(step.bury)
+    tagged = list(dict.fromkeys(list(step.items) + list(step.runes)
+                                + ([step.on_item] if step.on_item else [])
+                                + list(step.food) + list(step.bury)
                                 + list(step.keep) + ([step.enter_with] if step.enter_with else [])
                                 + ([step.use_item] if step.use_item not in (None, "any") else [])
                                 + list((step.process or {}).get("items", []))))
@@ -114,6 +123,11 @@ def check_setup(cfg: Config, step: Step, img, registry: Registry) -> list[Check]
     d = lambda c: describe(c, registry)      # noqa: E731
     checks = []
     blobs = seen(step.target) if step.target is not None else None
+    if step.obstacles:
+        first = seen(step.obstacles[0])
+        checks.append(Check("first obstacle", PASS if first else WARN,
+                            f"{d(step.obstacles[0])} visible" if first else
+                            f"{d(step.obstacles[0])} not visible: stand at the course start"))
     if step.target is None:
         pass
     elif blobs:

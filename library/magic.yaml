@@ -1,0 +1,38 @@
+# Magic by casting. Spell positions go in config.yaml under spells: (find them with
+# `python -m skillbot debug` with the magic tab open); runes are Inventory Tags.
+# Rates are rough estimates: ~1,000 teleports or ~1,200 alchs per hour.
+
+varrock_teleports:
+  name: "Varrock teleports"
+  skills: [magic]
+  levels: [25, 45]
+  xp_per_hour: 35000
+  reliability: 5
+  trade: {inputs: {law_rune: 1000, air_rune: 3000, fire_rune: 1000}}
+  step: {task: cast, spell: varrock_teleport, runes: [law_rune, air_rune, fire_rune],
+         cast_delay: 3.0, casts_per_batch: 60, bank_tab: magic,
+         withdraw: [{slot: 0, item: law_rune, quantity: all}, {slot: 1, item: air_rune, quantity: all},
+                    {slot: 2, item: fire_rune, quantity: all}]}
+
+camelot_teleports:
+  name: "Camelot teleports"
+  skills: [magic]
+  levels: [45, 55]
+  xp_per_hour: 55000
+  reliability: 5
+  trade: {inputs: {law_rune: 1000, air_rune: 5000}}
+  step: {task: cast, spell: camelot_teleport, runes: [law_rune, air_rune],
+         cast_delay: 3.0, casts_per_batch: 60, bank_tab: magic,
+         withdraw: [{slot: 0, item: law_rune, quantity: all}, {slot: 1, item: air_rune, quantity: all}]}
+
+high_alchemy:
+  name: "High Alchemy"
+  skills: [magic]
+  levels: [55, 99]
+  xp_per_hour: 78000
+  profit_per_hour: 0          # depends on the item: alch things worth ~ their alch value
+  reliability: 5
+  trade: {inputs: {nature_rune: 1200}}
+  step: {task: cast, spell: high_alchemy, on_item: alch_item, runes: [nature_rune],
+         cast_delay: 3.0, casts_per_batch: 100, bank_tab: magic,
+         withdraw: [{slot: 0, item: nature_rune, quantity: all}, {slot: 1, item: alch_item, quantity: all}]}

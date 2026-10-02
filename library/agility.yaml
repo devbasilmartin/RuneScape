@@ -1,0 +1,104 @@
+# Agility courses. Mark each obstacle with Object Markers in course order using
+# obstacle_1 ... obstacle_7 (long courses start over at obstacle_1); highlight marks of
+# grace with Ground Items (or the Agility plugin) in mark_of_grace. XP per hour is a
+# rough estimate. Each course's `location` is a destination near its start.
+
+gnome_course:
+  name: "Gnome Stronghold course"
+  skills: [agility]
+  levels: [1, 10]
+  xp_per_hour: 6000
+  profit_per_hour: 0
+  reliability: 4
+  location: "gnome stronghold course start"
+  step: {task: agility, obstacles: [obstacle_1, obstacle_2, obstacle_3, obstacle_4, obstacle_5, obstacle_6, obstacle_7], laps_per_batch: 5}
+
+draynor_rooftop:
+  name: "Draynor rooftop"
+  skills: [agility]
+  levels: [10, 20]
+  xp_per_hour: 9000
+  profit_per_hour: 15000
+  reliability: 4
+  location: "draynor rooftop start"
+  step: {task: agility, loot: mark_of_grace, obstacles: [obstacle_1, obstacle_2, obstacle_3, obstacle_4, obstacle_5, obstacle_6, obstacle_7], laps_per_batch: 5}
+
+al_kharid_rooftop:
+  name: "Al Kharid rooftop"
+  skills: [agility]
+  levels: [20, 30]
+  xp_per_hour: 11000
+  profit_per_hour: 15000
+  reliability: 4
+  location: "al kharid rooftop start"
+  step: {task: agility, loot: mark_of_grace, obstacles: [obstacle_1, obstacle_2, obstacle_3, obstacle_4, obstacle_5, obstacle_6, obstacle_7, obstacle_1], laps_per_batch: 5}
+
+varrock_rooftop:
+  name: "Varrock rooftop"
+  skills: [agility]
+  levels: [30, 40]
+  xp_per_hour: 13000
+  profit_per_hour: 15000
+  reliability: 4
+  location: "varrock rooftop start"
+  step: {task: agility, loot: mark_of_grace, obstacles: [obstacle_1, obstacle_2, obstacle_3, obstacle_4, obstacle_5, obstacle_6, obstacle_7, obstacle_1, obstacle_2], laps_per_batch: 5}
+
+canifis_rooftop:
+  name: "Canifis rooftop"
+  skills: [agility]
+  levels: [40, 50]
+  xp_per_hour: 17000
+  profit_per_hour: 15000
+  reliability: 4
+  location: "canifis rooftop start"
+  step: {task: agility, loot: mark_of_grace, obstacles: [obstacle_1, obstacle_2, obstacle_3, obstacle_4, obstacle_5, obstacle_6, obstacle_7, obstacle_1], laps_per_batch: 5}
+
+falador_rooftop:
+  name: "Falador rooftop"
+  skills: [agility]
+  levels: [50, 60]
+  xp_per_hour: 25000
+  profit_per_hour: 15000
+  reliability: 4
+  location: "falador rooftop start"
+  step: {task: agility, loot: mark_of_grace, obstacles: [obstacle_1, obstacle_2, obstacle_3, obstacle_4, obstacle_5, obstacle_6, obstacle_7, obstacle_1, obstacle_2, obstacle_3, obstacle_4, obstacle_5, obstacle_6, obstacle_7], laps_per_batch: 5}
+
+seers_rooftop:
+  name: "Seers' Village rooftop"
+  skills: [agility]
+  levels: [60, 70]
+  xp_per_hour: 35000
+  profit_per_hour: 15000
+  reliability: 4
+  location: "seers' village rooftop start"
+  step: {task: agility, loot: mark_of_grace, obstacles: [obstacle_1, obstacle_2, obstacle_3, obstacle_4, obstacle_5, obstacle_6], laps_per_batch: 5}
+
+pollnivneach_rooftop:
+  name: "Pollnivneach rooftop"
+  skills: [agility]
+  levels: [70, 80]
+  xp_per_hour: 40000
+  profit_per_hour: 15000
+  reliability: 4
+  location: "pollnivneach rooftop start"
+  step: {task: agility, loot: mark_of_grace, obstacles: [obstacle_1, obstacle_2, obstacle_3, obstacle_4, obstacle_5, obstacle_6, obstacle_7, obstacle_1, obstacle_2], laps_per_batch: 5}
+
+rellekka_rooftop:
+  name: "Rellekka rooftop"
+  skills: [agility]
+  levels: [80, 90]
+  xp_per_hour: 45000
+  profit_per_hour: 15000
+  reliability: 4
+  location: "rellekka rooftop start"
+  step: {task: agility, loot: mark_of_grace, obstacles: [obstacle_1, obstacle_2, obstacle_3, obstacle_4, obstacle_5, obstacle_6, obstacle_7], laps_per_batch: 5}
+
+ardougne_rooftop:
+  name: "Ardougne rooftop"
+  skills: [agility]
+  levels: [90, 99]
+  xp_per_hour: 55000
+  profit_per_hour: 15000
+  reliability: 4
+  location: "ardougne rooftop start"
+  step: {task: agility, loot: mark_of_grace, obstacles: [obstacle_1, obstacle_2, obstacle_3, obstacle_4, obstacle_5, obstacle_6, obstacle_7], laps_per_batch: 5}

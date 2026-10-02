@@ -32,10 +32,17 @@ def test_xp_table():
 
 def test_starter_library_builds_steps_with_the_example_config():
     reg = Registry.load()
+    spells = {"varrock_teleport": (1, 1), "camelot_teleport": (2, 2), "high_alchemy": (3, 3)}
     for m in load_library().values():
         for skill in m.skills:
-            step = m.to_step(skill, m.levels[1], 0, reg)
+            step = m.to_step(skill, m.levels[1], 0, reg, spells)
             assert step.skill == skill
+
+
+def test_magic_methods_explain_missing_spell_positions():
+    g = Goals(targets={"magic": 99})
+    text = chooser(g).explain({"magic": 30})
+    assert "spell 'varrock_teleport' has no position" in text
 
 
 def test_goals_file(tmp_path):

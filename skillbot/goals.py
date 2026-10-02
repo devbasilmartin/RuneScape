@@ -116,10 +116,11 @@ class Chooser:
         if self.cooldown.get(method.id, 0) > now:
             return None, "out of supplies recently"
         try:
-            step = method.to_step(skill, hi, 0, self.registry)
+            step = method.to_step(skill, hi, 0, self.registry, self.cfg.spells)
         except ValueError as e:
             return None, f"not set up: {e}"
         missing = [n for n in list(step.items) + list(step.food) + list(step.bury)
+                   + list(step.runes) + ([step.on_item] if step.on_item else [])
                    + list(step.keep) + [w.item for w in step.withdraw if w.item]
                    + ([step.enter_with] if step.enter_with else [])
                    if n not in self.cfg.items]
@@ -176,7 +177,7 @@ class Chooser:
 
     def _decide(self, skill, method, goal, phase, levels, slice_minutes) -> Decision:
         until = min(goal, method.levels[1])
-        step = method.to_step(skill, until, slice_minutes, self.registry)
+        step = method.to_step(skill, until, slice_minutes, self.registry, self.cfg.spells)
         hours = xp_between(levels.get(skill, 1), until) / method.xp_per_hour \
             if method.xp_per_hour else float("inf")
         return Decision(skill, method, step, phase, until, hours)

@@ -8,7 +8,7 @@ from .colors import Registry, collisions, resolve_config
 from .layout import Layout
 from .skills import SKILLS
 
-TASKS = ("gather", "process", "firemaking", "combat", "runecraft")
+TASKS = ("gather", "process", "firemaking", "combat", "runecraft", "cast", "agility")
 
 
 def _color(v):
@@ -56,6 +56,17 @@ class Step:
     with_item: str | None = None       # process: use `use_item` on this item (no station)
     location: str | None = None        # destination to travel to when the target isn't in sight
     gear: tuple = ()                   # tagged items to wear again after taking the grave
+
+    # cast (Magic: teleports, alchemy)
+    spell: tuple | None = None         # the spell's position in the magic tab
+    on_item: str | None = None         # tagged item to cast it on (alchemy); None = no target
+    runes: tuple = ()                  # tagged rune stacks the spell needs
+    cast_delay: float = 3.0            # seconds per cast
+    casts_per_batch: int = 50
+
+    # agility
+    obstacles: tuple = ()              # Object Marker colors in course order
+    laps_per_batch: int = 5
     process: dict | None = None        # gather: process the load before dropping/banking
     tools: int = 1                     # untagged slots always carried
     tool_slot: int = 0                 # firemaking: tinderbox slot
@@ -90,7 +101,11 @@ class Step:
         d["cast"] = _color(d.get("cast"))
         d["ruins"] = _color(d.get("ruins"))
         d["portal"] = _color(d.get("portal"))
-        for key in ("items", "confirm", "withdraw", "food", "bury", "keep", "gear"):
+        if d.get("spell") is not None:
+            d["spell"] = tuple(d["spell"])
+        if "obstacles" in d:
+            d["obstacles"] = tuple(tuple(c) for c in d["obstacles"])
+        for key in ("items", "confirm", "withdraw", "food", "bury", "keep", "gear", "runes"):
             if key in d:
                 d[key] = tuple(d[key])
         if "withdraw" in d:
@@ -102,7 +117,11 @@ class Step:
             raise ValueError(f"step {step.name!r}: task must be one of {TASKS}")
         if step.with_item and (step.task != "process" or not step.use_item):
             raise ValueError(f"step {step.name!r}: with_item needs task: process and a use_item")
-        if step.target is None and not step.with_item:
+        if step.task == "cast" and step.spell is None:
+            raise ValueError(f"step {step.name!r}: cast needs the spell's position")
+        if step.task == "agility" and len(step.obstacles) < 2:
+            raise ValueError(f"step {step.name!r}: agility needs the obstacle colors in order")
+        if step.target is None and not step.with_item and step.task not in ("cast", "agility"):
             raise ValueError(f"step {step.name!r}: needs a target highlight color")
         if step.when_full not in ("drop", "bank"):
             raise ValueError(f"step {step.name!r}: when_full must be drop or bank")
@@ -130,6 +149,7 @@ class Config:
     safety: dict = field(default_factory=dict)      # see safety.SafetyConfig
     colors_file: Path | None = None     # the color registry (default: colors.yaml in the repo)
     hubs: dict = field(default_factory=dict)        # name -> Hub (see navigation.py)
+    spells: dict = field(default_factory=dict)      # spell name -> [x, y] in the magic tab
     path_color: tuple = (255, 0, 128)              # Shortest Path's path color
     map_menu_option: int = 1          # which right-click option on the world map is "Set target"
     items: dict = field(default_factory=dict)      # Inventory Tags: name -> RGB
@@ -171,6 +191,8 @@ class Config:
                 setattr(cfg, key, tuple(value) if value else None)
             elif not hasattr(cfg, key):
                 raise ValueError(f"unknown config key: {key}")
+            elif key == "spells":
+                cfg.spells = {n: tuple(v) for n, v in (value or {}).items()}
             elif key == "hubs":
                 from .navigation import Hub
                 cfg.hubs = {n: Hub.from_dict(n, h) for n, h in (value or {}).items()}
@@ -191,6 +213,8 @@ class Config:
                  "respawn": self.respawn_color, "other players": self.other_player_color}
         if step.process and step.process.get("target"):
             scene["process target"] = tuple(step.process["target"])
+        for i, color in enumerate(dict.fromkeys(step.obstacles)):
+            scene[f"obstacle {i + 1}"] = color
         for role, route in step.walk.items():
             for i, tile in enumerate(self.routes.get(route, [])):
                 scene[f"route {route} tile {i + 1}"] = tile
@@ -226,7 +250,8 @@ class Config:
             names += [step.use_item] if step.use_item not in (None, "any") else []
             names += [step.with_item] if step.with_item else []
             names += [w.item for w in step.withdraw if w.item]
-            names += list(step.gear)
+            names += list(step.gear) + list(step.runes)
+            names += [step.on_item] if step.on_item else []
             names += list((step.process or {}).get("items", []))
             missing = [n for n in names if n not in self.items]
             if missing:

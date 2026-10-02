@@ -234,6 +234,13 @@ plan:
 #    when_full: drop
 #    process: {target: range, items: [raw_shrimps, raw_anchovies], use_item: any}
 
+# Spell positions in the magic tab (fixed mode), used by library methods and hubs.
+# Find them with `python -m skillbot debug` while the magic tab is open.
+# spells:
+#   varrock_teleport: [0, 0]
+#   camelot_teleport: [0, 0]
+#   high_alchemy: [0, 0]
+
 # Navigation (docs/navigation.md): teleport hubs, then Shortest Path. Steps with
 # `location: NAME` travel there when their target isn't in sight.
 # hubs:

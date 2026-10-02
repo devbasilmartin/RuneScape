@@ -142,6 +142,8 @@ def resolve_config(raw: dict, registry: Registry) -> dict:
         for key in STEP_COLOR_KEYS:
             if key in step:
                 step[key] = r(step[key])
+        if "obstacles" in step:
+            step["obstacles"] = [r(c) for c in step["obstacles"]]
         if isinstance(step.get("process"), dict) and "target" in step["process"]:
             step["process"] = {**step["process"], "target": r(step["process"]["target"])}
         steps.append(step)

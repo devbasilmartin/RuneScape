@@ -54,7 +54,7 @@ class Method:
                    dict(d.get("styles") or {}), dict(d.get("step") or {}), d.get("trade"))
 
     def to_step(self, skill: str, until_level: int, max_minutes: float,
-                registry: Registry) -> Step:
+                registry: Registry, spells: dict | None = None) -> Step:
         raw = {"name": f"{self.name}" + (f" ({skill})" if len(self.skills) > 1 else ""),
                "skill": skill, "until_level": until_level, "max_minutes": max_minutes,
                **self.step}
@@ -64,6 +64,12 @@ class Method:
             raw["style"] = self.styles[skill]
         elif self.step.get("task") == "combat" and skill in STYLE_FOR:
             raw.setdefault("style", STYLE_FOR[skill])
+        if isinstance(raw.get("spell"), str):
+            name = raw["spell"]
+            if not spells or name not in spells:
+                raise ValueError(f"spell {name!r} has no position (add it under spells: in "
+                                 "config.yaml)")
+            raw["spell"] = spells[name]
         raw = resolve_config({"plan": [raw]}, registry)["plan"][0]
         return Step.from_dict(raw)
 
