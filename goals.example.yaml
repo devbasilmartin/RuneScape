@@ -1,0 +1,22 @@
+# Copy to goals.yaml (next to config.yaml, or into a profile folder) to let the planner
+# choose what to train from the method library (library/*.yaml) instead of the plan: list.
+# `python -m skillbot plan --explain` shows what it would do next and why.
+
+# Trained first, in this order (from the roadmap: teleports, run energy, the house,
+# combat basics). Skills without a usable method are skipped until one exists.
+unlocks_first:
+  magic: 45
+  agility: 50
+  construction: 50
+  attack: 40
+  strength: 40
+  defence: 40
+
+# Then everything to 99, in time slices, always the skill with the most hours left.
+then: all_99
+exclude: [sailing]
+rotation_minutes: 120
+
+# Force a method for a skill (method ids are the keys in library/*.yaml):
+# overrides:
+#   woodcutting: willows_draynor

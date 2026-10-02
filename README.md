@@ -172,6 +172,23 @@ are chains of Ground Marker tiles (about one every 10 squares, distinct colors w
 and the bot always clicks the furthest one it can see. Moving between towns for a new step still
 needs you to move the character, or a route that covers the whole way.
 
+## Goals mode
+
+Instead of a hand-written `plan:`, put a **`goals.yaml`** next to config.yaml (copy
+`goals.example.yaml`): unlock targets first, then every skill to 99 in time slices. The
+planner picks methods from the **method library** (`library/*.yaml`): for the skill it
+chose, the usable method that is most reliable, then most profitable, then fastest.
+
+```sh
+python -m skillbot plan --explain        # what it would train next, and why each method is or isn't usable
+python -m skillbot quest-done "Rune Mysteries"   # methods needing a quest unlock once it's marked done
+```
+
+A method is usable when your levels are in its range, its quests are done, its Inventory
+Tags exist in your config, and it's trusted (or you're running `--supervised`). Methods
+that run out of supplies rest for 30 minutes. The library grows as methods are built and
+proven; skills without one are skipped.
+
 ## Banking
 
 Steps that restock take `withdraw` entries and an optional Bank Tags tab:

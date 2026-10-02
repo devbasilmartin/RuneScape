@@ -109,7 +109,7 @@ Helper follower.
 - [x] Bank v2 (tag tabs, quantities, out-of-stock checks) and item-on-item processing
 - [x] Navigation (teleport hubs, Shortest Path via map offsets) and dialogs: [docs/navigation.md](docs/navigation.md) (needs the first-run checks)
 - [x] Death recovery, random-event avoidance and the Genie lamp, world hopping: [docs/safety.md](docs/safety.md)
-- [ ] Method library, goals file, planner with `--explain`
+- [x] Method library (`library/`), goals file, planner with `plan --explain`, `quest-done`
 - [ ] Price service, alerts, shopping lists, tool-upgrade notices
 
 ### Phase 2: Simple, high-value methods (the unlocks first)

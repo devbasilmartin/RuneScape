@@ -1,0 +1,125 @@
+# Starter methods (the ones the bot can already run). XP and profit per hour are rough
+# planning estimates for a bot at those levels, not promises; adjust them to what you see.
+
+trees_lumbridge:
+  name: "trees (Lumbridge)"
+  skills: [woodcutting]
+  levels: [1, 15]
+  xp_per_hour: 8000
+  profit_per_hour: 0
+  reliability: 5
+  location: "lumbridge trees"
+  step: {task: gather, target: tree, items: [logs], when_full: drop}
+
+oaks_draynor:
+  name: "oaks (Draynor)"
+  skills: [woodcutting]
+  levels: [15, 30]
+  xp_per_hour: 18000
+  profit_per_hour: 0
+  reliability: 5
+  location: "draynor oaks"
+  step: {task: gather, target: oak_tree, items: [oak_logs], when_full: drop}
+
+willows_draynor:
+  name: "willows (Draynor)"
+  skills: [woodcutting]
+  levels: [30, 60]
+  xp_per_hour: 35000
+  profit_per_hour: 15000
+  reliability: 5
+  location: "draynor willows"
+  step:
+    task: gather
+    target: willow_tree
+    items: [willow_logs]
+    when_full: bank
+
+net_fishing_draynor:
+  name: "net fishing (Draynor)"
+  skills: [fishing]
+  levels: [1, 20]
+  xp_per_hour: 8000
+  profit_per_hour: 0
+  reliability: 5
+  location: "draynor fishing"
+  step:
+    task: gather
+    target: fishing_spot
+    items: [raw_shrimps, raw_anchovies, shrimps, anchovies, burnt_fish]
+    when_full: bank
+
+burn_willows:
+  name: "burn willows"
+  skills: [firemaking]
+  levels: [30, 99]
+  xp_per_hour: 45000
+  profit_per_hour: -20000
+  reliability: 4
+  location: "grand exchange lane"
+  step:
+    task: firemaking
+    target: fm_start
+    items: [willow_logs]
+    bank_tab: firemaking
+    withdraw: [{slot: 0, item: willow_logs, quantity: all}]
+
+cows_lumbridge:
+  name: "cows (Lumbridge)"
+  skills: [attack, strength, defence]
+  levels: [1, 40]
+  xp_per_hour: 10000
+  profit_per_hour: 5000
+  reliability: 4
+  location: "lumbridge cows"
+  step:
+    task: combat
+    target: cow
+    loot: loot
+    items: [cowhide]
+    bury: [bones]
+    food: [trout]
+    eat_below: 0.5
+    bank_tab: food
+    withdraw: [{slot: 0, item: trout, quantity: x}]
+    when_full: bank
+
+earth_runes_varrock:
+  name: "earth runes (Varrock)"
+  skills: [runecraft]
+  levels: [9, 14]
+  requires: {quests: ["Rune Mysteries"]}
+  xp_per_hour: 9000
+  profit_per_hour: 20000
+  reliability: 4
+  location: "varrock earth ruins"
+  step:
+    task: runecraft
+    target: altar
+    ruins: ruins
+    portal: altar_portal
+    items: [rune_essence]
+    enter_with: earth_talisman
+    keep: [earth_talisman]
+    bank_tab: runecraft
+    withdraw: [{slot: 0, item: rune_essence, quantity: all}]
+
+fire_runes_alkharid:
+  name: "fire runes (Al Kharid)"
+  skills: [runecraft]
+  levels: [14, 99]
+  requires: {quests: ["Rune Mysteries"]}
+  xp_per_hour: 12000
+  profit_per_hour: 25000
+  reliability: 4
+  location: "al kharid fire ruins"
+  step:
+    task: runecraft
+    target: altar
+    ruins: ruins
+    portal: altar_portal
+    items: [rune_essence]
+    enter_with: fire_talisman
+    keep: [fire_talisman]
+    bank_tab: runecraft
+    withdraw: [{slot: 0, item: rune_essence, quantity: all}]

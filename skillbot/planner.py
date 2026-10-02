@@ -74,6 +74,7 @@ class Planner:
         self.supervised = supervised
         self.notify = notify
         self.safety = None              # Safety: random events, deaths, world hopping
+        self.chooser = None             # goals.Chooser: pick steps from goals + the library
         self.current = None             # the step being run, for error accounting
         self.tainted = False            # a supervised run of the current step hit an error
         self.skipped = set()
@@ -87,9 +88,11 @@ class Planner:
     def run(self) -> None:
         g = self.game
         plan = g.cfg.plan
-        if not plan:
-            raise StopBot("the plan in config.yaml is empty")
         deadline = g.now() + g.cfg.max_runtime_hours * 3600 if g.cfg.max_runtime_hours else None
+        if not plan and self.chooser is None:
+            raise StopBot("the plan in config.yaml is empty (and there's no goals.yaml)")
+        if self.chooser is not None:
+            return self.run_goals(deadline)
         self._guard(lambda: self.resync({s.skill for s in plan}))
         while True:
             progressed = False
@@ -106,6 +109,24 @@ class Planner:
                     raise StopBot("only experimental steps are left: run them with "
                                   "`run --supervised` while you watch")
                 raise StopBot("no step could make progress (out of supplies everywhere?)")
+
+    def run_goals(self, deadline=None) -> None:
+        """Goals mode: ask the chooser what to train, run it, repeat."""
+        from .skills import SKILLS
+        g = self.game
+        self._guard(lambda: self.resync(SKILLS))
+        while True:
+            if deadline and g.now() >= deadline:
+                raise StopBot("max_runtime_hours reached")
+            decision = self.chooser.next(self.levels.levels, g.now())
+            if decision is None:
+                raise StopBot("nothing left to train with the methods available "
+                              "(see `python -m skillbot plan --explain`)")
+            log.info("goals: %s %d -> %d with %r (%s)", decision.skill,
+                     self.levels.get(decision.skill), decision.target, decision.method.name,
+                     decision.phase)
+            if self.run_step(decision.step, deadline) == 0:
+                self.chooser.rest(decision.method.id, g.now() + 1800)   # out of supplies
 
     def allowed(self, step: Step) -> bool:
         """Experimental steps only run supervised (you're watching)."""
