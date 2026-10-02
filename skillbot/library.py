@@ -39,6 +39,7 @@ class Method:
     location: str | None = None
     styles: dict = field(default_factory=dict)
     step: dict = field(default_factory=dict)
+    trade: dict | None = None         # {inputs: {item: per hour}, outputs: {item: per hour}}
 
     @classmethod
     def from_dict(cls, mid: str, d: dict) -> "Method":
@@ -50,7 +51,7 @@ class Method:
                    dict(req.get("levels") or {}), tuple(req.get("quests") or ()),
                    float(d.get("xp_per_hour", 0)), float(d.get("profit_per_hour", 0)),
                    int(d.get("reliability", 3)), d.get("location"),
-                   dict(d.get("styles") or {}), dict(d.get("step") or {}))
+                   dict(d.get("styles") or {}), dict(d.get("step") or {}), d.get("trade"))
 
     def to_step(self, skill: str, until_level: int, max_minutes: float,
                 registry: Registry) -> Step:

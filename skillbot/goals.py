@@ -88,7 +88,7 @@ class Decision:
 
 class Chooser:
     def __init__(self, goals: Goals, library: dict, cfg, registry, quests: QuestLog,
-                 trust=None, supervised: bool = False, clock=None):
+                 trust=None, supervised: bool = False, clock=None, prices=None):
         self.goals = goals
         self.library = library
         self.cfg = cfg
@@ -97,6 +97,7 @@ class Chooser:
         self.trust = trust
         self.supervised = supervised
         self.cooldown = {}            # method id -> time it may be tried again
+        self.prices = prices          # Prices: live profit for methods with a trade
         self.clock = clock
 
     # ---- eligibility -------------------------------------------------------------------
@@ -134,8 +135,16 @@ class Chooser:
         methods = [m for m in self.library.values() if skill in m.skills]
         if skill in self.goals.overrides:
             methods = [m for m in methods if m.id == self.goals.overrides[skill]]
-        methods.sort(key=lambda m: (-m.reliability, -m.profit_per_hour, -m.xp_per_hour, m.id))
+        methods.sort(key=lambda m: (-m.reliability, -self.profit(m), -m.xp_per_hour, m.id))
         return [(m, *self.check(m, skill, levels, now)) for m in methods]
+
+    def profit(self, method) -> float:
+        """Live profit per hour when prices and a trade are known, else the estimate."""
+        if self.prices is not None and method.trade:
+            live = self.prices.profit_per_hour(method.trade)
+            if live is not None:
+                return live
+        return method.profit_per_hour
 
     def best(self, skill: str, levels: dict, now: float = 0.0):
         for method, step, reason in self.candidates(skill, levels, now):
@@ -213,7 +222,7 @@ class Chooser:
             parts = []
             for m, step, reason in cands:
                 tag = "✓" if step is not None else f"✗ {reason}"
-                parts.append(f"{m.name} [{tag}; r{m.reliability}, {m.profit_per_hour/1000:+.0f}k gp/h, "
+                parts.append(f"{m.name} [{tag}; r{m.reliability}, {self.profit(m)/1000:+.0f}k gp/h, "
                              f"{m.xp_per_hour/1000:.0f}k xp/h]")
             lines.append(f"  {skill} {levels.get(skill, 1)}: " + "; ".join(parts))
         return "\n".join(lines)

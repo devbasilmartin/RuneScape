@@ -110,7 +110,7 @@ Helper follower.
 - [x] Navigation (teleport hubs, Shortest Path via map offsets) and dialogs: [docs/navigation.md](docs/navigation.md) (needs the first-run checks)
 - [x] Death recovery, random-event avoidance and the Genie lamp, world hopping: [docs/safety.md](docs/safety.md)
 - [x] Method library (`library/`), goals file, planner with `plan --explain`, `quest-done`
-- [ ] Price service, alerts, shopping lists, tool-upgrade notices
+- [x] Price service, alerts, shopping lists, tool-upgrade notices: [docs/prices.md](docs/prices.md)
 
 ### Phase 2: Simple, high-value methods (the unlocks first)
 - [ ] Magic (teleports → alching), Agility (rooftops), Construction (bagged plants → larders/doors), combat (giants → crabs)

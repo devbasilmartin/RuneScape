@@ -147,6 +147,7 @@ class Config:
     layout: Layout = field(default_factory=Layout)
     supervisor: dict = field(default_factory=dict)   # see supervisor.SupervisorConfig
     discord: dict = field(default_factory=dict)      # summary_hour (local time, default 9)
+    prices: dict = field(default_factory=dict)       # see prices.PriceConfig
 
     @classmethod
     def load(cls, path) -> "Config":

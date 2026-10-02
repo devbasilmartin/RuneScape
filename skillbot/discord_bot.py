@@ -63,7 +63,7 @@ class AskButton(discord.ui.DynamicItem[discord.ui.Button], template=r"ask:(?P<as
                                                 view=None)
 
 
-def run(profiles, legacy_data_dir: Path | None, summary_hour: int = 9) -> None:
+def run(profiles, legacy_data_dir: Path | None, summary_hour: int = 9, pricewatch=None) -> None:
     """``legacy_data_dir`` when no profiles are in use, otherwise None."""
     token = os.environ.get("SKILLBOT_DISCORD_TOKEN", "").strip()
     if not token:
@@ -71,9 +71,12 @@ def run(profiles, legacy_data_dir: Path | None, summary_hour: int = 9) -> None:
     channel_id = _env_int("SKILLBOT_DISCORD_CHANNEL")
     owner_id = _env_int("SKILLBOT_DISCORD_OWNER")
     if legacy_data_dir is not None:
-        core = DiscordCore(legacy_data_dir, summary_hour=summary_hour)
+        core = DiscordCore(legacy_data_dir, summary_hour=summary_hour, pricewatch=pricewatch)
     else:
-        core = DiscordCore(profiles.shared_data, summary_hour=summary_hour, profiles=profiles)
+        core = DiscordCore(profiles.shared_data, summary_hour=summary_hour, profiles=profiles,
+                           pricewatch=pricewatch)
+    if pricewatch is not None:
+        pricewatch.status_dir = lambda: core.status_dir
     AskButton.core, AskButton.owner_id = core, owner_id
 
     intents = discord.Intents.default()
@@ -102,6 +105,13 @@ def run(profiles, legacy_data_dir: Path | None, summary_hour: int = 9) -> None:
     simple("stop", "Stop the supervisor, RuneLite and the bot")
     simple("questions", "Open questions waiting for you")
     simple("profile", "Account profiles and which one is active")
+    simple("shopping", "What to buy for the next ~12 hours of training, at current prices")
+
+    @tree.command(name="sold", description="You sold an item the bot produced")
+    @app_commands.describe(item="the item's tag name, e.g. willow_logs")
+    async def sold(interaction: discord.Interaction, item: str):
+        if await allowed(interaction):
+            await interaction.response.send_message(await asyncio.to_thread(core.sold, item))
 
     @tree.command(name="switch", description="Switch the bot to another account profile")
     @app_commands.describe(name="profile name")
@@ -144,6 +154,8 @@ def run(profiles, legacy_data_dir: Path | None, summary_hour: int = 9) -> None:
                     summary = await asyncio.to_thread(core.tick)
                     if summary:
                         await channel.send(summary)
+                    for alert in await asyncio.to_thread(core.price_tick):
+                        await channel.send(alert)
             except discord.HTTPException as e:
                 log.warning("Discord error, will retry: %s", e)
             minute += 1

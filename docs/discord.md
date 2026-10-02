@@ -19,6 +19,7 @@ It runs as its own service in the VM, separate from the supervisor, so `/status`
 | `/pause`, `/resume` | hand over to yourself and back |
 | `/start`, `/stop` | start or stop the supervisor (RuneLite and the bot) |
 | `/questions` | questions still waiting for you |
+| `/shopping`, `/sold ITEM` | what to buy for ~12h of training; clear an item you sold ([prices.md](prices.md)) |
 | `/profile`, `/switch NAME` | which account is active; switch to another (restarts the supervisor) |
 
 **Only you can use it:** commands, buttons and replies from anyone other than the account in

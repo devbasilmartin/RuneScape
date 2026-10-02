@@ -28,6 +28,7 @@ class Game:
         self.run = None        # RunManager, when run: always
         self.reported = set()  # out-of-stock notices already sent
         self.nav = None        # Navigator, when hubs are configured
+        self.ledger = None     # prices.Ledger: what gets banked, for sell alerts
 
     def keep_running(self) -> None:
         if self.run is not None:
@@ -183,6 +184,9 @@ class Game:
         otherwise click every remembered slot (clicking an emptied slot does nothing).
         """
         before = {i: n for i, n in before.items() if n not in keep}
+        if self.ledger is not None:
+            for name in set(before.values()):
+                self.ledger.add(name, sum(1 for n in before.values() if n == name))
         if self.inv.any_tag_visible(self.grab()):
             for _ in range(len(before) + 1):
                 tagged = {i: n for i, n in self.inv.tags(self.grab()).items() if n not in keep}

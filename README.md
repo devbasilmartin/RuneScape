@@ -253,6 +253,7 @@ python -m skillbot run
 - `notify.py`, `messages.py`, `status.py`, `discord_core.py`, `discord_bot.py`: notifications, questions and phone commands via Discord ([docs/discord.md](docs/discord.md)).
 - `navigation.py`, `dialog.py`: teleport hubs, world-map targets, path following, chat dialogs ([docs/navigation.md](docs/navigation.md)).
 - `safety.py`: random events, deaths and graves, world hopping ([docs/safety.md](docs/safety.md)).
+- `prices.py`, `pricewatch.py`, `upgrades.py`: OSRS Wiki prices, buy/sell alerts, shopping list, upgrade notices ([docs/prices.md](docs/prices.md)).
 - `run.py`: keeps run on (orb color samples, energy reading, minimum energy).
 
 ## Tests

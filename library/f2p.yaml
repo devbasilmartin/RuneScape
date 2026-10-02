@@ -1,5 +1,6 @@
 # Starter methods (the ones the bot can already run). XP and profit per hour are rough
 # planning estimates for a bot at those levels, not promises; adjust them to what you see.
+# `trade` (items per hour in and out) lets the planner use live prices for profit instead.
 
 trees_lumbridge:
   name: "trees (Lumbridge)"
@@ -29,6 +30,7 @@ willows_draynor:
   profit_per_hour: 15000
   reliability: 5
   location: "draynor willows"
+  trade: {outputs: {willow_logs: 500}}
   step:
     task: gather
     target: willow_tree
@@ -57,6 +59,7 @@ burn_willows:
   profit_per_hour: -20000
   reliability: 4
   location: "grand exchange lane"
+  trade: {inputs: {willow_logs: 500}}
   step:
     task: firemaking
     target: fm_start
@@ -72,6 +75,7 @@ cows_lumbridge:
   profit_per_hour: 5000
   reliability: 4
   location: "lumbridge cows"
+  trade: {inputs: {trout: 20}, outputs: {cowhide: 150}}
   step:
     task: combat
     target: cow
@@ -93,6 +97,7 @@ earth_runes_varrock:
   profit_per_hour: 20000
   reliability: 4
   location: "varrock earth ruins"
+  trade: {inputs: {rune_essence: 1400}, outputs: {earth_rune: 1400}}
   step:
     task: runecraft
     target: altar
@@ -113,6 +118,7 @@ fire_runes_alkharid:
   profit_per_hour: 25000
   reliability: 4
   location: "al kharid fire ruins"
+  trade: {inputs: {rune_essence: 1700}, outputs: {fire_rune: 1700}}
   step:
     task: runecraft
     target: altar

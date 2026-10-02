@@ -32,9 +32,10 @@ def count_log_lines(path: Path, needle: str, since: float) -> int:
 
 class DiscordCore:
     def __init__(self, data_dir: Path, summary_hour: int = 9, run=subprocess.run,
-                 clock=time.time, profiles=None):
+                 clock=time.time, profiles=None, pricewatch=None):
         self.data_dir = Path(data_dir)      # shared: the mailbox and this service's state
         self.profiles = profiles
+        self.pricewatch = pricewatch
         self.mailbox = Mailbox(self.data_dir, clock=clock)
         self.summary_hour = summary_hour
         self.run = run
@@ -87,6 +88,10 @@ class DiscordCore:
             active = self.profiles.active()
             return "\n".join(("**→ " + n + "**") if n == active else n
                              for n in self.profiles.names())
+        if name == "shopping":
+            if self.pricewatch is None:
+                return "Prices aren't set up."
+            return self.pricewatch.shopping()
         if name == "questions":
             asks = self.mailbox.open_asks()
             if not asks:
@@ -108,6 +113,24 @@ class DiscordCore:
                      capture_output=True, text=True, timeout=60)
             return f"Switched to **{name}** and restarted the supervisor."
         return f"Switched to **{name}**. The supervisor isn't running; /start to start it."
+
+    def sold(self, item: str) -> str:
+        """You sold an item: stop counting it towards sell alerts."""
+        from .prices import Ledger
+        Ledger(self.status_dir / "ledger.json").sold(item)
+        return f"OK, {item} cleared from the ledger."
+
+    def price_tick(self) -> list[str]:
+        """Hourly: poll prices and return any alerts. Network errors are logged and skipped."""
+        if self.pricewatch is None or not self.pricewatch.due():
+            return []
+        try:
+            return self.pricewatch.run()
+        except OSError as e:
+            import logging
+            logging.getLogger("skillbot").warning("price poll failed: %s", e)
+            self.pricewatch.prices.last_poll = self.clock()
+            return []
 
     # ---- questions ---------------------------------------------------------------------
     def remember_ask_message(self, message_id: int, ask_id: str) -> None:

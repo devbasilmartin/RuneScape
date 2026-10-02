@@ -177,8 +177,13 @@ def cmd_discord(cfg: Config, args) -> None:
                                                    maxBytes=2_000_000, backupCount=2)
     handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
     logging.getLogger().addHandler(handler)
+    from .library import load_library
+    from .pricewatch import PriceWatch
+    from .prices import PriceConfig, Prices
+    watch = PriceWatch(Prices(args.mailbox_dir / "prices", PriceConfig.from_dict(cfg.prices)),
+                       load_library(), lambda: cfg.data_dir)
     run(args.profiles, cfg.data_dir if args.selected.name is None else None,
-        summary_hour=int(cfg.discord.get("summary_hour", 9)))
+        summary_hour=int(cfg.discord.get("summary_hour", 9)), pricewatch=watch)
 
 
 def cmd_ask(cfg: Config, args) -> None:
@@ -255,12 +260,31 @@ def cmd_travel(cfg: Config, args) -> None:
     print("arrived")
 
 
-def make_chooser(cfg: Config, goals_path, trust=None, supervised=False):
+def make_chooser(cfg: Config, goals_path, trust=None, supervised=False, prices_dir=None):
     from .colors import Registry
     from .goals import Chooser, Goals, QuestLog
     from .library import load_library
+    from .prices import PriceConfig, Prices
+    prices = Prices(prices_dir, PriceConfig.from_dict(cfg.prices)) if prices_dir else None
     return Chooser(Goals.load(goals_path), load_library(), cfg, Registry.load(cfg.colors_file),
-                   QuestLog(cfg.data_dir / "quests.json"), trust, supervised)
+                   QuestLog(cfg.data_dir / "quests.json"), trust, supervised, prices=prices)
+
+
+def cmd_sold(cfg: Config, args) -> None:
+    from .prices import Ledger
+    Ledger(cfg.data_dir / "ledger.json").sold(args.item)
+    print(f"cleared {args.item} from the ledger")
+
+
+def cmd_prices(cfg: Config, args) -> None:
+    from .library import load_library
+    from .pricewatch import PriceWatch
+    from .prices import PriceConfig, Prices
+    watch = PriceWatch(Prices(args.mailbox_dir / "prices", PriceConfig.from_dict(cfg.prices)),
+                       load_library(), lambda: cfg.data_dir)
+    for alert in watch.run():
+        print(alert)
+    print(watch.shopping())
 
 
 def cmd_plan(cfg: Config, args) -> None:
@@ -350,14 +374,19 @@ def cmd_run(cfg: Config, args) -> None:
         game.run = RunManager.load(game, cfg.data_dir)
     game.nav = make_navigator(cfg, game)
     levels = Levels.load(game, SkillReader.load(cfg.layout, cfg.data_dir), cfg.data_dir)
+    from .prices import Ledger
     from .trust import TrustStore
+    from .upgrades import Upgrades
+    game.ledger = Ledger(cfg.data_dir / "ledger.json")
+    levels.on_level_up = Upgrades(cfg.data_dir / "upgrades.json", notify).level_up
     planner = Planner(game, levels, Session.load(game, cfg.data_dir), status_dir=cfg.data_dir,
                       trust=TrustStore(cfg.data_dir / "trust.json"), supervised=args.supervised)
     if args.supervised:
         logging.info("supervised run: stops at the first error; experimental steps allowed")
     goals_path = Path(args.config).parent / "goals.yaml"
     if goals_path.exists():
-        planner.chooser = make_chooser(cfg, goals_path, planner.trust, args.supervised)
+        planner.chooser = make_chooser(cfg, goals_path, planner.trust, args.supervised,
+                                       prices_dir=args.mailbox_dir / "prices")
         logging.info("goals mode: %s", goals_path)
     from .safety import Safety, SafetyConfig
     planner.safety = Safety(game, SafetyConfig.from_dict(cfg.safety), cfg.genie_color,
@@ -423,6 +452,9 @@ def main(argv=None) -> None:
                    help="you're watching: allow experimental steps, stop at the first error")
     c = sub.add_parser("plan", help="what the goals planner would train next, and why")
     c.add_argument("--explain", action="store_true", help="(the default) show the reasoning")
+    c = sub.add_parser("sold", help="you sold an item: clear it from the sell-alert ledger")
+    c.add_argument("item")
+    sub.add_parser("prices", help="fetch prices now: alerts and the shopping list")
     c = sub.add_parser("quest-done", help="mark a quest as completed (unlocks methods)")
     c.add_argument("name")
     c = sub.add_parser("trust", help="trust level of each plan step (or set one)")
@@ -452,7 +484,7 @@ def main(argv=None) -> None:
      "learn-energy": cmd_learn_energy, "learn-digits": cmd_learn_digits, "levels": cmd_levels,
      "debug": cmd_debug, "doctor": cmd_doctor, "supervise": cmd_supervise, "discord": cmd_discord, "ask": cmd_ask,
      "add-destination": cmd_add_destination, "travel": cmd_travel,
-     "trust": cmd_trust, "plan": cmd_plan, "quest-done": cmd_quest_done, "setup": cmd_setup, "check-setup": cmd_check_setup, "colors": cmd_colors,
+     "trust": cmd_trust, "plan": cmd_plan, "sold": cmd_sold, "prices": cmd_prices, "quest-done": cmd_quest_done, "setup": cmd_setup, "check-setup": cmd_check_setup, "colors": cmd_colors,
      "profile": cmd_profile, "pause": cmd_pause,
      "resume": cmd_resume, "run": cmd_run}[args.cmd](cfg, args)
 

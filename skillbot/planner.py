@@ -42,6 +42,8 @@ class Levels:
     def get(self, skill: str) -> int:
         return self.levels.get(skill, 1)
 
+    on_level_up = None          # fn(skill, old, new): upgrade notices
+
     def refresh(self, skills) -> None:
         g = self.game
         g.open_tab("skills")
@@ -57,6 +59,8 @@ class Levels:
             else:
                 if level > self.get(skill):
                     log.info("%s level %d", skill, level)
+                    if self.on_level_up:
+                        self.on_level_up(skill, self.get(skill), level)
                 self.levels[skill] = level
         self.save()
 
@@ -75,6 +79,7 @@ class Planner:
         self.notify = notify
         self.safety = None              # Safety: random events, deaths, world hopping
         self.chooser = None             # goals.Chooser: pick steps from goals + the library
+        self.last_method = {}           # skill -> method id last used (to announce switches)
         self.current = None             # the step being run, for error accounting
         self.tainted = False            # a supervised run of the current step hit an error
         self.skipped = set()
@@ -125,6 +130,11 @@ class Planner:
             log.info("goals: %s %d -> %d with %r (%s)", decision.skill,
                      self.levels.get(decision.skill), decision.target, decision.method.name,
                      decision.phase)
+            last = self.last_method.get(decision.skill)
+            if last and last != decision.method.id:
+                self.notify(f"{decision.skill.title()}: switching from {last} to "
+                            f"{decision.method.id} ({self.chooser.profit(decision.method):+,.0f} gp/h)")
+            self.last_method[decision.skill] = decision.method.id
             if self.run_step(decision.step, deadline) == 0:
                 self.chooser.rest(decision.method.id, g.now() + 1800)   # out of supplies
 
