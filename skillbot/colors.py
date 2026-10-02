@@ -56,6 +56,7 @@ class Entry:
     name: str
     rgb: tuple
     category: str
+    area: str = "default"     # "everywhere", "default", or a place (e.g. "wintertodt")
 
 
 class Registry:
@@ -79,7 +80,7 @@ class Registry:
             rgb = tuple(spec["rgb"])
             if len(rgb) != 3 or not all(0 <= v <= 255 for v in rgb):
                 raise ValueError(f"colors.yaml: {name}: rgb must be three numbers 0-255")
-            entries[name] = Entry(name, rgb, category)
+            entries[name] = Entry(name, rgb, category, spec.get("area", "default"))
         return cls(entries, path)
 
     def resolve(self, value):
@@ -100,10 +101,21 @@ class Registry:
         matches.sort(key=lambda e: (e.category == "item") != item)
         return matches[0].name if matches else None
 
-    def free_color(self, category: str, tolerance: int = 25):
+    @staticmethod
+    def can_meet(a: Entry, b: Entry) -> bool:
+        """Could these two colors be on screen together? Items only meet items (in the
+        inventory); world highlights meet when they share an area or one is everywhere."""
+        if (a.category == "item") != (b.category == "item"):
+            return False
+        if a.category == "item":
+            return True
+        return a.area == b.area or "everywhere" in (a.area, b.area)
+
+    def free_color(self, category: str, tolerance: int = 25, area: str = "default"):
         """A color not confusable with any registry color it could meet."""
+        new = Entry("", (0, 0, 0), category, area)
+        taken = [e.rgb for e in self.entries.values() if self.can_meet(new, e)]
         in_inventory = category == "item"
-        taken = [e.rgb for e in self.entries.values() if (e.category == "item") == in_inventory]
         if in_inventory:
             levels = (0, 64, 128, 192, 255)
             options = [c for c in product(levels, repeat=3) if max(c) >= 128]
@@ -114,32 +126,31 @@ class Registry:
                 return c
         return None
 
-    def add(self, name: str, category: str, tolerance: int = 25) -> tuple:
+    def add(self, name: str, category: str, tolerance: int = 25, area: str = "default") -> tuple:
         """Append a new name with a free color to colors.yaml."""
         if name in self.entries:
             raise ValueError(f"{name} is already in the registry")
         if category not in CATEGORIES:
             raise ValueError(f"category must be one of {CATEGORIES}")
-        rgb = self.free_color(category, tolerance)
+        rgb = self.free_color(category, tolerance, area)
         if rgb is None:
-            raise ValueError(f"no free {category} colors left")
-        self.entries[name] = Entry(name, rgb, category)
+            raise ValueError(f"no free {category} colors left in area {area!r}")
+        self.entries[name] = Entry(name, rgb, category, area)
         if self.path:
+            extra = f", area: {area}" if area != "default" else ""
             with open(self.path, "a") as f:
                 f.write(f"{name + ':':<16} {{rgb: [{rgb[0]}, {rgb[1]}, {rgb[2]}], "
-                        f"category: {category}}}\n")
+                        f"category: {category}{extra}}}\n")
         return rgb
 
     def check(self, tolerance: int) -> list[str]:
         """Problems within the registry itself (two names for confusable colors)."""
         problems = []
-        # Inventory Tags colors only meet each other in the inventory; everything else
-        # (highlights in the game world) only meets other world highlights.
-        for in_inventory in (True, False):
-            group = {n: e.rgb for n, e in self.entries.items()
-                     if (e.category == "item") == in_inventory}
-            for a, b in collisions(group, tolerance):
-                problems.append(f"{a} and {b} are too similar")
+        entries = list(self.entries.values())
+        for i, a in enumerate(entries):
+            for b in entries[i + 1:]:
+                if self.can_meet(a, b) and not distinct(a.rgb, b.rgb, tolerance):
+                    problems.append(f"{a.name} and {b.name} are too similar")
         return problems
 
 
@@ -158,6 +169,8 @@ def resolve_config(raw: dict, registry: Registry) -> dict:
         raw["health_bar_colors"] = [r(c) for c in raw["health_bar_colors"]]
     if "items" in raw:
         items = raw["items"] or {}
+        if items == "all":                     # every item in the registry
+            items = [n for n, e in registry.entries.items() if e.category == "item"]
         if isinstance(items, list):            # just names: each is its own registry color
             items = {n: n for n in items}
         raw["items"] = {n: r(c) for n, c in items.items()}

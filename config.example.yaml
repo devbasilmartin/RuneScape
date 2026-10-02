@@ -29,9 +29,8 @@ run_retry_seconds: 60
 
 # Inventory Tags: the items the bot needs to see, each tagged with its registry color.
 # Untagged items (axe, pickaxe, net, tinderbox, hammer...) are never dropped or banked.
-items: [logs, oak_logs, willow_logs, raw_shrimps, raw_anchovies, shrimps, anchovies,
-        burnt_fish, copper_ore, tin_ore, bronze_bar, bones, cowhide, trout, rune_essence,
-        earth_rune, fire_rune, earth_talisman, fire_talisman]
+# `all` uses every item in the registry; or list just the ones you tag.
+items: all
 
 # Ground Markers: tiles clicked in order when a target isn't on screen. Each color is
 # used at most once within a route; the bot heads for the furthest one it can see.

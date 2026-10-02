@@ -1,0 +1,270 @@
+# Phase 3: minigames and special mechanics, written as routines (see skillbot/routine_spec.py).
+# These are first drafts made without the real client: expect to adjust timeouts, menu rows
+# and the occasional step after the first supervised runs. Every color name is in
+# colors.yaml under its own area. Rates are rough.
+
+motherlode_mine:
+  name: "Motherlode Mine"
+  skills: [mining]
+  levels: [30, 99]
+  xp_per_hour: 40000
+  profit_per_hour: 150000
+  reliability: 3
+  location: "motherlode mine"
+  step:
+    task: routine
+    items: [paydirt, mlm_ore]        # tag every ore and golden nuggets as mlm_ore
+    keep: [hammer]
+    tools: 2                         # pickaxe + hammer
+    routine:
+      - name: fix the water wheel   # Object Markers on the *broken* strut only
+        when: {visible: broken_strut}
+        do: [{click: broken_strut}, {wait: [4, 6]}]
+      - name: mine paydirt
+        repeat_until: {full: true}
+        max: 60
+        do: [{click: ore_vein}, {wait_for: {gained: paydirt}, timeout: 30}]
+      - name: hopper
+        count: loads
+        do: [{click: hopper}, {wait_for: {lacks: paydirt}, timeout: 20}]
+      - name: empty the sack        # every 3 loads (the sack holds 81)
+        when: {counter_at_least: {loads: 3}}
+        until_fail: true
+        reset: [loads]
+        do: [{click: mlm_sack}, {wait_for: {gained: mlm_ore}, timeout: 6}, {bank: true},
+             {progress: 1}]
+
+blast_furnace_gold:
+  name: "Blast Furnace gold bars"
+  skills: [smithing]
+  levels: [40, 99]
+  requires: {quests: ["Family Crest"]}
+  xp_per_hour: 300000
+  profit_per_hour: -50000
+  reliability: 3
+  location: "blast furnace"
+  trade: {inputs: {gold_ore: 5000}, outputs: {gold_bar: 5000}}
+  step:
+    task: routine
+    items: [gold_ore, gold_bar]
+    keep: [goldsmith_gauntlets, ice_gloves]
+    tools: 2
+    bank_tab: blast_furnace
+    withdraw: [{slot: 0, item: gold_ore, quantity: all}]
+    routine:
+      - name: restock
+        when: {lacks: gold_ore}
+        do: [{bank: true}]
+      - name: gauntlets on, ore on the belt
+        do: [{click: {item: goldsmith_gauntlets}}, {click: conveyor},
+             {wait_for: {lacks: gold_ore}, timeout: 15}]
+      - name: ice gloves on, take the bars
+        do: [{click: {item: ice_gloves}}, {wait: [2, 3]}, {click: bar_dispenser},
+             {wait: [1, 2]}, {key: space}, {wait_for: {gained: gold_bar}, timeout: 10},
+             {progress: 1}]
+
+wintertodt:
+  name: "Wintertodt"
+  skills: [firemaking]
+  levels: [50, 99]
+  xp_per_hour: 250000
+  profit_per_hour: 100000
+  reliability: 3
+  location: "wintertodt"
+  step:
+    task: routine
+    items: [bruma_root]
+    food: [shark]
+    eat_below: 0.5
+    keep: [hammer, tinderbox]
+    tools: 3                       # axe, hammer, tinderbox (+ warm clothing worn)
+    bank_tab: food
+    withdraw: [{slot: 1, item: shark, quantity: "x"}]
+    routine:
+      - name: restock food
+        when: {lacks: shark}
+        do: [{bank: true}, {travel: "wintertodt", until: bruma_tree}]
+      - name: repair the brazier   # Object Markers on the broken brazier only
+        when: {visible: broken_brazier}
+        do: [{click: broken_brazier}, {wait: [3, 4]}]
+      - name: light the brazier    # ...and on the unlit one
+        when: {visible: unlit_brazier}
+        do: [{click: unlit_brazier}, {wait: [3, 4]}]
+      - name: chop roots
+        until_fail: true
+        max: 12
+        do: [{click: bruma_tree}, {wait_for: {gained: bruma_root}, timeout: 15}]
+      - name: feed the brazier
+        when: {has: bruma_root}
+        do: [{click: lit_brazier}, {wait_for: {lacks: bruma_root}, timeout: 40},
+             {progress: 1}]
+
+fishing_trawler:
+  name: "Fishing Trawler (angler outfit)"
+  skills: [fishing]
+  levels: [15, 99]
+  xp_per_hour: 15000          # low on purpose: picked via goals overrides for the outfit
+  reliability: 3
+  location: "port khazard trawler"
+  step:
+    task: routine
+    items: []
+    tools: 0
+    routine:
+      - name: board
+        do: [{click: gangplank}, {wait_for: {visible: trawler_spot}, timeout: 300}]
+      - name: spam the spot
+        repeat_until: {not_visible: trawler_spot}
+        max: 600
+        do: [{click: trawler_spot}, {wait: [1.5, 2.5]}]
+      - name: rewards
+        do: [{wait_for: {visible: reward_net}, timeout: 120}, {click: reward_net},
+             {wait: [2, 3]}, {notify: "a Trawler reward is waiting in the net if the bot couldn't take it"},
+             {progress: 1}]
+
+red_chinchompas:
+  name: "red chinchompas (box traps)"
+  skills: [hunter]
+  levels: [63, 99]
+  requires: {quests: ["Eagles' Peak"]}
+  xp_per_hour: 80000
+  profit_per_hour: 300000
+  reliability: 3
+  location: "feldip red chinchompas"
+  step:
+    task: routine
+    items: [red_chinchompa]
+    keep: [box_trap]
+    tools: 0
+    routine:
+      - name: reset caught traps   # Hunter plugin: full-trap color; right-click "Reset"
+        until_fail: true
+        max: 6
+        do: [{click: trap_full, right_option: 2}, {wait_for: {not_visible: trap_full}, timeout: 6},
+             {progress: 1}]
+      - name: re-lay fallen traps  # Ground Items on a dropped box trap; right-click "Lay"
+        until_fail: true
+        max: 6
+        do: [{click: trap_ground, right_option: 2}, {wait_for: {not_visible: trap_ground}, timeout: 6}]
+      - name: lay new traps on marked tiles
+        when: {has: box_trap}
+        until_fail: true
+        max: 5
+        do: [{click: trap_tile}, {wait: [2, 3]}, {click: {item: box_trap}},
+             {wait_for: {not_visible: trap_tile}, timeout: 6}]
+      - name: wait
+        do: [{wait: [3, 5]}]
+
+ensouled_heads:
+  name: "ensouled heads (Arceuus reanimation)"
+  skills: [prayer]
+  levels: [1, 99]
+  requires: {levels: {magic: 41}}
+  xp_per_hour: 120000
+  profit_per_hour: -150000
+  reliability: 3
+  location: "dark altar"
+  step:
+    task: routine
+    items: [ensouled_head]
+    food: [shark]
+    eat_below: 0.5
+    bank_tab: prayer
+    withdraw: [{slot: 0, item: ensouled_head, quantity: all}]
+    routine:
+      - name: restock heads
+        when: {lacks: ensouled_head}
+        do: [{bank: true}, {travel: "dark altar", until: dark_altar}]
+      - name: reanimate and kill
+        do: [{cast: {spell: reanimate_adept, on_item: ensouled_head}},
+             {wait_for: {visible: enemy}, timeout: 10}, {tab: inventory},
+             {click: enemy}, {wait_for: {not_visible: enemy}, timeout: 90}, {progress: 1}]
+
+gilded_altar_public:
+  name: "gilded altar (public host)"
+  skills: [prayer]
+  levels: [1, 99]
+  xp_per_hour: 400000
+  profit_per_hour: -2000000
+  reliability: 2
+  location: "rimmington portal"
+  step:
+    task: routine
+    items: [bones_for_altar, noted_bones]
+    tools: 0
+    vars: {host: ""}                # the host's name: set it in goals overrides / the plan
+    bank_tab: prayer
+    withdraw: [{slot: 1, item: noted_bones, quantity: all}]
+    routine:
+      - name: unnote at Phials
+        when: {lacks: bones_for_altar}
+        exhausted_if: {lacks: noted_bones}
+        do: [{use: {item: noted_bones, target: phials}}, {dialog: [3]},
+             {wait_for: {has: bones_for_altar}, timeout: 10}]
+      - name: enter the host's house
+        do: [{click: house_portal}, {dialog: [2]}, {wait: [1, 2]}, {type: "{host}"},
+             {key: enter}, {wait_for: {visible: gilded_altar}, timeout: 20}]
+      - name: offer bones
+        do: [{use: {item: bones_for_altar, target: gilded_altar}},
+             {wait_for: {lacks: bones_for_altar}, timeout: 90}, {progress: 1}]
+      - name: leave
+        do: [{click: house_exit}, {wait_for: {visible: phials}, timeout: 20}]
+
+arceuus_blood_runes:
+  name: "Arceuus blood runes"
+  skills: [runecraft]
+  levels: [77, 90]
+  requires: {levels: {mining: 38, crafting: 38}}
+  xp_per_hour: 35000
+  profit_per_hour: 300000
+  reliability: 3
+  location: "arceuus dense runestones"
+  step:
+    task: routine
+    items: [dense_essence_block, dark_essence_block, dark_essence_fragments]
+    keep: [chisel]
+    tools: 2
+    routine:
+      - name: mine dense essence
+        repeat_until: {full: true}
+        max: 40
+        do: [{click: dense_runestone}, {wait_for: {gained: dense_essence_block}, timeout: 20}]
+      - name: venerate
+        do: [{click: dark_altar}, {wait_for: {gained: dark_essence_block}, timeout: 30}]
+      - name: chisel
+        do: [{use: {item: chisel, target: {item: dark_essence_block}}},
+             {wait_for: {gained: dark_essence_fragments}, timeout: 60}]
+      - name: bind at the blood altar
+        do: [{travel: "arceuus blood altar", until: blood_altar}, {click: blood_altar},
+             {wait_for: {lacks: dark_essence_fragments}, timeout: 20}, {progress: 1},
+             {travel: "arceuus dense runestones", until: dense_runestone}]
+
+tithe_farm:
+  name: "Tithe Farm"
+  skills: [farming]
+  levels: [34, 99]
+  xp_per_hour: 60000
+  reliability: 2
+  location: "tithe farm"
+  step:
+    task: routine
+    items: [tithe_seed, tithe_fruit]
+    keep: [gricollers_can]
+    tools: 2                        # seed dibber, spade
+    routine:
+      - name: seeds
+        when: {lacks: tithe_seed}
+        do: [{click: seed_table}, {dialog: [1]}, {wait_for: {has: tithe_seed}, timeout: 10}]
+      - name: plant and water       # needs the Tithe Farm plugin / markers in these colors
+        until_fail: true
+        max: 8
+        do: [{use: {item: tithe_seed, target: tithe_empty}}, {wait: [2, 3]},
+             {use: {item: gricollers_can, target: tithe_dry}}, {wait: [2, 3]}]
+      - name: water the dry ones
+        until_fail: true
+        max: 16
+        do: [{use: {item: gricollers_can, target: tithe_dry}}, {wait_for: {not_visible: tithe_dry}, timeout: 5}]
+      - name: harvest
+        until_fail: true
+        max: 8
+        do: [{click: tithe_grown}, {wait_for: {gained: tithe_fruit}, timeout: 6}, {progress: 1}]

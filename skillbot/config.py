@@ -9,7 +9,7 @@ from .layout import Layout
 from .skills import SKILLS
 
 TASKS = ("gather", "process", "firemaking", "combat", "runecraft", "cast", "agility",
-         "construction", "thieve")
+         "construction", "thieve", "routine", "quest")
 
 
 def _color(v):
@@ -81,6 +81,10 @@ class Step:
     open_every: int = 25
     attempts_per_batch: int = 100
 
+    # routine (minigames and other scripted activities; see routine_spec.py)
+    routine: tuple = ()
+    vars: dict = field(default_factory=dict)   # values for {name} in a routine's type: text
+
     # combat while standing still (crabs)
     stand_on: tuple | None = None      # Ground Marker to stand on
     reset_spot: tuple | None = None    # Ground Marker far enough away to reset aggression
@@ -129,6 +133,8 @@ class Step:
             d["build_key"] = str(d["build_key"])
         if "obstacles" in d:
             d["obstacles"] = tuple(tuple(c) for c in d["obstacles"])
+        if "routine" in d:
+            d["routine"] = tuple(d["routine"])
         for key in ("items", "confirm", "withdraw", "food", "bury", "keep", "gear", "runes"):
             if key in d:
                 d[key] = tuple(d[key])
@@ -145,10 +151,13 @@ class Step:
             raise ValueError(f"step {step.name!r}: cast needs the spell's position")
         if step.task == "agility" and len(step.obstacles) < 2:
             raise ValueError(f"step {step.name!r}: agility needs the obstacle colors in order")
+        if step.task == "routine":
+            from .routine_spec import check_routine
+            check_routine(list(step.routine), step.name)
         if step.task == "construction" and step.target is None and step.hotspot is None:
             raise ValueError(f"step {step.name!r}: construction needs a target color or hotspot")
         if step.target is None and not step.with_item and step.task not in (
-                "cast", "agility", "construction"):
+                "cast", "agility", "construction", "routine", "quest"):
             raise ValueError(f"step {step.name!r}: needs a target highlight color")
         if step.when_full not in ("drop", "bank"):
             raise ValueError(f"step {step.name!r}: when_full must be drop or bank")

@@ -33,7 +33,7 @@ def test_xp_table():
 def test_starter_library_builds_steps_with_the_example_config():
     reg = Registry.load()
     spells = {"varrock_teleport": (1, 1), "camelot_teleport": (2, 2), "high_alchemy": (3, 3),
-              "ourania_teleport": (4, 4)}
+              "ourania_teleport": (4, 4), "reanimate_adept": (5, 5)}
     for m in load_library().values():
         for skill in m.skills:
             step = m.to_step(skill, m.levels[1], 0, reg, spells)
@@ -103,9 +103,9 @@ def test_quests_trust_and_setup_gate_methods():
     assert "experimental" in c.explain({"runecraft": 20})
     bad = Method.from_dict("needs_tags", {"skills": ["fishing"], "xp_per_hour": 1,
                                           "step": {"task": "gather", "target": "fishing_spot",
-                                                   "items": ["raw_lobster"]}})
+                                                   "items": ["raw_unicorn"]}})
     step, reason = chooser(Goals()).check(bad, "fishing", {})
-    assert step is None and "raw_lobster" in reason
+    assert step is None and "raw_unicorn" in reason
 
 
 def test_resting_a_method_and_explain_text():

@@ -221,7 +221,7 @@ def cmd_colors(cfg: Config, args) -> None:
     if args.action == "add":
         if not args.name:
             raise SystemExit("colors add NAME --category CATEGORY")
-        rgb = reg.add(args.name, args.category, cfg.color_tolerance)
+        rgb = reg.add(args.name, args.category, cfg.color_tolerance, args.area)
         print(f"added {args.name}: {list(rgb)} (#{rgb[0]:02X}{rgb[1]:02X}{rgb[2]:02X})")
         return
     print(colors_text(reg, cfg.color_tolerance))
@@ -304,6 +304,22 @@ def cmd_plan(cfg: Config, args) -> None:
     levels = json.loads(progress.read_text()).get("levels", {}) if progress.exists() else {}
     chooser = make_chooser(cfg, goals_path, TrustStore(cfg.data_dir / "trust.json"))
     print(chooser.explain(levels))
+
+
+def cmd_quest(cfg: Config, args) -> None:
+    """Follow Quest Helper through a quest, supervised (you're watching)."""
+    from .config import Step
+    from .planner import Planner
+    game = live_game(cfg)
+    levels = Levels.load(game, SkillReader.load(cfg.layout, cfg.data_dir), cfg.data_dir)
+    step = Step.from_dict({"name": args.name, "skill": "attack", "task": "quest",
+                           "until_level": 99, "idle_timeout": args.idle})
+    planner = Planner(game, levels, supervised=True)
+    try:
+        while planner.run_step(step) > 0:
+            pass
+    except StopBot as e:
+        print(f"stopped: {e}")
 
 
 def cmd_quest_done(cfg: Config, args) -> None:
@@ -445,6 +461,8 @@ def main(argv=None) -> None:
     c.add_argument("action", nargs="?", choices=["list", "add"], default="list")
     c.add_argument("name", nargs="?")
     c.add_argument("--category", default="item")
+    c.add_argument("--area", default="default",
+                   help="where the color is used: everywhere, default, or a place name")
     c = sub.add_parser("add-destination", help="record a world-map destination from a hub")
     c.add_argument("name")
     c.add_argument("--hub", required=True)
@@ -465,6 +483,10 @@ def main(argv=None) -> None:
     c = sub.add_parser("sold", help="you sold an item: clear it from the sell-alert ledger")
     c.add_argument("item")
     sub.add_parser("prices", help="fetch prices now: alerts and the shopping list")
+    c = sub.add_parser("quest", help="follow Quest Helper through a quest (supervised)")
+    c.add_argument("name", help="the quest's name, as Quest Helper shows it")
+    c.add_argument("--idle", type=float, default=30,
+                   help="seconds with nothing highlighted before asking you")
     c = sub.add_parser("quest-done", help="mark a quest as completed (unlocks methods)")
     c.add_argument("name")
     c = sub.add_parser("trust", help="trust level of each plan step (or set one)")
@@ -494,7 +516,7 @@ def main(argv=None) -> None:
      "learn-energy": cmd_learn_energy, "learn-digits": cmd_learn_digits, "levels": cmd_levels,
      "debug": cmd_debug, "doctor": cmd_doctor, "supervise": cmd_supervise, "discord": cmd_discord, "ask": cmd_ask,
      "add-destination": cmd_add_destination, "travel": cmd_travel,
-     "trust": cmd_trust, "plan": cmd_plan, "sold": cmd_sold, "prices": cmd_prices, "quest-done": cmd_quest_done, "setup": cmd_setup, "check-setup": cmd_check_setup, "colors": cmd_colors,
+     "trust": cmd_trust, "plan": cmd_plan, "sold": cmd_sold, "prices": cmd_prices, "quest-done": cmd_quest_done, "quest": cmd_quest, "setup": cmd_setup, "check-setup": cmd_check_setup, "colors": cmd_colors,
      "profile": cmd_profile, "pause": cmd_pause,
      "resume": cmd_resume, "run": cmd_run}[args.cmd](cfg, args)
 

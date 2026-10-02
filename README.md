@@ -129,6 +129,8 @@ examples.
 | `construction` | in build mode: click the hotspot, press `build_key`, right-click → `remove_option`, confirm; restock at `bank_location` | Construction (and Farming via bagged plants) |
 | `combat` + `stand_on` | stand on a marked tile, let aggressive monsters come, eat, walk to `reset_spot` and back when they stop | Melee at crabs |
 | `thieve` | pickpocket the `target` NPC or steal from a stall; waits out stuns (HP drops), opens `pouch` every `open_every`, eats | Thieving |
+| `routine` | a scripted sequence of actions and conditions in YAML ([docs/minigames.md](docs/minigames.md)) | Minigames: Motherlode, Blast Furnace, Wintertodt, Trawler, chinchompas, ensouled heads, gilded altar, Arceuus runes, Tithe Farm |
+| `quest` | follow Quest Helper's highlights | Quests (`skillbot quest NAME`) |
 | `runecraft` | bank → `ruins` → craft at the `target` altar → `portal` → bank | Runecraft |
 
 ### Runecrafting

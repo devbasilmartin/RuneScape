@@ -121,9 +121,10 @@ Helper follower.
 - [x] Crafting (gems, glassblowing, d'hide bodies), Herblore (attack potions → brews), Runecraft (Ourania altar via leave_spell): library
 
 ### Phase 3: Minigames and special mechanics
-- [ ] Motherlode Mine, Blast Furnace, Tithe Farm, Wintertodt, Fishing Trawler, Hunter (chinchompas)
-- [ ] Prayer (ensouled heads, public gilded altar), Arceuus runes
-- [ ] Quest Helper follower (unlock quests), semi-automatic Slayer
+- [x] Motherlode Mine, Blast Furnace (gold), Tithe Farm, Wintertodt, Fishing Trawler, Hunter (chinchompas): routines in `library/minigames.yaml`
+- [x] Prayer (ensouled heads, public gilded altar), Arceuus blood runes: routines
+- [x] Quest Helper follower (`skillbot quest NAME`)
+- [ ] Semi-automatic Slayer
 
 ### Phase 4: Later
 - [ ] GOTR, Hallowed Sepulchre, Mahogany Homes, minnows
