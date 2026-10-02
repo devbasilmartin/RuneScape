@@ -65,6 +65,13 @@ def setup_text(cfg: Config, step: Step, registry: Registry) -> str:
     if cfg.danger_color:
         lines.append(f"  • NPC Indicators on random-event NPCs ({', '.join(RANDOM_EVENT_NPCS[:5])}, "
                      f"...): {d(cfg.danger_color)}")
+    for label, color, how in (
+            ("Genie", cfg.genie_color, "NPC Indicators on Genie"),
+            ("grave", cfg.grave_color, "NPC Indicators on Grave"),
+            ("respawn", cfg.respawn_color, "Ground Marker on your respawn tile"),
+            ("others", cfg.other_player_color, "Player Indicators, highlight others")):
+        if color:
+            lines.append(f"  • {how}: {d(color)}")
     for role, route in step.walk.items():
         tiles = " → ".join(d(t) for t in cfg.routes.get(route, []))
         lines.append(f"  • Ground Markers for route {route!r} ({role}), in walking order: {tiles}")

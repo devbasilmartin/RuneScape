@@ -95,6 +95,14 @@ class FakeClient:
     def click_rect(self, rect, button="left"):
         self.click(rect.center)
 
+    def point_in(self, rect):
+        return rect.center
+
+    def hotkey(self, *keys):
+        self.keys.append(("hotkey",) + keys)
+        for fn in list(self.on_key):
+            fn(self, "+".join(keys))
+
     def click(self, pt, button="left"):
         if button == "right":
             self.right_clicks.append(tuple(pt))

@@ -55,6 +55,7 @@ class Step:
     bank_tab: str | None = None        # Bank Tags tag whose tab holds this step's items
     with_item: str | None = None       # process: use `use_item` on this item (no station)
     location: str | None = None        # destination to travel to when the target isn't in sight
+    gear: tuple = ()                   # tagged items to wear again after taking the grave
     process: dict | None = None        # gather: process the load before dropping/banking
     tools: int = 1                     # untagged slots always carried
     tool_slot: int = 0                 # firemaking: tinderbox slot
@@ -89,7 +90,7 @@ class Step:
         d["cast"] = _color(d.get("cast"))
         d["ruins"] = _color(d.get("ruins"))
         d["portal"] = _color(d.get("portal"))
-        for key in ("items", "confirm", "withdraw", "food", "bury", "keep"):
+        for key in ("items", "confirm", "withdraw", "food", "bury", "keep", "gear"):
             if key in d:
                 d[key] = tuple(d[key])
         if "withdraw" in d:
@@ -122,6 +123,11 @@ class Config:
     health_bar_colors: tuple = ((0, 255, 0), (255, 0, 0))   # the game's own bars over NPCs
     hp_bar_color: tuple = (255, 0, 0)                        # Status Bars health fill
     danger_color: tuple | None = None   # NPC Indicators on random-event NPCs: never clicked
+    genie_color: tuple | None = None    # NPC Indicators on the Genie (its lamp is claimed)
+    respawn_color: tuple | None = None  # Ground Marker on your respawn tile (death detection)
+    grave_color: tuple | None = None    # NPC Indicators on "Grave"
+    other_player_color: tuple | None = None   # Player Indicators: other players (hopping)
+    safety: dict = field(default_factory=dict)      # see safety.SafetyConfig
     colors_file: Path | None = None     # the color registry (default: colors.yaml in the repo)
     hubs: dict = field(default_factory=dict)        # name -> Hub (see navigation.py)
     path_color: tuple = (255, 0, 128)              # Shortest Path's path color
@@ -159,8 +165,9 @@ class Config:
                 cfg.routes = {n: [tuple(c) for c in cs] for n, cs in value.items()}
             elif key in ("data_dir", "colors_file"):
                 setattr(cfg, key, Path(value))
-            elif key == "danger_color":
-                cfg.danger_color = tuple(value) if value else None
+            elif key in ("danger_color", "genie_color", "respawn_color", "grave_color",
+                         "other_player_color"):
+                setattr(cfg, key, tuple(value) if value else None)
             elif not hasattr(cfg, key):
                 raise ValueError(f"unknown config key: {key}")
             elif key == "hubs":
@@ -178,7 +185,9 @@ class Config:
     def scene(self, step: Step) -> dict:
         """Every highlight color that can be on screen while ``step`` runs."""
         scene = {"target": step.target, "bank": self.bank_color, "loot": step.loot,
-                 "ruins": step.ruins, "portal": step.portal, "danger": self.danger_color}
+                 "ruins": step.ruins, "portal": step.portal, "danger": self.danger_color,
+                 "genie": self.genie_color, "grave": self.grave_color,
+                 "respawn": self.respawn_color, "other players": self.other_player_color}
         if step.process and step.process.get("target"):
             scene["process target"] = tuple(step.process["target"])
         for role, route in step.walk.items():
@@ -216,6 +225,7 @@ class Config:
             names += [step.use_item] if step.use_item not in (None, "any") else []
             names += [step.with_item] if step.with_item else []
             names += [w.item for w in step.withdraw if w.item]
+            names += list(step.gear)
             names += list((step.process or {}).get("items", []))
             missing = [n for n in names if n not in self.items]
             if missing:

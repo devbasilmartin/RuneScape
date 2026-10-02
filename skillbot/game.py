@@ -50,13 +50,39 @@ class Game:
     def nearest(self, img, color):
         return vision.nearest(self.blobs(img, color), self.player)
 
-    def click_nearest(self, img, color) -> bool:
-        blob = self.nearest(img, color)
-        if blob is None:
+    def danger_zones(self, img) -> list:
+        """Random-event NPCs (danger color), grown a little: never click inside these."""
+        if self.cfg.danger_color is None:
+            return []
+        return [b.rect.grow(6) for b in self.blobs(img, self.cfg.danger_color)]
+
+    def safe_point(self, rect, danger):
+        """A point in ``rect`` outside every danger zone, or None if it's covered."""
+        def inside(pt, r):
+            return r.x <= pt[0] < r.x + r.w and r.y <= pt[1] < r.y + r.h
+        candidates = [self.controls.point_in(rect) for _ in range(6)]
+        candidates += [(rect.x + rect.w * fx // 4, rect.y + rect.h * fy // 4)
+                       for fx in (1, 2, 3) for fy in (1, 2, 3)]
+        for pt in candidates:
+            if not any(inside(pt, d) for d in danger):
+                return pt
+        return None
+
+    def click_blob(self, img, blob, avoid_danger: bool = True) -> bool:
+        danger = self.danger_zones(img) if avoid_danger else []
+        pt = self.safe_point(blob.rect, danger)
+        if pt is None:
             return False
         self.keep_running()    # clicking a highlight usually means walking to it
-        self.controls.click_rect(blob.rect)
+        self.controls.click(pt)
         return True
+
+    def click_nearest(self, img, color, avoid_danger: bool = True) -> bool:
+        """Click the nearest highlight of ``color`` that a random-event NPC isn't covering."""
+        px, py = self.player
+        blobs = sorted(self.blobs(img, color),
+                       key=lambda b: (b.center[0] - px) ** 2 + (b.center[1] - py) ** 2)
+        return any(self.click_blob(img, b, avoid_danger) for b in blobs)
 
     def highlight_near(self, img, color, point, radius: int) -> bool:
         px, py = point

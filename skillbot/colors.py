@@ -120,7 +120,8 @@ def resolve_config(raw: dict, registry: Registry) -> dict:
     """Replace registry names in a raw config dict with RGB lists."""
     raw = dict(raw)
     r = registry.resolve
-    for key in ("bank_color", "hp_bar_color", "danger_color", "path_color"):
+    for key in ("bank_color", "hp_bar_color", "danger_color", "path_color", "genie_color",
+                "respawn_color", "grave_color", "other_player_color"):
         if key in raw:
             raw[key] = r(raw[key])
     if "health_bar_colors" in raw:

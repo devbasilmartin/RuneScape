@@ -73,6 +73,7 @@ class Planner:
         self.trust = trust              # TrustStore, or None to run every step as trusted
         self.supervised = supervised
         self.notify = notify
+        self.safety = None              # Safety: random events, deaths, world hopping
         self.current = None             # the step being run, for error accounting
         self.tainted = False            # a supervised run of the current step hit an error
         self.skipped = set()
@@ -184,6 +185,8 @@ class Planner:
     def _run_batches(self, step: Step, task, started: float, slice_minutes, deadline) -> int:
         g, batches = self.game, 0
         while not self.done(step):
+            if self.safety is not None:
+                self._guard(lambda: self.safety.between_batches(step))
             if slice_minutes and g.now() - started >= slice_minutes * 60:
                 log.info("step %r: time slice over", step.name)
                 break
@@ -204,6 +207,8 @@ class Planner:
             self.session.ensure()
         try:
             self.game.keep_running()
+            if self.safety is not None:
+                self.safety.check(self.current)
             result = action()
         except BotError as e:
             step = self.current

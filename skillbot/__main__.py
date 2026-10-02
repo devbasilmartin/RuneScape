@@ -328,6 +328,10 @@ def cmd_run(cfg: Config, args) -> None:
                       trust=TrustStore(cfg.data_dir / "trust.json"), supervised=args.supervised)
     if args.supervised:
         logging.info("supervised run: stops at the first error; experimental steps allowed")
+    from .safety import Safety, SafetyConfig
+    planner.safety = Safety(game, SafetyConfig.from_dict(cfg.safety), cfg.genie_color,
+                            cfg.respawn_color, cfg.grave_color, cfg.other_player_color,
+                            notify=notify)
     logging.info("starting; move the mouse to a screen corner to stop")
     try:
         planner.run()

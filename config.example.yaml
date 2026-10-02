@@ -7,6 +7,10 @@ color_tolerance: 25
 bank_color: bank               # Object Markers on every bank booth you use
 hp_bar_color: status_hp        # Status Bars plugin: health fill color (combat)
 danger_color: random_event     # NPC Indicators on random-event NPCs: never clicked
+genie_color: genie             # the Genie: its lamp is claimed (docs/safety.md)
+respawn_color: respawn         # Ground Marker on your respawn tile: death detection
+grave_color: grave             # NPC Indicators on "Grave"
+other_player_color: other_player   # Player Indicators: other players, for world hopping
 
 # What to do when the game logs you out (6-hour logout, disconnect, server restart):
 #   stop    - stop the bot

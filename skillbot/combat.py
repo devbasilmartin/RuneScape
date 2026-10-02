@@ -94,8 +94,9 @@ class CombatTask(Task):
         if not near:
             return False
         before = len(g.inv.tags(img))
-        g.controls.click_rect(min(near, key=lambda b: (b.center[0] - px) ** 2
-                                  + (b.center[1] - py) ** 2).rect)
+        if not g.click_blob(img, min(near, key=lambda b: (b.center[0] - px) ** 2
+                                     + (b.center[1] - py) ** 2)):
+            return False
         if g.wait_until(lambda im: len(g.inv.tags(im)) > before, timeout=6):
             self.loot_misses = 0
         else:
@@ -118,7 +119,8 @@ class CombatTask(Task):
             g.open_tab("magic")
             g.controls.click(self.step.cast)
             g.wait(0.2, 0.4)
-        g.controls.click_rect(blob.rect)
+        if not g.click_blob(img, blob):
+            return None                  # a random event is standing on it
         if self.step.cast:
             g.wait(0.3, 0.5)
             g.open_tab("inventory")

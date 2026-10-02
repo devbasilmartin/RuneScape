@@ -47,6 +47,9 @@ class Controls:
         time.sleep(seconds)
         self._pg.keyUp(key)
 
+    def hotkey(self, *keys: str) -> None:
+        self._pg.hotkey(*keys)
+
     def key_down(self, key: str) -> None:
         self._pg.keyDown(key)
 

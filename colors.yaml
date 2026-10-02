@@ -27,6 +27,11 @@ enemy:           {rgb: [192, 64, 255],  category: enemy}
 loot:            {rgb: [255, 192, 0],   category: loot}
 random_event:    {rgb: [128, 0, 0],     category: danger}
 
+genie:           {rgb: [64, 255, 255],  category: other}    # NPC Indicators: Genie (lamp)
+grave:           {rgb: [192, 0, 64],    category: other}    # NPC Indicators: Grave
+respawn:         {rgb: [255, 64, 192],  category: other}    # Ground Marker: your respawn tile
+other_player:    {rgb: [64, 192, 64],   category: other}    # Player Indicators: others
+
 # --- runecrafting (Object Markers) ---
 ruins:           {rgb: [255, 128, 0],   category: portal}
 altar_portal:    {rgb: [128, 0, 192],   category: portal}
