@@ -45,7 +45,8 @@ def setup_text(cfg: Config, step: Step, registry: Registry) -> str:
     d = lambda c: describe(c, registry)      # noqa: E731
     lines = [f"Setup for step {step.name!r} ({step.skill}, {step.task})", "",
              "RuneLite `bot` profile, colors exact and fully opaque:"]
-    lines.append(f"  • {TARGET_PLUGIN[step.task]}: {d(step.target)}")
+    if step.target is not None:
+        lines.append(f"  • {TARGET_PLUGIN[step.task]}: {d(step.target)}")
     if step.process and step.process.get("target"):
         lines.append(f"  • Object Markers on the station for processing each load: "
                      f"{d(tuple(step.process['target']))}")
@@ -81,8 +82,14 @@ def setup_text(cfg: Config, step: Step, registry: Registry) -> str:
         lines.append("  • Shift-click drop on")
     if banks(step):
         lines.append("  • Esc closes the current interface; bank quantity set as the step needs")
-    if step.withdraw:
-        lines.append(f"  • Bank slots used (withdraw): {', '.join(str(i) for i in step.withdraw)}")
+    if step.bank_tab:
+        lines.append(f"  • Bank Tags: a tag {step.bank_tab!r} on this step's items, with "
+                     "'Bank tag layouts' arranging them; bank placeholders on")
+    for w in step.withdraw:
+        what = w.item or "(unchecked item)"
+        qty = f", quantity {w.quantity}" if w.quantity else ""
+        where = f"tab {step.bank_tab!r}" if step.bank_tab else "the bank"
+        lines.append(f"  • Withdraw: slot {w.slot} of {where}: {what}{qty}")
     untagged = step.tools
     if untagged:
         lines.append(f"  • {untagged} untagged tool slot(s) in the inventory (net, axe, tinderbox...)")
@@ -99,8 +106,10 @@ def check_setup(cfg: Config, step: Step, img, registry: Registry) -> list[Check]
 
     d = lambda c: describe(c, registry)      # noqa: E731
     checks = []
-    blobs = seen(step.target)
-    if blobs:
+    blobs = seen(step.target) if step.target is not None else None
+    if step.target is None:
+        pass
+    elif blobs:
         checks.append(Check("target", PASS, f"{len(blobs)} × {d(step.target)} visible"))
     else:
         checks.append(Check("target", FAIL, f"no {d(step.target)} on screen: check the marker "
@@ -121,7 +130,8 @@ def check_setup(cfg: Config, step: Step, img, registry: Registry) -> list[Check]
         checks.append(Check("random event", WARN, "a random-event NPC is on screen"))
     tags = Inventory(cfg.layout, cfg.items, tolerance=tol).tags(img)
     wanted = set(step.items) | set(step.food) | set(step.keep) | (
-        {step.enter_with} if step.enter_with else set())
+        {step.enter_with} if step.enter_with else set()) | (
+        {step.with_item} if step.with_item else set())
     present = sorted(set(tags.values()) & wanted)
     checks.append(Check("inventory tags", PASS if present else WARN,
                         f"tagged in inventory: {', '.join(present)}" if present else

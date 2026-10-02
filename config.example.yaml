@@ -182,6 +182,17 @@ plan:
 #    use_item: any
 #    withdraw: [0, 1]
 #
+#  - name: fletch longbows (u)           # item-on-item: no station needed
+#    skill: fletching
+#    task: process
+#    items: [logs]
+#    use_item: knife                     # tag the knife and keep it through banking
+#    with_item: logs
+#    keep: [knife]
+#    bank_tab: fletching                 # Bank Tags tab; slot 0 = logs
+#    withdraw: [{slot: 0, item: logs, quantity: all}]
+#    confirm: [{key: "3"}]               # the longbow option in the make menu
+#
 #  - name: magic on chickens            # cast from the magic tab each attack
 #    skill: magic                        # (or set autocast on a staff and omit `cast`)
 #    task: combat

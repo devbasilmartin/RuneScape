@@ -69,8 +69,8 @@ def slot_at(pt):
     return None
 
 
-def config(steps=(), **kw):
-    cfg = Config(items=dict(ITEMS), bank_color=BANK, **kw)
+def config(steps=(), extra_items=None, **kw):
+    cfg = Config(items={**ITEMS, **(extra_items or {})}, bank_color=BANK, **kw)
     cfg.plan = [Step.from_dict(s) for s in steps]
     cfg.validate()
     return cfg

@@ -106,7 +106,7 @@ Helper follower.
 - [x] Trust levels (`run --supervised`, `trust`, promotion/demotion, trial slices and reports)
 
 ### Phase 1: Engine
-- [ ] Bank v2 (tag tabs, placeholders, verification) and item-on-item processing
+- [x] Bank v2 (tag tabs, quantities, out-of-stock checks) and item-on-item processing
 - [ ] Navigation (teleport hubs, Shortest Path via map offsets) and dialogs
 - [ ] Death recovery, random-event avoidance and the Genie lamp, world hopping
 - [ ] Method library, goals file, planner with `--explain`

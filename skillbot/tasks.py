@@ -28,6 +28,17 @@ class Task:
     def has_items(self, img) -> bool:
         return bool(self.tagged(img, self.step.items))
 
+    def bank_and_restock(self, keep=None) -> bool:
+        """Deposit (except the step's ``keep`` items), withdraw this step's supplies and
+        check they arrived. False (and one notification) when the bank is out of something."""
+        step = self.step
+        keep = step.keep if keep is None else keep
+        missing = self.game.bank(step.walk.get("bank"), step.withdraw, keep=keep,
+                                 tab=step.bank_tab)
+        if missing:
+            self.game.out_of_stock(step.name, missing)
+        return not missing
+
     def run_batch(self) -> str:
         raise NotImplementedError
 
@@ -90,9 +101,7 @@ class ProcessTask(Task):
     a highlighted station, restocking from the bank."""
 
     def restock(self) -> bool:
-        g = self.game
-        g.bank(self.step.walk.get("bank"), self.step.withdraw)
-        return self.has_items(g.grab())
+        return self.bank_and_restock() and self.has_items(self.game.grab())
 
     def run_batch(self) -> str:
         if not self.has_items(self.game.grab()) and not self.restock():
@@ -116,6 +125,12 @@ class ProcessTask(Task):
             remaining = len(self.tagged(img, step.items))
             if not remaining:
                 return
+            if step.with_item:
+                if not self._use_on_item(img):
+                    return
+                self._confirm()
+                self._wait_for_progress(remaining)
+                continue
             g.walk(step.walk.get("target"), step.target)
             img = g.grab()
             use = self._use_item(img)
@@ -128,14 +143,34 @@ class ProcessTask(Task):
             if not g.click_nearest(img, step.target):
                 raise BotError(f"{step.name}: station not visible")
             g.wait(1.8, 2.6)       # walk over; the make menu / interface opens
-            for action in step.confirm:
-                if "key" in action:
-                    g.controls.press(action["key"])
-                else:
-                    g.controls.click(tuple(action["click"]))
-                g.wait(0.3, 0.6)
+            self._confirm()
             self._wait_for_progress(remaining)
         raise BotError(f"{step.name}: inputs are not being used up")
+
+    def _use_on_item(self, img) -> bool:
+        """Item-on-item (knife on logs, herb on vial...): click one, then the other."""
+        g, step = self.game, self.step
+        use = self._use_item(img)
+        first = self.tagged(img, [use]) if use else []
+        second = [i for i in self.tagged(img, [step.with_item]) if i not in first[:1]]
+        if not first or not second:
+            return False
+        a = min(first)
+        b = min(second, key=lambda i: abs(i - a))        # the nearest one: shortest mouse move
+        g.controls.click_rect(g.layout.slot(a))
+        g.wait(0.2, 0.4)
+        g.controls.click_rect(g.layout.slot(b))
+        g.wait(1.0, 1.5)           # the make menu opens
+        return True
+
+    def _confirm(self) -> None:
+        g = self.game
+        for action in self.step.confirm:
+            if "key" in action:
+                g.controls.press(action["key"])
+            else:
+                g.controls.click(tuple(action["click"]))
+            g.wait(0.3, 0.6)
 
     def _wait_for_progress(self, remaining: int) -> None:
         g, last_change = self.game, self.game.now()
@@ -155,8 +190,7 @@ class FiremakingTask(Task):
     def run_batch(self) -> str:
         g, step = self.game, self.step
         if not self.has_items(g.grab()):
-            g.bank(step.walk.get("bank"), step.withdraw)
-            if not self.has_items(g.grab()):
+            if not self.bank_and_restock() or not self.has_items(g.grab()):
                 log.info("%s: out of logs", step.name)
                 return "exhausted"
         self._go_to_start()

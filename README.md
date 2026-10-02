@@ -172,6 +172,22 @@ are chains of Ground Marker tiles (about one every 10 squares, distinct colors w
 and the bot always clicks the furthest one it can see. Moving between towns for a new step still
 needs you to move the character, or a route that covers the whole way.
 
+## Banking
+
+Steps that restock take `withdraw` entries and an optional Bank Tags tab:
+
+```yaml
+bank_tab: cooking                         # opened by searching tag:cooking
+withdraw:
+  - {slot: 0, item: raw_lobster, quantity: all}   # quantity: 1, 5, 10, x or all
+```
+
+Use RuneLite's **Bank Tags** with *Bank tag layouts* to give each activity a tab whose items
+never move, and turn on **bank placeholders**. After closing the bank the bot checks that
+every withdrawn item arrived; if one didn't (only a placeholder left), the step stops as out
+of stock, you get one Discord message, and the bot moves on to other steps. Items listed in
+a step's `keep` (knife, talisman, hammer...) are never deposited.
+
 ## Trust levels
 
 Every plan step starts **experimental** and has to earn unattended running:

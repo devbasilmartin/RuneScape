@@ -38,8 +38,7 @@ class RunecraftTask(Task):
             elif has_inputs:
                 self.enter()
             else:
-                g.bank(step.walk.get("bank"), step.withdraw, keep=step.keep)
-                if not self.has_items(g.grab()):
+                if not self.bank_and_restock(keep=step.keep) or not self.has_items(g.grab()):
                     log.info("%s: out of essence", step.name)
                     return "exhausted"
         raise BotError(f"{step.name}: could not complete a runecrafting trip")

@@ -125,9 +125,7 @@ class CombatTask(Task):
         return blob.center
 
     def restock(self) -> bool:
-        g = self.game
-        g.bank(self.step.walk.get("bank"), self.step.withdraw)
-        return bool(self.tagged(g.grab(), self.step.food))
+        return self.bank_and_restock() and bool(self.tagged(self.game.grab(), self.step.food))
 
     # ---- loop ----------------------------------------------------------------------------
     def run_batch(self) -> str:
@@ -183,4 +181,4 @@ class CombatTask(Task):
         if step.when_full == "drop":
             g.drop(names=set(step.items))
         else:
-            g.bank(step.walk.get("bank"), step.withdraw)
+            self.bank_and_restock()

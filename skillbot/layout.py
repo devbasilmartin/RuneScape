@@ -60,6 +60,9 @@ class Layout:
     bank_origin: tuple[int, int] = (73, 83)
     bank_step: tuple[int, int] = (48, 36)
     bank_columns: int = 8
+    bank_search: tuple[int, int] = (461, 318)
+    bank_quantity: dict = field(default_factory=lambda: {
+        "1": (198, 318), "5": (223, 318), "10": (248, 318), "x": (273, 318), "all": (298, 318)})
 
     # login screen buttons
     login_existing_user: tuple[int, int] = (462, 291)
@@ -104,8 +107,8 @@ class Layout:
                 raise ValueError(f"unknown layout key: {key}")
             if key in ("viewport", "hp_bar", "run_energy_box"):
                 d[key] = Rect(*value)
-            elif key == "tabs":
-                d[key] = {**cls().tabs, **{k: tuple(v) for k, v in value.items()}}
+            elif key in ("tabs", "bank_quantity"):
+                d[key] = {**getattr(cls(), key), **{str(k): tuple(v) for k, v in value.items()}}
             elif key in ("fingerprint_points", "combat_styles"):
                 d[key] = tuple(tuple(p) for p in value)
             elif isinstance(value, list):

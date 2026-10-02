@@ -26,6 +26,7 @@ class Game:
         self.now = now
         self.layout = cfg.layout
         self.run = None        # RunManager, when run: always
+        self.reported = set()  # out-of-stock notices already sent
 
     def keep_running(self) -> None:
         if self.run is not None:
@@ -167,13 +168,46 @@ class Game:
             self.controls.click_rect(self.layout.slot(i))
             self.wait(0.3, 0.6)
 
-    def withdraw(self, bank_slots) -> None:
-        for i in bank_slots:
-            self.controls.click_rect(self.layout.bank_slot(i))
+    def open_bank_tab(self, tab: str) -> None:
+        """Show a Bank Tags tab by searching ``tag:<name>``."""
+        self.controls.click(self.layout.bank_search)
+        self.wait(0.4, 0.7)
+        self.controls.type_text(f"tag:{tab}")
+        self.wait(0.6, 0.9)
+
+    def withdraw(self, entries, tab: str | None = None) -> None:
+        from .config import Withdraw
+        entries = [w if isinstance(w, Withdraw) else Withdraw.parse(w) for w in entries]
+        if tab and entries:
+            self.open_bank_tab(tab)
+        for w in entries:
+            if w.quantity:
+                self.controls.click(self.layout.bank_quantity[w.quantity])
+                self.wait(0.3, 0.5)
+            self.controls.click_rect(self.layout.bank_slot(w.slot))
             self.wait(0.5, 0.9)
 
-    def bank(self, route: str | None, withdraw=(), keep=()) -> None:
+    def missing(self, entries) -> list[str]:
+        """Withdrawn items that didn't arrive (out of stock: only a placeholder left)."""
+        have = set(self.inv.tags(self.grab()).values())
+        return [w.item for w in entries if getattr(w, "item", None) and w.item not in have]
+
+    def bank(self, route: str | None, withdraw=(), keep=(), tab: str | None = None) -> list[str]:
+        """Deposit, withdraw and close. Returns the names of withdrawn items that are out
+        of stock."""
         before = self.open_bank(route)
         self.deposit(before, keep)
-        self.withdraw(withdraw)
+        self.withdraw(withdraw, tab)
         self.close_interfaces()
+        if tab and withdraw:
+            self.close_interfaces()      # the first Esc may only end the search
+        return self.missing(withdraw)
+
+    def out_of_stock(self, step_name: str, items) -> None:
+        """Tell you once per run which supplies a step has run out of."""
+        from .notify import notify
+        key = (step_name, tuple(sorted(items)))
+        if key not in self.reported:
+            self.reported.add(key)
+            notify(f"{step_name}: the bank is out of {', '.join(items)} (buy more; the bot "
+                   "moves on to other steps meanwhile)")

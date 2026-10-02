@@ -129,6 +129,10 @@ def cmd_debug(cfg: Config, args) -> None:
     if args.bank:
         for i in range(lay.bank_columns * 4):
             box(lay.bank_slot(i), (255, 0, 255), str(i))
+        for label, pt in [("search", lay.bank_search)] + list(lay.bank_quantity.items()):
+            cv2.circle(out, pt, 5, (255, 0, 255), 1)
+            cv2.putText(out, label, (pt[0] - 8, pt[1] - 8), cv2.FONT_HERSHEY_SIMPLEX, 0.3,
+                        (255, 0, 255), 1)
     for name, pt in lay.tabs.items():
         cv2.circle(out, pt, 4, (255, 255, 0), 1)
     for i, pt in enumerate(lay.combat_styles):

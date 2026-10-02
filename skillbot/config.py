@@ -15,6 +15,29 @@ def _color(v):
     return None if v is None else tuple(v)
 
 
+QUANTITIES = ("1", "5", "10", "x", "all")
+
+
+@dataclass(frozen=True)
+class Withdraw:
+    """One withdrawal: click ``slot`` (in the open bank tab), after selecting
+    ``quantity`` if given; ``item`` (an Inventory Tags name) is checked afterwards."""
+    slot: int
+    item: str | None = None
+    quantity: str | None = None
+
+    @classmethod
+    def parse(cls, value) -> "Withdraw":
+        if isinstance(value, int):
+            return cls(value)
+        value = dict(value)
+        if "quantity" in value and value["quantity"] is not None:
+            value["quantity"] = str(value["quantity"]).lower()
+            if value["quantity"] not in QUANTITIES:
+                raise ValueError(f"withdraw quantity must be one of {QUANTITIES}")
+        return cls(**value)
+
+
 @dataclass
 class Step:
     """One entry of the plan: train ``skill`` with one method until ``until_level``."""
@@ -28,7 +51,9 @@ class Step:
     when_full: str = "bank"            # gather: drop | bank
     use_item: str | None = None        # process: click this item before the station
     confirm: tuple = ({"key": "space"},)   # process: keys/clicks after the menu opens
-    withdraw: tuple = ()               # bank slot indices to left-click, in order
+    withdraw: tuple = ()               # Withdraw entries (or plain bank slot numbers), in order
+    bank_tab: str | None = None        # Bank Tags tag whose tab holds this step's items
+    with_item: str | None = None       # process: use `use_item` on this item (no station)
     process: dict | None = None        # gather: process the load before dropping/banking
     tools: int = 1                     # untagged slots always carried
     tool_slot: int = 0                 # firemaking: tinderbox slot
@@ -66,12 +91,16 @@ class Step:
         for key in ("items", "confirm", "withdraw", "food", "bury", "keep"):
             if key in d:
                 d[key] = tuple(d[key])
+        if "withdraw" in d:
+            d["withdraw"] = tuple(Withdraw.parse(w) for w in d["withdraw"])
         step = cls(**d)
         if step.skill not in SKILLS:
             raise ValueError(f"step {step.name!r}: unknown skill {step.skill!r}")
         if step.task not in TASKS:
             raise ValueError(f"step {step.name!r}: task must be one of {TASKS}")
-        if step.target is None:
+        if step.with_item and (step.task != "process" or not step.use_item):
+            raise ValueError(f"step {step.name!r}: with_item needs task: process and a use_item")
+        if step.target is None and not step.with_item:
             raise ValueError(f"step {step.name!r}: needs a target highlight color")
         if step.when_full not in ("drop", "bank"):
             raise ValueError(f"step {step.name!r}: when_full must be drop or bank")
@@ -178,6 +207,8 @@ class Config:
             names = list(step.items) + list(step.food) + list(step.bury) + list(step.keep)
             names += [step.enter_with] if step.enter_with else []
             names += [step.use_item] if step.use_item not in (None, "any") else []
+            names += [step.with_item] if step.with_item else []
+            names += [w.item for w in step.withdraw if w.item]
             names += list((step.process or {}).get("items", []))
             missing = [n for n in names if n not in self.items]
             if missing:
