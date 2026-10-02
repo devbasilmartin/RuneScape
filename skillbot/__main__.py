@@ -11,6 +11,7 @@ from . import vision
 from .config import Config
 from .game import Game, StopBot
 from .inventory import SLOTS, Inventory
+from .notify import notify
 from .planner import Levels, Planner
 from .digits import GlyphBook
 from .run import EnergyReader, RunManager, orb_sample
@@ -151,17 +152,42 @@ def cmd_doctor(cfg: Config, args) -> None:
     raise SystemExit(report(run_checks(cfg)))
 
 
+def cmd_supervise(cfg: Config, args) -> None:
+    from .supervisor import Host, Supervisor, SupervisorConfig
+    handler = logging.handlers.RotatingFileHandler(cfg.data_dir / "supervisor.log",
+                                                   maxBytes=2_000_000, backupCount=3)
+    handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
+    logging.getLogger().addHandler(handler)
+    sup_cfg = SupervisorConfig.from_dict(cfg.supervisor)
+    raise SystemExit(Supervisor(sup_cfg, Host(args.config, cfg.data_dir), cfg.data_dir).run())
+
+
+def cmd_pause(cfg: Config, args) -> None:
+    (cfg.data_dir / "paused").write_text("")
+    print("paused: the supervisor stops the bot within ~15s. Switch RuneLite to your own "
+          "profile if you're going to play. `python -m skillbot resume` to hand back.")
+
+
+def cmd_resume(cfg: Config, args) -> None:
+    (cfg.data_dir / "paused").unlink(missing_ok=True)
+    print("resumed: switch RuneLite back to the `bot` profile; the supervisor starts the bot "
+          "within ~15s.")
+
+
 def cmd_run(cfg: Config, args) -> None:
     import pyautogui
 
     from .controls import Controls
+    from .heartbeat import Heartbeat
     handler = logging.handlers.RotatingFileHandler(cfg.data_dir / "skillbot.log",
                                                    maxBytes=5_000_000, backupCount=3)
     handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
     logging.getLogger().addHandler(handler)
     screen = Screen.load(cfg.data_dir)
-    game = Game(cfg, screen, Controls(screen), Inventory(cfg.layout, cfg.items,
-                                                         tolerance=cfg.color_tolerance))
+    controls = Controls(screen)
+    screen.heartbeat = controls.heartbeat = Heartbeat(cfg.data_dir / "heartbeat.json")
+    game = Game(cfg, screen, controls, Inventory(cfg.layout, cfg.items,
+                                                 tolerance=cfg.color_tolerance))
     if cfg.run == "always":
         game.run = RunManager.load(game, cfg.data_dir)
     levels = Levels.load(game, SkillReader.load(cfg.layout, cfg.data_dir), cfg.data_dir)
@@ -171,6 +197,7 @@ def cmd_run(cfg: Config, args) -> None:
         planner.run()
     except StopBot as e:
         logging.info("stopped: %s", e)
+        notify(f"stopped: {e}")
     except pyautogui.FailSafeException:
         logging.info("stopped by failsafe")
     except KeyboardInterrupt:
@@ -196,6 +223,9 @@ def main(argv=None) -> None:
     c.add_argument("--bank", action="store_true", help="show bank slot numbers")
     c.add_argument("--out", default="debug.png")
     sub.add_parser("doctor", help="check this machine is ready for the bot")
+    sub.add_parser("supervise", help="run the client and the bot, restarting them as needed")
+    sub.add_parser("pause", help="stop the bot (supervisor keeps it stopped) so you can play")
+    sub.add_parser("resume", help="hand control back to the bot")
     sub.add_parser("run", help="work through the plan")
     args = p.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s", datefmt="%H:%M:%S")
@@ -203,7 +233,8 @@ def main(argv=None) -> None:
     cfg.data_dir.mkdir(parents=True, exist_ok=True)
     {"calibrate": cmd_calibrate, "calibrate-run": cmd_calibrate_run,
      "learn-energy": cmd_learn_energy, "learn-digits": cmd_learn_digits, "levels": cmd_levels,
-     "debug": cmd_debug, "doctor": cmd_doctor, "run": cmd_run}[args.cmd](cfg, args)
+     "debug": cmd_debug, "doctor": cmd_doctor, "supervise": cmd_supervise, "pause": cmd_pause,
+     "resume": cmd_resume, "run": cmd_run}[args.cmd](cfg, args)
 
 
 if __name__ == "__main__":

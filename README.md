@@ -190,6 +190,8 @@ python -m skillbot run
 - `planner.py`: step selection, level refresh, error recovery.
 - `session.py`: logout detection and re-login.
 - `digits.py`: learned digit shapes, shared by skill levels and run energy.
+- `supervisor.py`, `heartbeat.py`: keep RuneLite and the bot running ([docs/unattended.md](docs/unattended.md)).
+- `notify.py`: notifications (log, optional Discord webhook).
 - `run.py`: keeps run on (orb color samples, energy reading, minimum energy).
 
 ## Tests

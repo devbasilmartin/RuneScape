@@ -103,6 +103,7 @@ class Config:
     walk_timeout: float = 12.0
     bank_open_wait: float = 4.0
     layout: Layout = field(default_factory=Layout)
+    supervisor: dict = field(default_factory=dict)   # see supervisor.SupervisorConfig
 
     @classmethod
     def load(cls, path) -> "Config":

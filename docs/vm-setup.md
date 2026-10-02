@@ -165,6 +165,11 @@ From those two I'll correct every screen position in one go before the first rea
 Once `check.sh` passes, take a snapshot so you can always get back to a working setup:
 in VirtualBox, **Machine → Take Snapshot**, name it `clean setup`.
 
+## Next: running unattended
+
+Once the first real runs work, follow [unattended.md](unattended.md) to make the bot start by
+itself and recover from crashes.
+
 ## Using the VM day to day
 
 - **Leave the mouse alone inside the VM window while the bot runs.** With mouse integration on,

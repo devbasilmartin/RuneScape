@@ -16,6 +16,7 @@ class Controls:
         self._pg = pyautogui
         self.screen = screen
         self.rng = rng or random.Random()
+        self.heartbeat = None
 
     def point_in(self, rect: Rect) -> tuple[int, int]:
         """A point near the middle of ``rect``, so clicks don't land on its edges."""
@@ -53,4 +54,10 @@ class Controls:
         self._pg.keyUp(key)
 
     def wait(self, lo: float, hi: float | None = None) -> None:
-        time.sleep(lo if hi is None else self.rng.uniform(lo, hi))
+        remaining = lo if hi is None else self.rng.uniform(lo, hi)
+        while remaining > 0:      # long waits (login backoff) keep the heartbeat going
+            step = min(remaining, 5.0)
+            time.sleep(step)
+            remaining -= step
+            if self.heartbeat:
+                self.heartbeat.beat()

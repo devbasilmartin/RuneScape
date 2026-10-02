@@ -12,6 +12,7 @@ class Screen:
         import mss
         self.origin = origin
         self._sct = mss.mss()
+        self.heartbeat = None
 
     @classmethod
     def load(cls, data_dir: Path) -> "Screen":
@@ -22,6 +23,8 @@ class Screen:
 
     def grab(self) -> np.ndarray:
         """Return the canvas as an RGB array of shape (503, 765, 3)."""
+        if self.heartbeat:
+            self.heartbeat.beat()
         box = {"left": self.origin[0], "top": self.origin[1], "width": CANVAS_W, "height": CANVAS_H}
         bgra = np.asarray(self._sct.grab(box))
         return bgra[..., 2::-1].copy()

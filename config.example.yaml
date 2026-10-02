@@ -234,6 +234,14 @@ plan:
 #    when_full: drop
 #    process: {target: [255, 64, 128], items: [raw_shrimps, raw_anchovies], use_item: any}
 
+# Supervisor (`python -m skillbot supervise`, see docs/unattended.md). Defaults shown.
+# supervisor:
+#   heartbeat_minutes: 3
+#   freeze_minutes: 5
+#   max_restarts_per_hour: 5
+#   window_name: RuneLite
+#   window_position: [0, 0]
+
 # Override fixed-mode geometry if `python -m skillbot debug` shows boxes out of place.
 # layout:
 #   inv_origin: [563, 213]
