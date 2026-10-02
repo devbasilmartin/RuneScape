@@ -129,3 +129,23 @@ fire_runes_alkharid:
     keep: [fire_talisman]
     bank_tab: runecraft
     withdraw: [{slot: 0, item: rune_essence, quantity: all}]
+
+ourania_altar:
+  name: "Ourania altar (ZMI)"
+  skills: [runecraft]
+  levels: [1, 99]
+  requires: {quests: ["Lunar Diplomacy"], levels: {magic: 71}}
+  xp_per_hour: 40000
+  profit_per_hour: 100000
+  reliability: 3
+  location: "ourania bank"
+  trade: {inputs: {pure_essence: 1400}}
+  step:
+    task: runecraft
+    target: altar
+    ruins: zmi_ladder               # Object Markers on the ladder down
+    leave_spell: ourania_teleport   # Lunar spellbook; its position under spells:
+    walk: {altar: zmi_cave}         # Ground Marker route from the ladder to the altar
+    items: [pure_essence]
+    bank_tab: runecraft
+    withdraw: [{slot: 1, item: pure_essence, quantity: all}]

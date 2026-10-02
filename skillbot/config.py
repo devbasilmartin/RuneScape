@@ -106,6 +106,7 @@ class Step:
     portal: tuple | None = None        # Object Markers: the exit portal inside the altar
     enter_with: str | None = None      # tagged talisman to use on the ruins (None: wear a tiara)
     keep: tuple = ()                   # tagged items never deposited (e.g. that talisman)
+    leave_spell: tuple | None = None   # teleport out instead of a portal (Ourania altar)
 
     @classmethod
     def from_dict(cls, d: dict) -> "Step":
@@ -121,7 +122,7 @@ class Step:
         d["portal"] = _color(d.get("portal"))
         if d.get("spell") is not None:
             d["spell"] = tuple(d["spell"])
-        for key in ("hotspot", "stand_on", "reset_spot"):
+        for key in ("hotspot", "stand_on", "reset_spot", "leave_spell"):
             if d.get(key) is not None:
                 d[key] = tuple(d[key])
         if "build_key" in d:
@@ -153,8 +154,10 @@ class Step:
             raise ValueError(f"step {step.name!r}: when_full must be drop or bank")
         if step.when_out_of_food not in ("bank", "stop"):
             raise ValueError(f"step {step.name!r}: when_out_of_food must be bank or stop")
-        if step.task == "runecraft" and (step.ruins is None or step.portal is None):
-            raise ValueError(f"step {step.name!r}: runecraft needs ruins and portal colors")
+        if step.task == "runecraft" and (step.ruins is None
+                                         or (step.portal is None and step.leave_spell is None)):
+            raise ValueError(f"step {step.name!r}: runecraft needs ruins and a portal color "
+                             "(or a leave_spell)")
         if step.style is not None and step.style not in range(4):
             raise ValueError(f"step {step.name!r}: style must be 0-3")
         return step

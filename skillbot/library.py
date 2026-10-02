@@ -64,12 +64,13 @@ class Method:
             raw["style"] = self.styles[skill]
         elif self.step.get("task") == "combat" and skill in STYLE_FOR:
             raw.setdefault("style", STYLE_FOR[skill])
-        if isinstance(raw.get("spell"), str):
-            name = raw["spell"]
-            if not spells or name not in spells:
-                raise ValueError(f"spell {name!r} has no position (add it under spells: in "
-                                 "config.yaml)")
-            raw["spell"] = spells[name]
+        for key in ("spell", "leave_spell"):
+            if isinstance(raw.get(key), str):
+                name = raw[key]
+                if not spells or name not in spells:
+                    raise ValueError(f"spell {name!r} has no position (add it under spells: "
+                                     "in config.yaml)")
+                raw[key] = spells[name]
         raw = resolve_config({"plan": [raw]}, registry)["plan"][0]
         return Step.from_dict(raw)
 

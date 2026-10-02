@@ -90,3 +90,14 @@ def test_check_setup_from_screenshot():
     assert status["target"] == "PASS" and status["bank"] == "PASS"
     assert status["inventory tags"] == "PASS"
     assert status["route bank_to_willows tile 1"] == "WARN"      # not visible from here
+
+
+def test_add_writes_valid_yaml_for_long_names(tmp_path):
+    path = tmp_path / "c.yaml"
+    path.write_text("bank: {rgb: [255, 0, 255], category: bank}\n")
+    reg = Registry.load(path)
+    reg.add("a_very_long_item_name_here", "item")
+    reg.add("ok", "item")
+    again = Registry.load(path)
+    assert set(again.entries) == {"bank", "a_very_long_item_name_here", "ok"}
+    assert again.check(25) == []

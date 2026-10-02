@@ -1,0 +1,133 @@
+# Herblore: secondary on unfinished potion (buy the unf potions), ~2,500 potions/h.
+# All need the Druidic Ritual quest. 14 of each per inventory: bank slots 0 and 1
+# of each potion's own tag tab.
+
+attack_potions:
+  name: "attack potions"
+  skills: [herblore]
+  levels: [3, 12]
+  requires: {quests: ["Druidic Ritual"]}
+  xp_per_hour: 62500
+  reliability: 5
+  location: "grand exchange bank"
+  trade: {inputs: {guam_unf: 2500, eye_of_newt: 2500}}
+  step: {task: process, items: [guam_unf], use_item: eye_of_newt, with_item: guam_unf, tools: 0,
+         confirm: [{key: space}], bank_tab: attack_potions,
+         withdraw: [{slot: 0, item: guam_unf, quantity: "x"}, {slot: 1, item: eye_of_newt, quantity: "x"}]}
+
+strength_potions:
+  name: "strength potions"
+  skills: [herblore]
+  levels: [12, 38]
+  requires: {quests: ["Druidic Ritual"]}
+  xp_per_hour: 125000
+  reliability: 5
+  location: "grand exchange bank"
+  trade: {inputs: {tarromin_unf: 2500, limpwurt_root: 2500}}
+  step: {task: process, items: [tarromin_unf], use_item: limpwurt_root, with_item: tarromin_unf, tools: 0,
+         confirm: [{key: space}], bank_tab: strength_potions,
+         withdraw: [{slot: 0, item: tarromin_unf, quantity: "x"}, {slot: 1, item: limpwurt_root, quantity: "x"}]}
+
+prayer_potions:
+  name: "prayer potions"
+  skills: [herblore]
+  levels: [38, 45]
+  requires: {quests: ["Druidic Ritual"]}
+  xp_per_hour: 218750
+  reliability: 5
+  location: "grand exchange bank"
+  trade: {inputs: {ranarr_unf: 2500, snape_grass: 2500}}
+  step: {task: process, items: [ranarr_unf], use_item: snape_grass, with_item: ranarr_unf, tools: 0,
+         confirm: [{key: space}], bank_tab: prayer_potions,
+         withdraw: [{slot: 0, item: ranarr_unf, quantity: "x"}, {slot: 1, item: snape_grass, quantity: "x"}]}
+
+super_attacks:
+  name: "super attacks"
+  skills: [herblore]
+  levels: [45, 55]
+  requires: {quests: ["Druidic Ritual"]}
+  xp_per_hour: 250000
+  reliability: 5
+  location: "grand exchange bank"
+  trade: {inputs: {irit_unf: 2500, eye_of_newt: 2500}}
+  step: {task: process, items: [irit_unf], use_item: eye_of_newt, with_item: irit_unf, tools: 0,
+         confirm: [{key: space}], bank_tab: super_attacks,
+         withdraw: [{slot: 0, item: irit_unf, quantity: "x"}, {slot: 1, item: eye_of_newt, quantity: "x"}]}
+
+super_strengths:
+  name: "super strengths"
+  skills: [herblore]
+  levels: [55, 63]
+  requires: {quests: ["Druidic Ritual"]}
+  xp_per_hour: 312500
+  reliability: 5
+  location: "grand exchange bank"
+  trade: {inputs: {kwuarm_unf: 2500, limpwurt_root: 2500}}
+  step: {task: process, items: [kwuarm_unf], use_item: limpwurt_root, with_item: kwuarm_unf, tools: 0,
+         confirm: [{key: space}], bank_tab: super_strengths,
+         withdraw: [{slot: 0, item: kwuarm_unf, quantity: "x"}, {slot: 1, item: limpwurt_root, quantity: "x"}]}
+
+super_restores:
+  name: "super restores"
+  skills: [herblore]
+  levels: [63, 66]
+  requires: {quests: ["Druidic Ritual"]}
+  xp_per_hour: 356250
+  reliability: 5
+  location: "grand exchange bank"
+  trade: {inputs: {snapdragon_unf: 2500, red_spiders_eggs: 2500}}
+  step: {task: process, items: [snapdragon_unf], use_item: red_spiders_eggs, with_item: snapdragon_unf, tools: 0,
+         confirm: [{key: space}], bank_tab: super_restores,
+         withdraw: [{slot: 0, item: snapdragon_unf, quantity: "x"}, {slot: 1, item: red_spiders_eggs, quantity: "x"}]}
+
+super_defences:
+  name: "super defences"
+  skills: [herblore]
+  levels: [66, 72]
+  requires: {quests: ["Druidic Ritual"]}
+  xp_per_hour: 375000
+  reliability: 5
+  location: "grand exchange bank"
+  trade: {inputs: {cadantine_unf: 2500, white_berries: 2500}}
+  step: {task: process, items: [cadantine_unf], use_item: white_berries, with_item: cadantine_unf, tools: 0,
+         confirm: [{key: space}], bank_tab: super_defences,
+         withdraw: [{slot: 0, item: cadantine_unf, quantity: "x"}, {slot: 1, item: white_berries, quantity: "x"}]}
+
+ranging_potions:
+  name: "ranging potions"
+  skills: [herblore]
+  levels: [72, 76]
+  requires: {quests: ["Druidic Ritual"]}
+  xp_per_hour: 406250
+  reliability: 5
+  location: "grand exchange bank"
+  trade: {inputs: {dwarf_weed_unf: 2500, wine_of_zamorak: 2500}}
+  step: {task: process, items: [dwarf_weed_unf], use_item: wine_of_zamorak, with_item: dwarf_weed_unf, tools: 0,
+         confirm: [{key: space}], bank_tab: ranging_potions,
+         withdraw: [{slot: 0, item: dwarf_weed_unf, quantity: "x"}, {slot: 1, item: wine_of_zamorak, quantity: "x"}]}
+
+magic_potions:
+  name: "magic potions"
+  skills: [herblore]
+  levels: [76, 81]
+  requires: {quests: ["Druidic Ritual"]}
+  xp_per_hour: 431250
+  reliability: 5
+  location: "grand exchange bank"
+  trade: {inputs: {lantadyme_unf: 2500, potato_cactus: 2500}}
+  step: {task: process, items: [lantadyme_unf], use_item: potato_cactus, with_item: lantadyme_unf, tools: 0,
+         confirm: [{key: space}], bank_tab: magic_potions,
+         withdraw: [{slot: 0, item: lantadyme_unf, quantity: "x"}, {slot: 1, item: potato_cactus, quantity: "x"}]}
+
+saradomin_brews:
+  name: "Saradomin brews"
+  skills: [herblore]
+  levels: [81, 99]
+  requires: {quests: ["Druidic Ritual"]}
+  xp_per_hour: 450000
+  reliability: 5
+  location: "grand exchange bank"
+  trade: {inputs: {toadflax_unf: 2500, crushed_nest: 2500}}
+  step: {task: process, items: [toadflax_unf], use_item: crushed_nest, with_item: toadflax_unf, tools: 0,
+         confirm: [{key: space}], bank_tab: saradomin_brews,
+         withdraw: [{slot: 0, item: toadflax_unf, quantity: "x"}, {slot: 1, item: crushed_nest, quantity: "x"}]}

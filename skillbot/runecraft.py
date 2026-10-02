@@ -19,7 +19,9 @@ log = logging.getLogger("skillbot")
 class RunecraftTask(Task):
     def inside(self, img) -> bool:
         g = self.game
-        return bool(g.blobs(img, self.step.target) or g.blobs(img, self.step.portal))
+        if g.blobs(img, self.step.target):
+            return True
+        return self.step.portal is not None and bool(g.blobs(img, self.step.portal))
 
     def run_batch(self) -> str:
         g, step = self.game, self.step
@@ -55,6 +57,10 @@ class RunecraftTask(Task):
             g.wait(0.3, 0.6)
         if not g.click_nearest(img, step.ruins):
             raise BotError(f"{step.name}: ruins not visible")
+        route = step.walk.get("altar")
+        if route:                         # e.g. Ourania: down the ladder, then through a cave
+            g.wait(2, 3)
+            g.walk(route, step.target)
         if not g.wait_until(self.inside, timeout=g.cfg.walk_timeout):
             raise BotError(f"{step.name}: did not get into the altar")
         g.wait(0.8, 1.2)     # the area finishes loading
@@ -82,6 +88,14 @@ class RunecraftTask(Task):
 
     def leave(self) -> None:
         g, step = self.game, self.step
+        if step.leave_spell is not None:   # teleport out (Ourania Teleport)
+            g.open_tab("magic")
+            g.controls.click(step.leave_spell)
+            g.wait(4, 5)
+            g.open_tab("inventory")
+            if not g.wait_until(lambda im: not self.inside(im), timeout=g.cfg.walk_timeout):
+                raise BotError(f"{step.name}: the teleport out didn't work")
+            return
         g.walk(None, step.portal)
         if not g.click_nearest(g.grab(), step.portal):
             raise BotError(f"{step.name}: portal not visible")

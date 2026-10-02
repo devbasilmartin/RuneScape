@@ -198,3 +198,22 @@ def test_walk_reports_a_gap_in_the_route():
     fake.on_click.append(arrive)
     with pytest.raises(BotError, match="reached tile 1"):
         game.walk("r", RUINS)
+
+
+def test_ourania_style_leaves_by_spell():
+    game, fake = make_game(rc_cfg())
+    world = World(fake)
+    world.where = "altar"
+    for i in range(1, 5):
+        put_item(fake.img, i, "rune_essence")
+    world.draw()
+
+    def teleport(f, pt):
+        if tuple(pt) == (700, 400):
+            world.where = "bank"
+            world.draw()
+    fake.on_click.append(teleport)
+    task = make_task(game, rc_step(portal=None, leave_spell=[700, 400], enter_with=None,
+                                   keep=[]))
+    assert task.run_batch() == "ok"
+    assert world.where == "bank" and "fire_rune" in fake.items().values()

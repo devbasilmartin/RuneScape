@@ -126,7 +126,7 @@ class Registry:
         self.entries[name] = Entry(name, rgb, category)
         if self.path:
             with open(self.path, "a") as f:
-                f.write(f"{name + ':':<17}{{rgb: [{rgb[0]}, {rgb[1]}, {rgb[2]}], "
+                f.write(f"{name + ':':<16} {{rgb: [{rgb[0]}, {rgb[1]}, {rgb[2]}], "
                         f"category: {category}}}\n")
         return rgb
 

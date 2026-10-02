@@ -1,0 +1,158 @@
+# Crafting. Item-on-item at a bank; make-menu keys need checking on your client.
+# Rates are rough (gems ~2,700/h; glass ~1,600/h; bodies ~1,000/h).
+
+cut_sapphires:
+  name: "cut sapphires"
+  skills: [crafting]
+  levels: [20, 27]
+  xp_per_hour: 135000
+  reliability: 5
+  location: "grand exchange bank"
+  trade: {inputs: {uncut_sapphire: 2700}}
+  step: {task: process, items: [uncut_sapphire], use_item: chisel, with_item: uncut_sapphire,
+         keep: [chisel], confirm: [{key: space}], bank_tab: crafting,
+         withdraw: [{slot: 0, item: uncut_sapphire, quantity: all}]}
+
+cut_emeralds:
+  name: "cut emeralds"
+  skills: [crafting]
+  levels: [27, 34]
+  xp_per_hour: 182250
+  reliability: 5
+  location: "grand exchange bank"
+  trade: {inputs: {uncut_emerald: 2700}}
+  step: {task: process, items: [uncut_emerald], use_item: chisel, with_item: uncut_emerald,
+         keep: [chisel], confirm: [{key: space}], bank_tab: crafting,
+         withdraw: [{slot: 1, item: uncut_emerald, quantity: all}]}
+
+cut_rubys:
+  name: "cut rubys"
+  skills: [crafting]
+  levels: [34, 43]
+  xp_per_hour: 229500
+  reliability: 5
+  location: "grand exchange bank"
+  trade: {inputs: {uncut_ruby: 2700}}
+  step: {task: process, items: [uncut_ruby], use_item: chisel, with_item: uncut_ruby,
+         keep: [chisel], confirm: [{key: space}], bank_tab: crafting,
+         withdraw: [{slot: 2, item: uncut_ruby, quantity: all}]}
+
+cut_diamonds:
+  name: "cut diamonds"
+  skills: [crafting]
+  levels: [43, 55]
+  xp_per_hour: 290250
+  reliability: 5
+  location: "grand exchange bank"
+  trade: {inputs: {uncut_diamond: 2700}}
+  step: {task: process, items: [uncut_diamond], use_item: chisel, with_item: uncut_diamond,
+         keep: [chisel], confirm: [{key: space}], bank_tab: crafting,
+         withdraw: [{slot: 3, item: uncut_diamond, quantity: all}]}
+
+cut_dragonstones:
+  name: "cut dragonstones"
+  skills: [crafting]
+  levels: [55, 99]
+  xp_per_hour: 371250
+  reliability: 5
+  location: "grand exchange bank"
+  trade: {inputs: {uncut_dragonstone: 2700}}
+  step: {task: process, items: [uncut_dragonstone], use_item: chisel, with_item: uncut_dragonstone,
+         keep: [chisel], confirm: [{key: space}], bank_tab: crafting,
+         withdraw: [{slot: 4, item: uncut_dragonstone, quantity: all}]}
+
+glass_low:
+  name: "glassblowing beer glasses / oil lamps"
+  skills: [crafting]
+  levels: [1, 33]
+  xp_per_hour: 28000
+  reliability: 5
+  location: "grand exchange bank"
+  trade: {inputs: {molten_glass: 1600}}
+  step: {task: process, items: [molten_glass], use_item: glassblowing_pipe,
+         with_item: molten_glass, keep: [glassblowing_pipe], confirm: [{key: "1"}],
+         bank_tab: crafting, withdraw: [{slot: 5, item: molten_glass, quantity: all}]}
+
+glass_vials:
+  name: "glassblowing vials"
+  skills: [crafting]
+  levels: [33, 46]
+  xp_per_hour: 56000
+  reliability: 5
+  location: "grand exchange bank"
+  trade: {inputs: {molten_glass: 1600}}
+  step: {task: process, items: [molten_glass], use_item: glassblowing_pipe,
+         with_item: molten_glass, keep: [glassblowing_pipe], confirm: [{key: "4"}],
+         bank_tab: crafting, withdraw: [{slot: 5, item: molten_glass, quantity: all}]}
+
+glass_orbs:
+  name: "glassblowing unpowered orbs"
+  skills: [crafting]
+  levels: [46, 87]
+  xp_per_hour: 84000
+  reliability: 5
+  location: "grand exchange bank"
+  trade: {inputs: {molten_glass: 1600}}
+  step: {task: process, items: [molten_glass], use_item: glassblowing_pipe,
+         with_item: molten_glass, keep: [glassblowing_pipe], confirm: [{key: "6"}],
+         bank_tab: crafting, withdraw: [{slot: 5, item: molten_glass, quantity: all}]}
+
+glass_light_orbs:
+  name: "glassblowing light orbs"
+  skills: [crafting]
+  levels: [87, 99]
+  xp_per_hour: 112000
+  reliability: 5
+  location: "grand exchange bank"
+  trade: {inputs: {molten_glass: 1600}}
+  step: {task: process, items: [molten_glass], use_item: glassblowing_pipe,
+         with_item: molten_glass, keep: [glassblowing_pipe], confirm: [{key: "8"}],
+         bank_tab: crafting, withdraw: [{slot: 5, item: molten_glass, quantity: all}]}
+
+green_dhide_bodies:
+  name: "green d'hide bodies"
+  skills: [crafting]
+  levels: [63, 71]
+  xp_per_hour: 186000
+  reliability: 5
+  location: "grand exchange bank"
+  trade: {inputs: {green_leather: 3000}}
+  step: {task: process, items: [green_leather], use_item: needle,
+         with_item: green_leather, keep: [needle, thread], confirm: [{key: "1"}],
+         bank_tab: crafting, withdraw: [{slot: 6, item: green_leather, quantity: all}]}
+
+blue_dhide_bodies:
+  name: "blue d'hide bodies"
+  skills: [crafting]
+  levels: [71, 77]
+  xp_per_hour: 210000
+  reliability: 5
+  location: "grand exchange bank"
+  trade: {inputs: {blue_leather: 3000}}
+  step: {task: process, items: [blue_leather], use_item: needle,
+         with_item: blue_leather, keep: [needle, thread], confirm: [{key: "1"}],
+         bank_tab: crafting, withdraw: [{slot: 6, item: blue_leather, quantity: all}]}
+
+red_dhide_bodies:
+  name: "red d'hide bodies"
+  skills: [crafting]
+  levels: [77, 84]
+  xp_per_hour: 234000
+  reliability: 5
+  location: "grand exchange bank"
+  trade: {inputs: {red_leather: 3000}}
+  step: {task: process, items: [red_leather], use_item: needle,
+         with_item: red_leather, keep: [needle, thread], confirm: [{key: "1"}],
+         bank_tab: crafting, withdraw: [{slot: 6, item: red_leather, quantity: all}]}
+
+black_dhide_bodies:
+  name: "black d'hide bodies"
+  skills: [crafting]
+  levels: [84, 99]
+  xp_per_hour: 258000
+  reliability: 5
+  location: "grand exchange bank"
+  trade: {inputs: {black_leather: 3000}}
+  step: {task: process, items: [black_leather], use_item: needle,
+         with_item: black_leather, keep: [needle, thread], confirm: [{key: "1"}],
+         bank_tab: crafting, withdraw: [{slot: 6, item: black_leather, quantity: all}]}

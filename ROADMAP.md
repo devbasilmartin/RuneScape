@@ -118,7 +118,7 @@ Helper follower.
 - [x] Construction (bagged plants → larders/doors, mahogany tables): `construction` task + library (butler later)
 - [x] Combat (cows → hill giants → sand/ammonite crabs): standing-combat mode + library
 - [x] Woodcutting (Guild), Fishing (Catherby → Guild), Cooking (Hosidius), Fletching, Thieving (knights), Firemaking lines: library + `thieve` task, `bank_location` travel
-- [ ] Crafting, Herblore, Runecraft (ZMI)
+- [x] Crafting (gems, glassblowing, d'hide bodies), Herblore (attack potions → brews), Runecraft (Ourania altar via leave_spell): library
 
 ### Phase 3: Minigames and special mechanics
 - [ ] Motherlode Mine, Blast Furnace, Tithe Farm, Wintertodt, Fishing Trawler, Hunter (chinchompas)
