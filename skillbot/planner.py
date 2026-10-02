@@ -8,7 +8,9 @@ from .game import BotError, Game, StopBot
 from .combat import CombatTask
 from .runecraft import RunecraftTask
 from .skills import SkillReader
+from .notify import notify
 from .status import write_status
+from .trust import TRIAL_SLICE_MINUTES, fingerprint
 from .tasks import FiremakingTask, GatherTask, ProcessTask
 
 TASK_TYPES = {"gather": GatherTask, "process": ProcessTask, "firemaking": FiremakingTask,
@@ -64,9 +66,16 @@ class Levels:
 
 
 class Planner:
-    def __init__(self, game: Game, levels: Levels, session=None, status_dir=None):
+    def __init__(self, game: Game, levels: Levels, session=None, status_dir=None,
+                 trust=None, supervised: bool = False, notify=notify):
         self.game = game
         self.status_dir = status_dir
+        self.trust = trust              # TrustStore, or None to run every step as trusted
+        self.supervised = supervised
+        self.notify = notify
+        self.current = None             # the step being run, for error accounting
+        self.tainted = False            # a supervised run of the current step hit an error
+        self.skipped = set()
         self.levels = levels
         self.session = session
         self.errors = 0
@@ -84,7 +93,7 @@ class Planner:
         while True:
             progressed = False
             for step in plan:
-                if self.done(step):
+                if self.done(step) or not self.allowed(step):
                     continue
                 progressed |= self.run_step(step, deadline) > 0
                 if deadline and g.now() >= deadline:
@@ -92,7 +101,26 @@ class Planner:
             if all(self.done(s) for s in plan):
                 raise StopBot("plan complete")
             if not progressed:
+                if self.skipped and all(self.done(s) or s.name in self.skipped for s in plan):
+                    raise StopBot("only experimental steps are left: run them with "
+                                  "`run --supervised` while you watch")
                 raise StopBot("no step could make progress (out of supplies everywhere?)")
+
+    def allowed(self, step: Step) -> bool:
+        """Experimental steps only run supervised (you're watching)."""
+        if self.trust is None or self.supervised:
+            return True
+        code = fingerprint(step, TASK_TYPES[step.task])
+        _, message = self.trust.record(step.name, code)
+        if message:
+            self.notify(message)
+        if self.trust.level(step.name) == "experimental":
+            if step.name not in self.skipped:
+                self.skipped.add(step.name)
+                self.notify(f"skipping {step.name!r}: it's experimental; run it with "
+                            "`run --supervised` while you watch")
+            return False
+        return True
 
     def report(self, step: Step, task, started: float) -> None:
         if self.status_dir is None:
@@ -118,13 +146,42 @@ class Planner:
         log.info("step %r: %s %d -> %d", step.name, step.skill,
                  self.levels.get(step.skill), step.until_level)
         task = make_task(g, step)
+        self.current, self.tainted = step, False
+        level = "trusted"
+        if self.trust is not None:
+            self.trust.record(step.name, fingerprint(step, TASK_TYPES[step.task]))
+            level = self.trust.level(step.name)
+        slice_minutes = step.max_minutes
+        if level == "trial" and not self.supervised:
+            slice_minutes = min(step.max_minutes or TRIAL_SLICE_MINUTES, TRIAL_SLICE_MINUTES)
         # Until every digit is known, read after each item so levels change one at a time.
         task.on_progress = lambda: (None if self.levels.reader.complete()
                                     else self.levels.refresh([step.skill]))
         started, batches = g.now(), 0
         self.report(step, task, started)
+        try:
+            batches = self._run_batches(step, task, started, slice_minutes, deadline)
+        except StopBot:
+            if self.trust is not None and not self.supervised:
+                self.trust.add_stop(step.name)
+            raise
+        finally:
+            self.current = None
+            if self.trust is not None and not self.tainted:
+                self.trust.add_time(step.name, g.now() - started, self.supervised)
+                message = self.trust.evaluate(step.name)
+                if message:
+                    self.notify(message)
+        if level == "trial" and not self.supervised:
+            self.notify(f"trial report: {step.name!r} ran {(g.now() - started) / 60:.0f} min, "
+                        f"{batches} batches, {task.stats}; {self.trust.progress(step.name)}")
+        log.info("step %r: %d batches, %s", step.name, batches, task.stats)
+        return batches
+
+    def _run_batches(self, step: Step, task, started: float, slice_minutes, deadline) -> int:
+        g, batches = self.game, 0
         while not self.done(step):
-            if step.max_minutes and g.now() - started >= step.max_minutes * 60:
+            if slice_minutes and g.now() - started >= slice_minutes * 60:
                 log.info("step %r: time slice over", step.name)
                 break
             if deadline and g.now() >= deadline:
@@ -136,7 +193,6 @@ class Planner:
                 batches += 1
                 self._guard(lambda: self.levels.refresh([step.skill]))
                 self.report(step, task, started)
-        log.info("step %r: %d batches, %s", step.name, batches, task.stats)
         return batches
 
     def _guard(self, action):
@@ -147,6 +203,13 @@ class Planner:
             self.game.keep_running()
             result = action()
         except BotError as e:
+            step = self.current
+            if self.trust is not None and step is not None:
+                self.trust.add_error(step.name, self.supervised)
+            if self.supervised:
+                self.tainted = True
+                raise StopBot(f"supervised run: stopping at the first error ({e}) so you "
+                              "can see what happened") from e
             self.errors += 1
             log.warning("error %d/%d: %s", self.errors, self.game.cfg.max_consecutive_errors, e)
             if self.errors >= self.game.cfg.max_consecutive_errors:

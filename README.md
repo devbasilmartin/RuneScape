@@ -172,6 +172,21 @@ are chains of Ground Marker tiles (about one every 10 squares, distinct colors w
 and the bot always clicks the furthest one it can see. Moving between towns for a new step still
 needs you to move the character, or a route that covers the whole way.
 
+## Trust levels
+
+Every plan step starts **experimental** and has to earn unattended running:
+
+| level | how it runs | promotion |
+|---|---|---|
+| experimental | only with `python -m skillbot run --supervised` (you watch; it stops at the first error) | 2 hours supervised without an error → trial |
+| trial | unattended, in slices of at most 2 hours, with a Discord report after each | 24 trial hours over ≥3 days, ≤1 recovered error per 4 hours, no stops → trusted |
+| trusted | normally, 24/7 | — |
+
+A trusted step that stops the bot twice within 24 hours drops back to trial, and so does
+any step whose settings or code change. `python -m skillbot trust` shows where every step
+stands; `python -m skillbot trust STEP LEVEL` overrides it (e.g. for a step you've already
+watched run fine). Promotions and demotions are announced on Discord.
+
 ## Running unattended
 
 ```sh

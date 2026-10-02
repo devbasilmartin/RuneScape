@@ -103,7 +103,7 @@ Helper follower.
 - [x] Supervisor and watchdog, VM autostart: [docs/unattended.md](docs/unattended.md)
 - [x] Discord two-way bot, notifications, questions, commands, daily summary: [docs/discord.md](docs/discord.md) (price alerts come with the price service in Phase 1)
 - [x] Color registry (`colors.yaml`), scene collision checks, `setup` / `check-setup` / `colors`
-- [ ] Trust levels
+- [x] Trust levels (`run --supervised`, `trust`, promotion/demotion, trial slices and reports)
 
 ### Phase 1: Engine
 - [ ] Bank v2 (tag tabs, placeholders, verification) and item-on-item processing

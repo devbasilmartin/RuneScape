@@ -207,6 +207,20 @@ def cmd_colors(cfg: Config, args) -> None:
     print(colors_text(Registry.load(cfg.colors_file), cfg.color_tolerance))
 
 
+def cmd_trust(cfg: Config, args) -> None:
+    from .planner import TASK_TYPES
+    from .trust import TrustStore, fingerprint
+    store = TrustStore(cfg.data_dir / "trust.json")
+    if args.step:
+        from .setup_check import find_step
+        step = find_step(cfg, args.step)
+        store.set_level(step.name, args.level, fingerprint(step, TASK_TYPES[step.task]))
+        print(f"{step.name}: set to {args.level}")
+        return
+    for i, step in enumerate(cfg.plan, 1):
+        print(f"{i:>2}. {step.name:<32} {store.progress(step.name)}")
+
+
 def cmd_profile(cfg: Config, args) -> None:
     import subprocess
     profiles = args.profiles
@@ -261,7 +275,11 @@ def cmd_run(cfg: Config, args) -> None:
     if cfg.run == "always":
         game.run = RunManager.load(game, cfg.data_dir)
     levels = Levels.load(game, SkillReader.load(cfg.layout, cfg.data_dir), cfg.data_dir)
-    planner = Planner(game, levels, Session.load(game, cfg.data_dir), status_dir=cfg.data_dir)
+    from .trust import TrustStore
+    planner = Planner(game, levels, Session.load(game, cfg.data_dir), status_dir=cfg.data_dir,
+                      trust=TrustStore(cfg.data_dir / "trust.json"), supervised=args.supervised)
+    if args.supervised:
+        logging.info("supervised run: stops at the first error; experimental steps allowed")
     logging.info("starting; move the mouse to a screen corner to stop")
     try:
         planner.run()
@@ -310,11 +328,18 @@ def main(argv=None) -> None:
     c.add_argument("name", nargs="?")
     sub.add_parser("pause", help="stop the bot (supervisor keeps it stopped) so you can play")
     sub.add_parser("resume", help="hand control back to the bot")
-    sub.add_parser("run", help="work through the plan")
+    c = sub.add_parser("run", help="work through the plan")
+    c.add_argument("--supervised", action="store_true",
+                   help="you're watching: allow experimental steps, stop at the first error")
+    c = sub.add_parser("trust", help="trust level of each plan step (or set one)")
+    c.add_argument("step", nargs="?", help="step name or number to set")
+    c.add_argument("level", nargs="?", choices=["experimental", "trial", "trusted"])
     args = p.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s", datefmt="%H:%M:%S")
     from .profiles import Profiles
     args.profiles = profiles = Profiles()
+    if args.cmd == "trust" and bool(args.step) != bool(args.level):
+        p.error("trust: give both STEP and LEVEL, or neither")
     if args.cmd == "profile" and args.action != "list" and not args.name:
         p.error(f"profile {args.action} needs a NAME")
     try:
@@ -332,7 +357,7 @@ def main(argv=None) -> None:
     {"calibrate": cmd_calibrate, "calibrate-run": cmd_calibrate_run,
      "learn-energy": cmd_learn_energy, "learn-digits": cmd_learn_digits, "levels": cmd_levels,
      "debug": cmd_debug, "doctor": cmd_doctor, "supervise": cmd_supervise, "discord": cmd_discord, "ask": cmd_ask,
-     "setup": cmd_setup, "check-setup": cmd_check_setup, "colors": cmd_colors,
+     "trust": cmd_trust, "setup": cmd_setup, "check-setup": cmd_check_setup, "colors": cmd_colors,
      "profile": cmd_profile, "pause": cmd_pause,
      "resume": cmd_resume, "run": cmd_run}[args.cmd](cfg, args)
 
