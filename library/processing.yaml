@@ -1,0 +1,105 @@
+# Members processing ladders. Rates are rough; make-menu keys need checking on your client.
+
+cook_lobsters_hosidius:
+  name: "cook lobsters (Hosidius kitchen)"
+  skills: [cooking]
+  levels: [40, 80]
+  xp_per_hour: 150000
+  reliability: 5
+  location: "hosidius kitchen"
+  trade: {inputs: {raw_lobster: 1250}, outputs: {lobster: 1200}}
+  step: {task: process, target: range, items: [raw_lobster], use_item: raw_lobster,
+         bank_tab: cooking, withdraw: [{slot: 0, item: raw_lobster, quantity: all}]}
+
+cook_swordfish_hosidius:
+  name: "cook swordfish (Hosidius kitchen)"
+  skills: [cooking]
+  levels: [45, 80]
+  xp_per_hour: 175000
+  reliability: 5
+  location: "hosidius kitchen"
+  trade: {inputs: {raw_swordfish: 1250}, outputs: {swordfish: 1200}}
+  step: {task: process, target: range, items: [raw_swordfish], use_item: raw_swordfish,
+         bank_tab: cooking, withdraw: [{slot: 1, item: raw_swordfish, quantity: all}]}
+
+cook_sharks_hosidius:
+  name: "cook sharks (Hosidius kitchen)"
+  skills: [cooking]
+  levels: [80, 99]
+  xp_per_hour: 250000
+  reliability: 5
+  location: "hosidius kitchen"
+  trade: {inputs: {raw_shark: 1250}, outputs: {shark: 1200}}
+  step: {task: process, target: range, items: [raw_shark], use_item: raw_shark,
+         bank_tab: cooking, withdraw: [{slot: 2, item: raw_shark, quantity: all}]}
+
+fletch_maple_longbows:
+  name: "maple longbows (u)"
+  skills: [fletching]
+  levels: [55, 70]
+  xp_per_hour: 80000
+  reliability: 5
+  location: "grand exchange bank"
+  trade: {inputs: {maple_logs: 1500}}
+  step: {task: process, items: [maple_logs], use_item: knife, with_item: maple_logs,
+         keep: [knife], confirm: [{key: "3"}], bank_tab: fletching,
+         withdraw: [{slot: 0, item: maple_logs, quantity: all}]}
+
+fletch_yew_longbows:
+  name: "yew longbows (u)"
+  skills: [fletching]
+  levels: [70, 85]
+  xp_per_hour: 100000
+  reliability: 5
+  location: "grand exchange bank"
+  trade: {inputs: {yew_logs: 1500}}
+  step: {task: process, items: [yew_logs], use_item: knife, with_item: yew_logs,
+         keep: [knife], confirm: [{key: "3"}], bank_tab: fletching,
+         withdraw: [{slot: 1, item: yew_logs, quantity: all}]}
+
+fletch_magic_longbows:
+  name: "magic longbows (u)"
+  skills: [fletching]
+  levels: [85, 99]
+  xp_per_hour: 135000
+  reliability: 5
+  location: "grand exchange bank"
+  trade: {inputs: {magic_logs: 1500}}
+  step: {task: process, items: [magic_logs], use_item: knife, with_item: magic_logs,
+         keep: [knife], confirm: [{key: "3"}], bank_tab: fletching,
+         withdraw: [{slot: 2, item: magic_logs, quantity: all}]}
+
+burn_maples:
+  name: "burn maples"
+  skills: [firemaking]
+  levels: [45, 60]
+  xp_per_hour: 100000
+  reliability: 4
+  location: "grand exchange lane"
+  trade: {inputs: {maple_logs: 800}}
+  step: {task: firemaking, target: fm_start, items: [maple_logs], bank_tab: firemaking,
+         withdraw: [{slot: 1, item: maple_logs, quantity: all}]}
+
+burn_yews:
+  name: "burn yews"
+  skills: [firemaking]
+  levels: [60, 99]
+  xp_per_hour: 150000
+  reliability: 4
+  location: "grand exchange lane"
+  trade: {inputs: {yew_logs: 800}}
+  step: {task: firemaking, target: fm_start, items: [yew_logs], bank_tab: firemaking,
+         withdraw: [{slot: 2, item: yew_logs, quantity: all}]}
+
+ardougne_knights:
+  name: "Ardougne knights"
+  skills: [thieving]
+  levels: [55, 99]
+  xp_per_hour: 200000
+  profit_per_hour: 250000
+  reliability: 4
+  location: "ardougne market knights"
+  trade: {inputs: {lobster: 60}}
+  step: {task: thieve, target: knight, items: [], food: [lobster], eat_below: 0.4,
+         pouch: coin_pouch, open_every: 25, bank_tab: food,
+         withdraw: [{slot: 0, item: lobster, quantity: 10}]}

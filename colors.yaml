@@ -100,3 +100,24 @@ shark:           {rgb: [0, 0, 192],     category: item}
 
 # --- plugin colors that aren't highlights ---
 status_hp:       {rgb: [255, 0, 0],     category: other}
+yew_logs:        {rgb: [0, 128, 192], category: item}
+redwood_logs:    {rgb: [0, 192, 64], category: item}
+maple_logs:      {rgb: [0, 192, 255], category: item}
+magic_logs:      {rgb: [0, 255, 64], category: item}
+raw_trout:       {rgb: [0, 255, 255], category: item}
+raw_salmon:      {rgb: [64, 0, 192], category: item}
+raw_lobster:     {rgb: [64, 0, 255], category: item}
+raw_swordfish:   {rgb: [64, 64, 128], category: item}
+raw_tuna:        {rgb: [64, 64, 192], category: item}
+raw_shark:       {rgb: [64, 64, 255], category: item}
+lobster:         {rgb: [64, 128, 0], category: item}
+swordfish:       {rgb: [64, 128, 64], category: item}
+knife:           {rgb: [64, 128, 128], category: item}
+coin_pouch:      {rgb: [64, 128, 192], category: item}
+yew_tree:        {rgb: [0, 0, 192], category: resource}
+redwood_tree:    {rgb: [0, 64, 192], category: resource}
+maple_tree:      {rgb: [0, 128, 255], category: resource}
+lobster_spot:    {rgb: [0, 192, 0], category: resource}
+harpoon_spot:    {rgb: [0, 255, 192], category: resource}
+knight:          {rgb: [64, 64, 192], category: resource}
+stall:           {rgb: [64, 64, 255], category: resource}

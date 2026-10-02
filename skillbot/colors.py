@@ -100,6 +100,36 @@ class Registry:
         matches.sort(key=lambda e: (e.category == "item") != item)
         return matches[0].name if matches else None
 
+    def free_color(self, category: str, tolerance: int = 25):
+        """A color not confusable with any registry color it could meet."""
+        in_inventory = category == "item"
+        taken = [e.rgb for e in self.entries.values() if (e.category == "item") == in_inventory]
+        if in_inventory:
+            levels = (0, 64, 128, 192, 255)
+            options = [c for c in product(levels, repeat=3) if max(c) >= 128]
+        else:
+            options = palette(tolerance)
+        for c in options:
+            if all(distinct(c, t, tolerance) for t in taken):
+                return c
+        return None
+
+    def add(self, name: str, category: str, tolerance: int = 25) -> tuple:
+        """Append a new name with a free color to colors.yaml."""
+        if name in self.entries:
+            raise ValueError(f"{name} is already in the registry")
+        if category not in CATEGORIES:
+            raise ValueError(f"category must be one of {CATEGORIES}")
+        rgb = self.free_color(category, tolerance)
+        if rgb is None:
+            raise ValueError(f"no free {category} colors left")
+        self.entries[name] = Entry(name, rgb, category)
+        if self.path:
+            with open(self.path, "a") as f:
+                f.write(f"{name + ':':<17}{{rgb: [{rgb[0]}, {rgb[1]}, {rgb[2]}], "
+                        f"category: {category}}}\n")
+        return rgb
+
     def check(self, tolerance: int) -> list[str]:
         """Problems within the registry itself (two names for confusable colors)."""
         problems = []

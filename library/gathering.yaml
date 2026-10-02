@@ -1,0 +1,62 @@
+# Members gathering ladders (banking everything). Rates are rough.
+
+yews_wc_guild:
+  name: "yews (Woodcutting Guild)"
+  skills: [woodcutting]
+  levels: [60, 90]
+  xp_per_hour: 40000
+  reliability: 5
+  location: "woodcutting guild yews"
+  trade: {outputs: {yew_logs: 230}}
+  step: {task: gather, target: yew_tree, items: [yew_logs], when_full: bank}
+
+redwoods_wc_guild:
+  name: "redwoods (Woodcutting Guild)"
+  skills: [woodcutting]
+  levels: [90, 99]
+  xp_per_hour: 65000
+  reliability: 5
+  location: "woodcutting guild redwoods"
+  trade: {outputs: {redwood_logs: 400}}
+  step: {task: gather, target: redwood_tree, items: [redwood_logs], when_full: bank}
+
+fly_fishing_barbarian:
+  name: "fly fishing (Barbarian Village)"
+  skills: [fishing]
+  levels: [20, 40]
+  xp_per_hour: 25000
+  reliability: 4
+  location: "barbarian village fishing"
+  trade: {outputs: {raw_trout: 300, raw_salmon: 150}}
+  step: {task: gather, target: fishing_spot, items: [raw_trout, raw_salmon], when_full: bank,
+         bank_location: "edgeville bank"}
+
+lobsters_catherby:
+  name: "lobsters (Catherby)"
+  skills: [fishing]
+  levels: [40, 68]
+  xp_per_hour: 25000
+  reliability: 5
+  location: "catherby fishing"
+  trade: {outputs: {raw_lobster: 250}}
+  step: {task: gather, target: lobster_spot, items: [raw_lobster], when_full: bank}
+
+fishing_guild_harpoon:
+  name: "swordfish & tuna (Fishing Guild)"
+  skills: [fishing]
+  levels: [68, 76]
+  xp_per_hour: 30000
+  reliability: 5
+  location: "fishing guild harpoon"
+  trade: {outputs: {raw_swordfish: 80, raw_tuna: 160}}
+  step: {task: gather, target: harpoon_spot, items: [raw_swordfish, raw_tuna], when_full: bank}
+
+sharks_fishing_guild:
+  name: "sharks (Fishing Guild)"
+  skills: [fishing]
+  levels: [76, 99]
+  xp_per_hour: 30000
+  reliability: 5
+  location: "fishing guild sharks"
+  trade: {outputs: {raw_shark: 270}}
+  step: {task: gather, target: harpoon_spot, items: [raw_shark], when_full: bank}

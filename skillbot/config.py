@@ -9,7 +9,7 @@ from .layout import Layout
 from .skills import SKILLS
 
 TASKS = ("gather", "process", "firemaking", "combat", "runecraft", "cast", "agility",
-         "construction")
+         "construction", "thieve")
 
 
 def _color(v):
@@ -75,6 +75,11 @@ class Step:
     hotspot: tuple | None = None       # fixed screen point instead of a target color
     bank_location: str | None = None   # destination with a bank, for restocking
     builds_per_batch: int = 20
+
+    # thieving
+    pouch: str | None = None           # tagged coin pouch stack, opened every `open_every`
+    open_every: int = 25
+    attempts_per_batch: int = 100
 
     # combat while standing still (crabs)
     stand_on: tuple | None = None      # Ground Marker to stand on

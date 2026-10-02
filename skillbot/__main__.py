@@ -217,7 +217,14 @@ def cmd_check_setup(cfg: Config, args) -> None:
 def cmd_colors(cfg: Config, args) -> None:
     from .colors import Registry
     from .setup_check import colors_text
-    print(colors_text(Registry.load(cfg.colors_file), cfg.color_tolerance))
+    reg = Registry.load(cfg.colors_file)
+    if args.action == "add":
+        if not args.name:
+            raise SystemExit("colors add NAME --category CATEGORY")
+        rgb = reg.add(args.name, args.category, cfg.color_tolerance)
+        print(f"added {args.name}: {list(rgb)} (#{rgb[0]:02X}{rgb[1]:02X}{rgb[2]:02X})")
+        return
+    print(colors_text(reg, cfg.color_tolerance))
 
 
 def make_navigator(cfg: Config, game):
@@ -434,7 +441,10 @@ def main(argv=None) -> None:
     c = sub.add_parser("check-setup", help="verify a step's highlights from a screenshot")
     c.add_argument("step", help="step name or number")
     c.add_argument("--image", help="check this PNG instead of the live screen")
-    sub.add_parser("colors", help="the color registry and free colors")
+    c = sub.add_parser("colors", help="the color registry and free colors; or add a name")
+    c.add_argument("action", nargs="?", choices=["list", "add"], default="list")
+    c.add_argument("name", nargs="?")
+    c.add_argument("--category", default="item")
     c = sub.add_parser("add-destination", help="record a world-map destination from a hub")
     c.add_argument("name")
     c.add_argument("--hub", required=True)

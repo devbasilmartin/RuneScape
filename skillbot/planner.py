@@ -7,6 +7,7 @@ from .config import Step
 from .game import BotError, Game, StopBot
 from .combat import CombatTask, StandingCombatTask
 from .construction import ConstructionTask
+from .thieving import ThieveTask
 from .agility import AgilityTask
 from .magic import CastTask
 from .runecraft import RunecraftTask
@@ -18,7 +19,7 @@ from .tasks import FiremakingTask, GatherTask, ProcessTask
 
 TASK_TYPES = {"gather": GatherTask, "process": ProcessTask, "firemaking": FiremakingTask,
               "combat": CombatTask, "runecraft": RunecraftTask, "cast": CastTask,
-              "agility": AgilityTask, "construction": ConstructionTask}
+              "agility": AgilityTask, "construction": ConstructionTask, "thieve": ThieveTask}
 
 
 def make_task(game: Game, step: Step):

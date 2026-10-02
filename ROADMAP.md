@@ -117,7 +117,8 @@ Helper follower.
 - [x] Agility (gnome course → all rooftops): `agility` task + library
 - [x] Construction (bagged plants → larders/doors, mahogany tables): `construction` task + library (butler later)
 - [x] Combat (cows → hill giants → sand/ammonite crabs): standing-combat mode + library
-- [ ] Woodcutting (Guild), Fishing (Catherby → Guild), Cooking (Hosidius), Fletching, Crafting, Herblore, Thieving (knights), Firemaking lines, Runecraft (fire, ZMI)
+- [x] Woodcutting (Guild), Fishing (Catherby → Guild), Cooking (Hosidius), Fletching, Thieving (knights), Firemaking lines: library + `thieve` task, `bank_location` travel
+- [ ] Crafting, Herblore, Runecraft (ZMI)
 
 ### Phase 3: Minigames and special mechanics
 - [ ] Motherlode Mine, Blast Furnace, Tithe Farm, Wintertodt, Fishing Trawler, Hunter (chinchompas)

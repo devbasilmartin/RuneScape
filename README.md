@@ -34,6 +34,7 @@ uses those names. Two commands do the setup work for you:
 python -m skillbot setup "willows"          # exactly what to mark, with which colors (hex)
 python -m skillbot check-setup "willows"    # stand where the step runs: verifies it from a screenshot
 python -m skillbot colors                   # the registry, and free colors for new highlights
+python -m skillbot colors add raw_monkfish --category item   # add a name with a free color
 ```
 
 The config check refuses colors that could be confused when they're on screen together.
@@ -127,6 +128,7 @@ examples.
 | `agility` | click `obstacles` (Object Marker colors in course order), pick up `loot` (marks of grace), restart the lap after a fall | Agility |
 | `construction` | in build mode: click the hotspot, press `build_key`, right-click → `remove_option`, confirm; restock at `bank_location` | Construction (and Farming via bagged plants) |
 | `combat` + `stand_on` | stand on a marked tile, let aggressive monsters come, eat, walk to `reset_spot` and back when they stop | Melee at crabs |
+| `thieve` | pickpocket the `target` NPC or steal from a stall; waits out stuns (HP drops), opens `pouch` every `open_every`, eats | Thieving |
 | `runecraft` | bank → `ruins` → craft at the `target` altar → `portal` → bank | Runecraft |
 
 ### Runecrafting

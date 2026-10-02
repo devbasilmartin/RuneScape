@@ -28,15 +28,32 @@ class Task:
     def has_items(self, img) -> bool:
         return bool(self.tagged(img, self.step.items))
 
+    def go_bank(self) -> None:
+        """Make the bank reachable: travel to the step's bank_location when it has one."""
+        g, step = self.game, self.step
+        if step.bank_location and g.nav is not None \
+                and not g.blobs(g.grab(), g.cfg.bank_color):
+            g.nav.travel(step.bank_location, g.cfg.bank_color)
+
+    def back_to_work(self) -> None:
+        """After a trip to a far-away bank, travel back to where the step runs."""
+        g, step = self.game, self.step
+        if step.bank_location and step.location and g.nav is not None \
+                and step.target is not None:
+            g.nav.travel(step.location, step.target)
+
     def bank_and_restock(self, keep=None) -> bool:
         """Deposit (except the step's ``keep`` items), withdraw this step's supplies and
         check they arrived. False (and one notification) when the bank is out of something."""
         step = self.step
         keep = step.keep if keep is None else keep
+        self.go_bank()
         missing = self.game.bank(step.walk.get("bank"), step.withdraw, keep=keep,
                                  tab=step.bank_tab)
         if missing:
             self.game.out_of_stock(step.name, missing)
+        else:
+            self.back_to_work()
         return not missing
 
     def run_batch(self) -> str:
@@ -91,7 +108,9 @@ class GatherTask(Task):
         if step.when_full == "drop":
             g.drop(names=set(step.items))
         else:
-            g.bank(step.walk.get("bank"))
+            self.go_bank()
+            g.bank(step.walk.get("bank"), keep=step.keep)
+            self.back_to_work()
         self.stats["batches"] += 1
         return "ok"
 
