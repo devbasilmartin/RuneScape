@@ -259,6 +259,7 @@ python -m skillbot run
 - `session.py`: logout detection and re-login.
 - `digits.py`: learned digit shapes, shared by skill levels and run energy.
 - `supervisor.py`, `heartbeat.py`: keep RuneLite and the bot running ([docs/unattended.md](docs/unattended.md)).
+- `rotation.py`, `history.py`: rotate between account profiles and log each account's progress ([docs/accounts.md](docs/accounts.md)).
 - `notify.py`, `messages.py`, `status.py`, `discord_core.py`, `discord_bot.py`: notifications, questions and phone commands via Discord ([docs/discord.md](docs/discord.md)).
 - `navigation.py`, `dialog.py`: teleport hubs, world-map targets, path following, chat dialogs ([docs/navigation.md](docs/navigation.md)).
 - `safety.py`: random events, deaths and graves, world hopping ([docs/safety.md](docs/safety.md)).

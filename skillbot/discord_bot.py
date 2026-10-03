@@ -105,6 +105,7 @@ def run(profiles, legacy_data_dir: Path | None, summary_hour: int = 9, pricewatc
     simple("stop", "Stop the supervisor, RuneLite and the bot")
     simple("questions", "Open questions waiting for you")
     simple("profile", "Account profiles and which one is active")
+    simple("accounts", "Every account's progress, current task and rotation turn")
     simple("shopping", "What to buy for the next ~12 hours of training, at current prices")
 
     @tree.command(name="sold", description="You sold an item the bot produced")

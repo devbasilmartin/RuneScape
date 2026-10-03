@@ -169,7 +169,9 @@ def cmd_supervise(cfg: Config, args) -> None:
     logging.getLogger().addHandler(handler)
     sup_cfg = SupervisorConfig.from_dict(cfg.supervisor)
     host = Host(args.config, cfg.data_dir, profile=args.selected.name)
-    raise SystemExit(Supervisor(sup_cfg, host, cfg.data_dir).run())
+    from .rotation import load_rotation
+    rotation = load_rotation(args.profiles) if args.selected.name else None
+    raise SystemExit(Supervisor(sup_cfg, host, cfg.data_dir, rotation=rotation).run())
 
 
 def cmd_discord(cfg: Config, args) -> None:
@@ -364,6 +366,66 @@ def cmd_learn_slayer(cfg: Config, args) -> None:
     book.save()
 
 
+def cmd_logout(cfg: Config, args) -> None:
+    game = live_game(cfg)
+    ok = Session.load(game, cfg.data_dir).logout()
+    print("logged out" if ok else "still logged in")
+    raise SystemExit(0 if ok else 1)
+
+
+def cmd_accounts(cfg: Config, args) -> None:
+    """Every account's progress and the rotation, or one account's history."""
+    import time
+
+    from .history import format_log, read_events
+    from .rotation import format_overview, load_rotation, overview
+    profiles = args.profiles
+    if args.log:
+        if args.log not in profiles.names():
+            raise SystemExit(f"no profile {args.log!r}")
+        events = read_events(profiles.dir / args.log / "data", last=args.n)
+        print(json.dumps(events, indent=1) if args.json else format_log(events))
+        return
+    data = overview(profiles, load_rotation(profiles), time.time())
+    print(json.dumps(data, indent=1) if args.json else format_overview(data, time.time()))
+
+
+def cmd_switch(cfg: Config, args) -> None:
+    """Ask the supervisor to hand over to another account (clean: finish the load, log out)."""
+    from .rotation import load_rotation
+    rotation = load_rotation(args.profiles)
+    if rotation is None:
+        raise SystemExit("no profiles yet: python -m skillbot profile create NAME")
+    try:
+        rotation.request(args.name, args.hours)
+    except ValueError as e:
+        raise SystemExit(str(e))
+    print(f"requested {args.name}" + (f" for {args.hours:g}h" if args.hours else "")
+          + "; the supervisor switches within a minute or so (after the current load)")
+
+
+def cmd_rotation(cfg: Config, args) -> None:
+    from .rotation import load_rotation
+    rotation = load_rotation(args.profiles)
+    if rotation is None:
+        raise SystemExit("no profiles yet")
+    if args.action == "bench":
+        rotation.bench(args.name, "benched by you")
+        print(f"{args.name} benched (skipped by the rotation)")
+    elif args.action == "unbench":
+        print(f"{args.name} back in the rotation" if rotation.unbench(args.name)
+              else f"{args.name} wasn't benched")
+    else:
+        if rotation.cfg is None:
+            print("no rotation.yaml: one account at a time (`switch NAME` still works)")
+            return
+        for t in rotation.cfg.accounts:
+            cap = f", max {t.max_hours_per_day:g}h/day" if t.max_hours_per_day else ""
+            goals = f", goals {t.goals}" if t.goals else ""
+            print(f"  {t.profile}: {t.hours:g}h turns{cap}{goals}")
+        print(f"order: {rotation.cfg.order}")
+
+
 def cmd_quest_done(cfg: Config, args) -> None:
     from .goals import QuestLog
     QuestLog(cfg.data_dir / "quests.json").add(args.name)
@@ -400,13 +462,15 @@ def cmd_profile(cfg: Config, args) -> None:
               f'  SKILLBOT_USERNAME="..."\n  SKILLBOT_PASSWORD="..."\n'
               f"Then calibrate it: python -m skillbot --profile {args.name} calibrate")
     elif args.action == "use":
-        profiles.use(args.name)
-        print(f"active profile: {args.name}")
         state = subprocess.run(["systemctl", "--user", "is-active", "skillbot.service"],
                                capture_output=True, text=True).stdout.strip()
-        if state == "active":
-            subprocess.run(["systemctl", "--user", "restart", "skillbot.service"], check=False)
-            print("restarted the supervisor with this profile")
+        if state == "active":           # hand over cleanly: finish the load, log out, log in
+            from .rotation import load_rotation
+            load_rotation(profiles).request(args.name)
+            print(f"the supervisor is running: switching to {args.name} after the current load")
+        else:
+            profiles.use(args.name)
+            print(f"active profile: {args.name}")
 
 
 def cmd_pause(cfg: Config, args) -> None:
@@ -419,6 +483,14 @@ def cmd_resume(cfg: Config, args) -> None:
     (cfg.data_dir / "paused").unlink(missing_ok=True)
     print("resumed: switch RuneLite back to the `bot` profile; the supervisor starts the bot "
           "within ~15s.")
+
+
+def write_stopped(data_dir: Path, kind: str, detail: str) -> None:
+    """Why the bot last exited, for the supervisor: handover, stopped (a StopBot, e.g.
+    plan complete), failsafe or interrupt (you stopped it)."""
+    import time
+    (data_dir / "stopped.json").write_text(json.dumps(
+        {"kind": kind, "detail": detail, "time": time.time()}))
 
 
 def cmd_run(cfg: Config, args) -> None:
@@ -448,7 +520,9 @@ def cmd_run(cfg: Config, args) -> None:
                       trust=TrustStore(cfg.data_dir / "trust.json"), supervised=args.supervised)
     if args.supervised:
         logging.info("supervised run: stops at the first error; experimental steps allowed")
-    goals_path = Path(args.config).parent / "goals.yaml"
+    goals_path = Path(args.goals) if args.goals else Path(args.config).parent / "goals.yaml"
+    if args.goals and not goals_path.exists():
+        raise SystemExit(f"no goals file {goals_path}")
     if goals_path.exists():
         planner.chooser = make_chooser(cfg, goals_path, planner.trust, args.supervised,
                                        prices_dir=args.mailbox_dir / "prices")
@@ -457,16 +531,34 @@ def cmd_run(cfg: Config, args) -> None:
     planner.safety = Safety(game, SafetyConfig.from_dict(cfg.safety), cfg.genie_color,
                             cfg.respawn_color, cfg.grave_color, cfg.other_player_color,
                             notify=notify)
+    from .history import log_event
+    from .planner import HANDOVER
     logging.info("starting; move the mouse to a screen corner to stop")
+    (cfg.data_dir / "handover").unlink(missing_ok=True)      # stale, from a killed supervisor
+    log_event(cfg.data_dir, "session_start", levels=dict(levels.levels))
+    kind, detail = "stopped", ""
     try:
         planner.run()
     except StopBot as e:
+        detail = str(e)
         logging.info("stopped: %s", e)
-        notify(f"stopped: {e}")
+        if detail == HANDOVER:
+            kind = HANDOVER
+            if not planner.session.logout():
+                logging.warning("couldn't log out; the supervisor will try")
+            (cfg.data_dir / "handover").unlink(missing_ok=True)
+        else:
+            notify(f"stopped: {e}")
     except pyautogui.FailSafeException:
+        kind, detail = "failsafe", "mouse in a screen corner"
         logging.info("stopped by failsafe")
     except KeyboardInterrupt:
+        kind, detail = "interrupt", "Ctrl+C"
         logging.info("stopped")
+    finally:
+        log_event(cfg.data_dir, "session_end", reason=detail or kind,
+                  levels=dict(levels.levels))
+        write_stopped(cfg.data_dir, kind, detail)
     logging.info("levels: %s", levels.levels)
     if game.run:
         logging.info("run: %s", game.run.stats)
@@ -518,6 +610,7 @@ def main(argv=None) -> None:
     sub.add_parser("pause", help="stop the bot (supervisor keeps it stopped) so you can play")
     sub.add_parser("resume", help="hand control back to the bot")
     c = sub.add_parser("run", help="work through the plan")
+    c.add_argument("--goals", help="goals file to use instead of goals.yaml (rotation turns)")
     c.add_argument("--supervised", action="store_true",
                    help="you're watching: allow experimental steps, stop at the first error")
     c = sub.add_parser("plan", help="what the goals planner would train next, and why")
@@ -532,6 +625,17 @@ def main(argv=None) -> None:
     c = sub.add_parser("slayer-task", help="which monster your Slayer task is (or skip / mine)")
     c.add_argument("monster", nargs="+")
     sub.add_parser("learn-slayer", help="teach the Slayer infobox's digits")
+    sub.add_parser("logout", help="log the game out")
+    c = sub.add_parser("accounts", help="every account's progress, task and rotation turn")
+    c.add_argument("--json", action="store_true", help="machine-readable, for your scripts")
+    c.add_argument("--log", metavar="PROFILE", help="that account's history instead")
+    c.add_argument("-n", type=int, default=30, help="history entries to show")
+    c = sub.add_parser("switch", help="hand over to another account (supervisor, clean logout)")
+    c.add_argument("name")
+    c.add_argument("--hours", type=float, help="length of its turn (default: rotation.yaml)")
+    c = sub.add_parser("rotation", help="the rotation schedule; bench/unbench an account")
+    c.add_argument("action", nargs="?", default="show", choices=["show", "bench", "unbench"])
+    c.add_argument("name", nargs="?")
     c = sub.add_parser("quest-done", help="mark a quest as completed (unlocks methods)")
     c.add_argument("name")
     c = sub.add_parser("trust", help="trust level of each plan step (or set one)")
@@ -543,6 +647,8 @@ def main(argv=None) -> None:
     args.profiles = profiles = Profiles()
     if args.cmd == "trust" and bool(args.step) != bool(args.level):
         p.error("trust: give both STEP and LEVEL, or neither")
+    if args.cmd == "rotation" and args.action != "show" and not args.name:
+        p.error(f"rotation {args.action} needs a NAME")
     if args.cmd == "profile" and args.action != "list" and not args.name:
         p.error(f"profile {args.action} needs a NAME")
     try:
@@ -561,7 +667,7 @@ def main(argv=None) -> None:
      "learn-energy": cmd_learn_energy, "learn-digits": cmd_learn_digits, "levels": cmd_levels,
      "debug": cmd_debug, "doctor": cmd_doctor, "supervise": cmd_supervise, "discord": cmd_discord, "ask": cmd_ask,
      "add-destination": cmd_add_destination, "travel": cmd_travel,
-     "trust": cmd_trust, "plan": cmd_plan, "sold": cmd_sold, "prices": cmd_prices, "quest-done": cmd_quest_done, "quest": cmd_quest, "slayer-task": cmd_slayer_task, "learn-slayer": cmd_learn_slayer, "setup": cmd_setup, "check-setup": cmd_check_setup, "colors": cmd_colors,
+     "trust": cmd_trust, "plan": cmd_plan, "sold": cmd_sold, "prices": cmd_prices, "quest-done": cmd_quest_done, "quest": cmd_quest, "logout": cmd_logout, "accounts": cmd_accounts, "switch": cmd_switch, "rotation": cmd_rotation, "slayer-task": cmd_slayer_task, "learn-slayer": cmd_learn_slayer, "setup": cmd_setup, "check-setup": cmd_check_setup, "colors": cmd_colors,
      "profile": cmd_profile, "pause": cmd_pause,
      "resume": cmd_resume, "run": cmd_run}[args.cmd](cfg, args)
 

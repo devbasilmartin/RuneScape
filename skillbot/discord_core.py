@@ -92,6 +92,12 @@ class DiscordCore:
             if self.pricewatch is None:
                 return "Prices aren't set up."
             return self.pricewatch.shopping()
+        if name == "accounts":
+            if self.profiles is None or not self.profiles.names():
+                return "No profiles set up (single account)."
+            from .rotation import format_overview, load_rotation, overview
+            return format_overview(overview(self.profiles, load_rotation(self.profiles),
+                                            self.clock()), self.clock())
         if name == "questions":
             asks = self.mailbox.open_asks()
             if not asks:
@@ -100,18 +106,23 @@ class DiscordCore:
         return f"Unknown command {name!r}."
 
     def switch(self, name: str) -> str:
-        """Make ``name`` the active profile and restart the supervisor with it."""
+        """Switch account: a clean handover when the supervisor runs, else just make
+        ``name`` the active profile."""
         if self.profiles is None:
             return "No profiles set up (single account)."
+        state = self.supervisor_state()
+        if state == "active":
+            from .rotation import load_rotation
+            try:
+                load_rotation(self.profiles).request(name)
+            except ValueError as e:
+                return str(e)
+            return (f"Switching to **{name}**: the bot finishes its load and logs out, then "
+                    f"{name} logs in.")
         try:
             self.profiles.use(name)
         except ValueError as e:
             return str(e)
-        state = self.supervisor_state()
-        if state == "active":
-            self.run(["systemctl", "--user", "restart", SERVICE],
-                     capture_output=True, text=True, timeout=60)
-            return f"Switched to **{name}** and restarted the supervisor."
         return f"Switched to **{name}**. The supervisor isn't running; /start to start it."
 
     def sold(self, item: str) -> str:

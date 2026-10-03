@@ -54,7 +54,8 @@ class Layout:
     # side panel tab buttons
     tabs: dict = field(default_factory=lambda: {
         "combat": (538, 186), "skills": (571, 186), "inventory": (637, 186),
-        "magic": (736, 186)})
+        "magic": (736, 186), "logout": (637, 484)})
+    logout_button: tuple[int, int] = (641, 432)     # "Click here to logout" in the logout tab
 
     # combat options tab: the four attack style buttons, in game order
     combat_styles: tuple = ((603, 270), (683, 270), (603, 322), (683, 322))

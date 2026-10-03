@@ -15,6 +15,7 @@ from .agility import AgilityTask
 from .magic import CastTask
 from .runecraft import RunecraftTask
 from .skills import SkillReader
+from .history import log_event
 from .notify import notify
 from .status import write_status
 from .trust import TRIAL_SLICE_MINUTES, fingerprint
@@ -34,6 +35,7 @@ def make_task(game: Game, step: Step):
 
 
 log = logging.getLogger("skillbot")
+HANDOVER = "handover"            # StopBot reason: the rotation's turn is over
 
 
 class Levels:
@@ -203,18 +205,24 @@ class Planner:
         task.on_progress = lambda: (None if self.levels.reader.complete()
                                     else self.levels.refresh([step.skill]))
         started, batches = g.now(), 0
+        first_level = self.levels.get(step.skill)
         self.report(step, task, started)
         if step.location and getattr(g, "nav", None) is not None:
             arrive = step.target if step.target is not None else g.cfg.bank_color
             self._guard(lambda: g.nav.travel(step.location, arrive))
         try:
             batches = self._run_batches(step, task, started, slice_minutes, deadline)
-        except StopBot:
-            if self.trust is not None and not self.supervised:
+        except StopBot as e:
+            if self.trust is not None and not self.supervised and str(e) != HANDOVER:
                 self.trust.add_stop(step.name)
             raise
         finally:
             self.current = None
+            if self.status_dir is not None:
+                log_event(self.status_dir, "step", step=step.name, skill=step.skill,
+                          **{"from": first_level}, to=self.levels.get(step.skill),
+                          target=step.until_level, minutes=round((g.now() - started) / 60, 1),
+                          stats=dict(task.stats))
             if self.trust is not None and not self.tainted:
                 self.trust.add_time(step.name, g.now() - started, self.supervised)
                 message = self.trust.evaluate(step.name)
@@ -226,9 +234,15 @@ class Planner:
         log.info("step %r: %d batches, %s", step.name, batches, task.stats)
         return batches
 
+    def handover_requested(self) -> bool:
+        """The supervisor wants the next account: stop between batches."""
+        return self.status_dir is not None and (Path(self.status_dir) / "handover").exists()
+
     def _run_batches(self, step: Step, task, started: float, slice_minutes, deadline) -> int:
         g, batches = self.game, 0
         while not self.done(step):
+            if self.handover_requested():
+                raise StopBot(HANDOVER)
             if self.safety is not None:
                 self._guard(lambda: self.safety.between_batches(step))
             if slice_minutes and g.now() - started >= slice_minutes * 60:

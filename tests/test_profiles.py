@@ -72,8 +72,11 @@ def test_discord_follows_the_active_profile(repo, tmp_path):
     core = DiscordCore(repo.shared_data, run=run, profiles=repo)
     assert "No levels" in core.command("levels")
     assert "**→ main**" in core.command("profile")
-    assert "restarted" in core.switch("alt")
-    assert ["systemctl", "--user", "restart", "skillbot.service"] in calls
+    assert "Switching to **alt**" in core.switch("alt")        # a clean handover request
+    state = json.loads((repo.shared_data / "rotation.json").read_text())
+    assert state["request"]["profile"] == "alt"
+    assert not any("restart" in c for c in calls)
+    repo.use("alt")                                             # what the supervisor does
     assert "Magic: 70" in core.command("levels")
     core.command("pause")
     assert (repo.dir / "alt" / "data" / "paused").exists()

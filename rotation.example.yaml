@@ -1,0 +1,15 @@
+# Copy to rotation.yaml (next to profiles/) to rotate between account profiles.
+# The supervisor runs it; see docs/accounts.md.
+accounts:
+  - {profile: main, hours: 3}                          # 3-hour turns
+  - {profile: alt, hours: 1.5, max_hours_per_day: 6}   # skipped once it has played 6h today
+  - {profile: pure, hours: 2, goals: profiles/pure/goals-combat.yaml}   # its own goals per turn
+
+# Who goes next when a turn ends:
+#   in_order            - down the list, then from the top
+#   least_played_today  - whoever has played least today
+#   lowest_total_level  - whoever is furthest behind
+order: in_order
+
+gap_minutes: 1          # logged out between two accounts
+handover_minutes: 10    # time the bot gets to finish its load and log out before it's stopped

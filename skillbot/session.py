@@ -53,6 +53,22 @@ class Session:
             raise StopBot("logged out (on_logout: stop)")
         self.login()
 
+    def logout(self, attempts: int = 6) -> bool:
+        """Log out from the logout tab. Retries while the game refuses (10 seconds after
+        combat). True once the login screen shows."""
+        g = self.game
+        for _ in range(attempts):
+            if not self.logged_in(g.grab()):
+                return True
+            g.close_interfaces()
+            g.open_tab("logout")
+            g.controls.click(g.layout.logout_button)
+            if g.wait_until(lambda img: not self.logged_in(img), timeout=8, poll=(1, 1.5)):
+                log.info("logged out")
+                return True
+            g.wait(5, 6)
+        return not self.logged_in(g.grab())
+
     def login(self) -> None:
         g = self.game
         user, password = os.environ.get("SKILLBOT_USERNAME"), os.environ.get("SKILLBOT_PASSWORD")

@@ -113,6 +113,9 @@ messages are tagged with the profile, and `/switch NAME` changes account from yo
 
 Without any profiles, the top-level `config.yaml` and `data/` are used as before.
 
+To see every account's progress, or to rotate between accounts on a schedule (or from your
+own scripts), see [accounts.md](accounts.md).
+
 **Handing over and back:** `pause` stops the bot; play as much as you like, anywhere. On
 `resume` the bot starts fresh: it closes open interfaces, opens the inventory, resets the
 camera and re-reads all levels before continuing. (Walking back from wherever you left the

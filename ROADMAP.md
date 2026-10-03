@@ -101,6 +101,7 @@ Helper follower.
 ### Phase 0.5: Running unattended
 - [x] Profiles, pause/resume with re-sync (location re-sync comes with navigation), RuneLite profile reminders
 - [x] Supervisor and watchdog, VM autostart: [docs/unattended.md](docs/unattended.md)
+- [x] Account rotation (schedule, `switch`, clean logout handover) and per-account history: [docs/accounts.md](docs/accounts.md)
 - [x] Discord two-way bot, notifications, questions, commands, daily summary: [docs/discord.md](docs/discord.md) (price alerts come with the price service in Phase 1)
 - [x] Color registry (`colors.yaml`), scene collision checks, `setup` / `check-setup` / `colors`
 - [x] Trust levels (`run --supervised`, `trust`, promotion/demotion, trial slices and reports)

@@ -145,3 +145,45 @@ def test_resync_resets_the_client_before_training(scripted):
     assert fake.keys[:2] == ["esc", "esc"]               # closed whatever was open
     assert fake.clicks[0][0] == LAYOUT.tabs["inventory"]  # then the inventory tab
     assert levels.refreshes >= 1
+
+
+def test_logout_waits_out_the_combat_timer():
+    game, fake = make_game(config())
+    fake.img = logged_in_screen()
+    session = Session(game, sample(fake.img, LAYOUT.fingerprint_points))
+    tries = []
+
+    def click(fake, pt):
+        if tuple(pt) == LAYOUT.logout_button:
+            tries.append(fake.t)
+            if len(tries) == 2:                   # the first try is "in combat"
+                fake.img = blank()
+    fake.on_click.append(click)
+    assert session.logout() and len(tries) == 2
+    assert session.logout() and len(tries) == 2   # already out: nothing to click
+
+
+def test_handover_flag_stops_between_batches_and_logs_the_step(scripted, tmp_path):
+    from skillbot.history import read_events
+    from skillbot.planner import HANDOVER
+    cfg = config(steps(("trees", "woodcutting", 10)))
+    game, fake = make_game(cfg)
+    levels = FakeLevels({"woodcutting": 1})
+    scripted.levels = levels
+    planner = Planner(game, levels, status_dir=tmp_path)
+    scripted.script = {}
+    orig = ScriptedTask.run_batch
+
+    def batch(self):
+        if len(self.log) == 2:
+            (tmp_path / "handover").write_text("")
+        return orig(self)
+    ScriptedTask.run_batch = batch
+    try:
+        with pytest.raises(StopBot, match=HANDOVER):
+            planner.run()
+    finally:
+        ScriptedTask.run_batch = orig
+    assert scripted.log == ["trees"] * 3
+    (step,) = [e for e in read_events(tmp_path) if e["event"] == "step"]
+    assert step["from"] == 1 and step["to"] == 4 and step["skill"] == "woodcutting"
