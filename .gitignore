@@ -6,3 +6,4 @@ debug*.png
 config.yaml
 profiles/
 goals.yaml
+rotation.yaml
