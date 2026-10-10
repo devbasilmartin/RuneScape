@@ -37,7 +37,8 @@ In VirtualBox: **Machine → New**.
 Click **Finish**, then select the VM and open **Settings** before starting it:
 
 - **Display → Screen:** Graphics Controller **VMSVGA**, Video Memory **128 MB**,
-  **Enable 3D Acceleration: off**.
+  **Enable 3D Acceleration: on**. (With it off, Ubuntu 24.04 on VirtualBox 7.1 can boot to
+  a black screen: the desktop runs but nothing is drawn.)
 - **System → Motherboard:** Pointing Device **USB Tablet** (the default).
 - Everything else can stay at the defaults (NAT networking is fine).
 
@@ -198,7 +199,8 @@ itself and recover from crashes.
 | Problem | Fix |
 |---|---|
 | VirtualBox says VT-x/AMD-V is not available | Enable virtualization in the BIOS (step 1). |
-| The VM is very slow, with a green turtle icon in the status bar | Windows' Hyper-V is in use, so VirtualBox runs in a slow compatibility mode. Turning off *Hyper-V*, *Virtual Machine Platform* and *Core isolation → Memory integrity* in Windows fixes it, but Memory integrity is a security feature, so decide whether the speed is worth it. A slower VM still works if the game runs smoothly enough. |
+| The VM is very slow or stays black, and `VBox.log` says `fall back to NEM: VT-x is not available` | Windows' hypervisor (used by WSL2/Hyper-V) holds VT-x. In an admin PowerShell: `bcdedit /set hypervisorlaunchtype off`, turn off *Core isolation → Memory integrity*, restart Windows. WSL2 won't start while it's off; `bcdedit /set hypervisorlaunchtype auto` undoes it. |
+| Black screen after "Try or Install Ubuntu", though `VBox.log` shows a `1280x800` resize | 3D acceleration is off. Power the VM off, then `VBoxManage modifyvm skillbot --accelerate3d on`. Or boot **Ubuntu (safe graphics)**. |
 | `check.sh` says Wayland | Re-run `scripts/vm/setup.sh` and reboot. At the login screen you can also pick **Ubuntu on Xorg** with the gear icon. |
 | The game window is black or flickers | Make sure the GPU plugin is off. `start-client.sh` already forces software rendering. |
 | The screen goes blank or locks after a while | Re-run `scripts/vm/setup.sh` from the desktop terminal (its settings only apply to the logged-in user). |
