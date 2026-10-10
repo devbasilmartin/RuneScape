@@ -126,13 +126,18 @@ bash scripts/vm/start-client.sh
 
 In RuneLite:
 
-1. **Profiles:** in the configuration panel, open **Profiles** and create one called **`bot`**.
+1. **Profiles:** the bot's highlights live in their own RuneLite profile, `bot`. You'll import a
+   generated one in step 5; until then create an empty one called **`bot`**.
    Switch to it. All bot highlights live in this profile, so your own profile stays clean.
 2. **Fixed mode:** after logging in, open the game's settings (the wrench icon) → *Display* →
    *Game client layout* → **Fixed - Classic layout**. Don't resize the RuneLite window afterwards.
 3. **GPU plugin: off.** Software rendering is more reliable in a VM.
-4. Zoom the camera all the way out, and set up the highlights from the README for
-   your first test: Draynor fishing (fishing spots, the bank booth, Inventory Tags on the fish).
+4. Zoom the camera all the way out.
+5. **Highlights:** generate them instead of setting them by hand:
+   `python -m skillbot runelite-profile`, then **Profiles → Import Profile** and switch to it
+   ([runelite-profile.md](runelite-profile.md)). For the first test (Draynor fishing), the
+   fishing spots and the fish are already done; mark the bank booth (shift + right-click →
+   Mark object), export, and run it again with `--from`.
 
 ## 9. Check everything
 

@@ -19,7 +19,7 @@ masters:
 monsters:
   birds:          {name: Birds (chickens), aliases: [bird, chicken, chickens],
                    location: "lumbridge chickens", step: {target: enemy}}
-  cows:           {name: Cows, aliases: [cow], location: "lumbridge cows", step: {target: enemy}}
+  cows:           {name: Cows, aliases: [cow], location: "lumbridge cows", step: {target: cow}}
   goblins:        {name: Goblins, aliases: [goblin], location: "lumbridge goblins",
                    step: {target: enemy}}
   dwarves:        {name: Dwarves, aliases: [dwarf], location: "falador dwarven mine",

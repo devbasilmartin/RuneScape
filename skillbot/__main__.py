@@ -426,6 +426,25 @@ def cmd_rotation(cfg: Config, args) -> None:
         print(f"order: {rotation.cfg.order}")
 
 
+def cmd_runelite_profile(cfg: Config, args) -> None:
+    """Build a RuneLite profile with every highlight color, to import in RuneLite."""
+    from .colors import Registry
+    from .runelite_profile import WikiIds, build, read_properties, write_properties
+    base = None
+    if args.from_file:
+        base = read_properties(Path(args.from_file).read_text(encoding="latin-1"))
+    wiki = WikiIds(args.mailbox_dir / "runelite_ids.json")
+    print("looking up item and NPC ids on the OSRS Wiki (cached after the first run)...")
+    try:
+        props, report = build(Registry.load(cfg.colors_file), wiki=wiki, base=base)
+    finally:
+        wiki.save()
+    Path(args.out).write_text(write_properties(props), encoding="latin-1")
+    print("\n".join(report))
+    print(f"\nwrote {args.out}: in RuneLite, Configuration (wrench) → Profiles → Import "
+          "Profile, then switch to it (rename it to `bot`).")
+
+
 def cmd_quest_done(cfg: Config, args) -> None:
     from .goals import QuestLog
     QuestLog(cfg.data_dir / "quests.json").add(args.name)
@@ -626,6 +645,10 @@ def main(argv=None) -> None:
     c.add_argument("monster", nargs="+")
     sub.add_parser("learn-slayer", help="teach the Slayer infobox's digits")
     sub.add_parser("logout", help="log the game out")
+    c = sub.add_parser("runelite-profile", help="generate the RuneLite profile with every highlight")
+    c.add_argument("--from", dest="from_file", metavar="EXPORT",
+                   help="an exported profile: keep it, recolor its object and tile markers")
+    c.add_argument("--out", default="bot-profile.properties")
     c = sub.add_parser("accounts", help="every account's progress, task and rotation turn")
     c.add_argument("--json", action="store_true", help="machine-readable, for your scripts")
     c.add_argument("--log", metavar="PROFILE", help="that account's history instead")
@@ -667,7 +690,7 @@ def main(argv=None) -> None:
      "learn-energy": cmd_learn_energy, "learn-digits": cmd_learn_digits, "levels": cmd_levels,
      "debug": cmd_debug, "doctor": cmd_doctor, "supervise": cmd_supervise, "discord": cmd_discord, "ask": cmd_ask,
      "add-destination": cmd_add_destination, "travel": cmd_travel,
-     "trust": cmd_trust, "plan": cmd_plan, "sold": cmd_sold, "prices": cmd_prices, "quest-done": cmd_quest_done, "quest": cmd_quest, "logout": cmd_logout, "accounts": cmd_accounts, "switch": cmd_switch, "rotation": cmd_rotation, "slayer-task": cmd_slayer_task, "learn-slayer": cmd_learn_slayer, "setup": cmd_setup, "check-setup": cmd_check_setup, "colors": cmd_colors,
+     "trust": cmd_trust, "plan": cmd_plan, "sold": cmd_sold, "prices": cmd_prices, "quest-done": cmd_quest_done, "quest": cmd_quest, "logout": cmd_logout, "runelite-profile": cmd_runelite_profile, "accounts": cmd_accounts, "switch": cmd_switch, "rotation": cmd_rotation, "slayer-task": cmd_slayer_task, "learn-slayer": cmd_learn_slayer, "setup": cmd_setup, "check-setup": cmd_check_setup, "colors": cmd_colors,
      "profile": cmd_profile, "pause": cmd_pause,
      "resume": cmd_resume, "run": cmd_run}[args.cmd](cfg, args)
 
