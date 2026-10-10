@@ -140,7 +140,8 @@ In RuneLite:
    `python -m skillbot runelite-profile`, then **Profiles → Import Profile** and switch to it
    ([runelite-profile.md](runelite-profile.md)). For the first test (Draynor fishing), the
    fishing spots and the fish are already done; mark the bank booth (shift + right-click →
-   Mark object), export, and run it again with `--from`.
+   Mark object), export, and run it again with `--from`. Every other place is in the
+   checklist [markers.md](markers.md).
 
 ## 9. Check everything
 

@@ -47,6 +47,10 @@ mark more.
 
 ## Still by hand
 
+[markers.md](markers.md) is the per-place checklist of every marker the library needs,
+and which ones are recolored for you.
+
+
 The command lists these too:
 - **Agility obstacles**: each course's obstacles take `obstacle_1`, `obstacle_2`... in order, and
   courses reuse names (two "Tightrope"s), so color them by hand: set Object Markers' marker

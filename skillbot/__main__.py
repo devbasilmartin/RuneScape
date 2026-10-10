@@ -445,6 +445,14 @@ def cmd_runelite_profile(cfg: Config, args) -> None:
           "Profile, then switch to it (rename it to `bot`).")
 
 
+def cmd_marker_list(cfg: Config, args) -> None:
+    from .colors import Registry
+    from .library import load_library
+    from .markers import marker_list
+    Path(args.out).write_text(marker_list(load_library(), Registry.load(cfg.colors_file)))
+    print(f"wrote {args.out}")
+
+
 def cmd_mouse_summary(cfg: Config, args) -> None:
     """Click success per mouse style, overall and per step."""
     from .mouse import MouseConfig, format_summary, summary_rows
@@ -660,6 +668,8 @@ def main(argv=None) -> None:
     sub.add_parser("logout", help="log the game out")
     c = sub.add_parser("mouse-summary", help="click success per mouse style (A/B testing)")
     c.add_argument("--json", action="store_true")
+    c = sub.add_parser("marker-list", help="what to mark in RuneLite at each place (markdown)")
+    c.add_argument("--out", default=str(Path(__file__).resolve().parent.parent / "docs/markers.md"))
     c = sub.add_parser("runelite-profile", help="generate the RuneLite profile with every highlight")
     c.add_argument("--from", dest="from_file", metavar="EXPORT",
                    help="an exported profile: keep it, recolor its object and tile markers")
@@ -705,7 +715,7 @@ def main(argv=None) -> None:
      "learn-energy": cmd_learn_energy, "learn-digits": cmd_learn_digits, "levels": cmd_levels,
      "debug": cmd_debug, "doctor": cmd_doctor, "supervise": cmd_supervise, "discord": cmd_discord, "ask": cmd_ask,
      "add-destination": cmd_add_destination, "travel": cmd_travel,
-     "trust": cmd_trust, "plan": cmd_plan, "sold": cmd_sold, "prices": cmd_prices, "quest-done": cmd_quest_done, "quest": cmd_quest, "logout": cmd_logout, "mouse-summary": cmd_mouse_summary, "runelite-profile": cmd_runelite_profile, "accounts": cmd_accounts, "switch": cmd_switch, "rotation": cmd_rotation, "slayer-task": cmd_slayer_task, "learn-slayer": cmd_learn_slayer, "setup": cmd_setup, "check-setup": cmd_check_setup, "colors": cmd_colors,
+     "trust": cmd_trust, "plan": cmd_plan, "sold": cmd_sold, "prices": cmd_prices, "quest-done": cmd_quest_done, "quest": cmd_quest, "logout": cmd_logout, "mouse-summary": cmd_mouse_summary, "marker-list": cmd_marker_list, "runelite-profile": cmd_runelite_profile, "accounts": cmd_accounts, "switch": cmd_switch, "rotation": cmd_rotation, "slayer-task": cmd_slayer_task, "learn-slayer": cmd_learn_slayer, "setup": cmd_setup, "check-setup": cmd_check_setup, "colors": cmd_colors,
      "profile": cmd_profile, "pause": cmd_pause,
      "resume": cmd_resume, "run": cmd_run}[args.cmd](cfg, args)
 
