@@ -73,9 +73,98 @@ def check_calibration(data_dir: Path) -> Check:
     return Check("calibration", PASS, "all calibration files present")
 
 
-def run_checks(cfg) -> list[Check]:
-    checks = [check_session()]
-    if checks[0].status != FAIL:
+def check_os(os_release=Path("/etc/os-release")) -> Check:
+    try:
+        info = dict(line.split("=", 1) for line in os_release.read_text().splitlines()
+                    if "=" in line)
+    except OSError:
+        return Check("ubuntu", WARN, "no /etc/os-release; is this the VM?")
+    distro, version = info.get("ID", "").strip('"'), info.get("VERSION_ID", "").strip('"')
+    if distro == "ubuntu" and version == "24.04":
+        return Check("ubuntu", PASS, "24.04")
+    return Check("ubuntu", FAIL, f"{distro} {version}: the bot needs Ubuntu 24.04 (later "
+                                 "versions have no Xorg session; docs/vm-setup.md)")
+
+
+PACKAGES = (("numpy", "numpy"), ("cv2", "opencv-python"), ("mss", "mss"),
+            ("pyautogui", "pyautogui"), ("yaml", "pyyaml"), ("discord", "discord.py"))
+
+
+def check_packages(mouse_enabled: bool = False, find=None) -> Check:
+    import importlib.util
+    find = find or importlib.util.find_spec
+    missing = [pip for mod, pip in PACKAGES if find(mod) is None]
+    if mouse_enabled and find("humanized_input") is None:
+        from .mouse import INSTALL
+        missing.append(f"humanized_input (mouse A/B testing is on: {INSTALL})")
+    if missing:
+        return Check("python packages", FAIL, "missing: " + ", ".join(missing)
+                     + " (pip install -r requirements.txt)")
+    return Check("python packages", PASS, "all installed")
+
+
+def check_tools(which=shutil.which) -> Check:
+    missing = [t for t in ("xdotool",) if not which(t)]
+    if missing:
+        return Check("tools", FAIL, f"missing {', '.join(missing)}: run scripts/vm/setup.sh")
+    return Check("tools", PASS, "xdotool")
+
+
+def check_login(profile: str | None, env=os.environ) -> Check:
+    """Credentials present (never printed)."""
+    where = f"profiles/{profile}.env in ~/.config/skillbot/" if profile else \
+        "~/.config/skillbot/env"
+    missing = [k for k in ("SKILLBOT_USERNAME", "SKILLBOT_PASSWORD") if not env.get(k)]
+    if missing:
+        return Check("login", WARN, f"{' and '.join(missing)} not set ({where}); the bot "
+                                    "can't log back in after a disconnect")
+    return Check("login", PASS, "username and password set" + (f" for {profile}" if profile
+                                                               else ""))
+
+
+def check_client(window_name: str, run=subprocess.run) -> Check:
+    try:
+        found = run(["xdotool", "search", "--name", window_name], capture_output=True,
+                    timeout=5).returncode == 0
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        return Check("client window", WARN, "can't look for it without xdotool")
+    if not found:
+        return Check("client window", WARN, f"no {window_name!r} window open (fine if the "
+                                            "supervisor starts it)")
+    return Check("client window", PASS, f"{window_name} is open")
+
+
+def check_runelite_profile(repo_dir: Path) -> Check:
+    if not (repo_dir / "bot-profile.properties").exists():
+        return Check("runelite profile", WARN, "not generated yet: python -m skillbot "
+                                               "runelite-profile, then import it in RuneLite "
+                                               "(docs/runelite-profile.md)")
+    return Check("runelite profile", PASS, "bot-profile.properties generated (imported? "
+                                           "debug.png shows the highlights)")
+
+
+def check_rotation(profiles) -> Check | None:
+    if profiles is None or not (profiles.root / "rotation.yaml").exists():
+        return None
+    from .rotation import load_rotation
+    try:
+        load_rotation(profiles)
+    except ValueError as e:
+        return Check("rotation.yaml", FAIL, str(e))
+    return Check("rotation.yaml", PASS, "valid")
+
+
+def run_checks(cfg, profile: str | None = None, profiles=None,
+               repo_dir: Path | None = None) -> list[Check]:
+    from .supervisor import SupervisorConfig
+    repo_dir = repo_dir or Path(__file__).resolve().parent.parent
+    try:
+        window = SupervisorConfig.from_dict(cfg.supervisor).window_name
+    except (TypeError, ValueError):
+        window = "RuneLite"
+    checks = [check_os(), check_packages(bool(cfg.mouse.get("enabled"))), check_tools(),
+              check_session()]
+    if checks[-1].status != FAIL:
         try:
             import mss
             with mss.mss() as sct:
@@ -96,9 +185,13 @@ def run_checks(cfg) -> list[Check]:
         check_gsetting("org.gnome.desktop.notifications", "show-banners", "false",
                        "notification pop-ups off"),
         check_java(),
+        check_client(window),
+        check_login(profile),
+        check_runelite_profile(repo_dir),
         check_calibration(cfg.data_dir),
+        check_rotation(profiles),
     ]
-    return checks
+    return [c for c in checks if c is not None]
 
 
 def report(checks: list[Check]) -> int:

@@ -158,7 +158,7 @@ def cmd_debug(cfg: Config, args) -> None:
 
 def cmd_doctor(cfg: Config, args) -> None:
     from .doctor import report, run_checks
-    raise SystemExit(report(run_checks(cfg)))
+    raise SystemExit(report(run_checks(cfg, args.selected.name, args.profiles)))
 
 
 def cmd_supervise(cfg: Config, args) -> None:

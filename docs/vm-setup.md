@@ -151,8 +151,13 @@ cd ~/skillbot
 bash scripts/vm/check.sh
 ```
 
-Everything should be **PASS**, except **calibration**, which stays WARN until the next step.
-Each FAIL says what to fix.
+(or `python -m skillbot doctor`; add `--profile NAME` to check that account's login).
+It checks the Ubuntu version, the Python packages, xdotool, the X session and screen, the
+GNOME settings, the RuneLite window, the login variables (never printed), the generated
+RuneLite profile, calibration and `rotation.yaml`.
+
+Everything should be **PASS**, except **calibration**, which stays WARN until the next step
+(and **login** if you haven't set the account's variables yet). Each FAIL says what to fix.
 
 ## 10. Calibrate and send me a screenshot
 
