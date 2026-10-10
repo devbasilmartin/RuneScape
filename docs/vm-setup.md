@@ -36,9 +36,9 @@ In VirtualBox: **Machine → New**.
 
 Click **Finish**, then select the VM and open **Settings** before starting it:
 
-- **Display → Screen:** Graphics Controller **VMSVGA**, Video Memory **128 MB**,
-  **Enable 3D Acceleration: on**. (With it off, Ubuntu 24.04 on VirtualBox 7.1 can boot to
-  a black screen: the desktop runs but nothing is drawn.)
+- **Display → Screen:** Graphics Controller **VBoxSVGA**, Video Memory **128 MB**,
+  **Enable 3D Acceleration: off**. (VMSVGA without 3D can boot Ubuntu 24.04 to a black
+  screen; 3D on can crash the VM with some Windows graphics drivers, e.g. Intel's.)
 - **System → Motherboard:** Pointing Device **USB Tablet** (the default).
 - Everything else can stay at the defaults (NAT networking is fine).
 
@@ -200,7 +200,8 @@ itself and recover from crashes.
 |---|---|
 | VirtualBox says VT-x/AMD-V is not available | Enable virtualization in the BIOS (step 1). |
 | The VM is very slow or stays black, and `VBox.log` says `fall back to NEM: VT-x is not available` | Windows' hypervisor (used by WSL2/Hyper-V) holds VT-x. In an admin PowerShell: `bcdedit /set hypervisorlaunchtype off`, turn off *Core isolation → Memory integrity*, restart Windows. WSL2 won't start while it's off; `bcdedit /set hypervisorlaunchtype auto` undoes it. |
-| Black screen after "Try or Install Ubuntu", though `VBox.log` shows a `1280x800` resize | 3D acceleration is off. Power the VM off, then `VBoxManage modifyvm skillbot --accelerate3d on`. Or boot **Ubuntu (safe graphics)**. |
+| Black screen after "Try or Install Ubuntu", though `VBox.log` shows a `1280x800` resize | Power the VM off, then `VBoxManage modifyvm skillbot --accelerate3d off --graphicscontroller vboxsvga`. Or boot **Ubuntu (safe graphics)**. |
+| The VM window closes by itself; `VBox.log` shows an exception in a graphics driver DLL (e.g. `igd10iumd64.dll`) | 3D acceleration is crashing the host's graphics driver. Same fix: `--accelerate3d off --graphicscontroller vboxsvga`. |
 | `check.sh` says Wayland | Re-run `scripts/vm/setup.sh` and reboot. At the login screen you can also pick **Ubuntu on Xorg** with the gear icon. |
 | The game window is black or flickers | Make sure the GPU plugin is off. `start-client.sh` already forces software rendering. |
 | The screen goes blank or locks after a while | Re-run `scripts/vm/setup.sh` from the desktop terminal (its settings only apply to the logged-in user). |
