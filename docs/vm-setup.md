@@ -15,7 +15,10 @@ and the bot installed.
    called "SVM") in your BIOS/UEFI settings.
 2. **Download:**
    - VirtualBox for Windows hosts: <https://www.virtualbox.org/wiki/Downloads>. Install it with the defaults.
-   - Ubuntu **24.04 LTS Desktop** ISO: <https://ubuntu.com/download/desktop>.
+   - Ubuntu **24.04 LTS Desktop** ISO from <https://releases.ubuntu.com/24.04/>
+     (`ubuntu-24.04.x-desktop-amd64.iso`). **Not 26.04 or 25.10**, even though the main
+     download page now offers 26.04: those no longer have the Xorg desktop session the bot
+     needs. `setup.sh` refuses to run on anything but 24.04.
 3. **Disk space:** the VM needs about 40 GB.
 
 ## 2. Create the VM

@@ -12,6 +12,16 @@ if [[ $EUID -eq 0 ]]; then
     exit 1
 fi
 
+# Newer Ubuntu releases (25.10 and later, including 26.04) no longer ship the GNOME
+# session on Xorg, which the bot needs; forcing it off Wayland there leaves no desktop.
+. /etc/os-release
+if [[ "${ID:-}" != "ubuntu" || "${VERSION_ID:-}" != "24.04" ]]; then
+    echo "This VM runs ${PRETTY_NAME:-an unknown system}; the bot needs Ubuntu Desktop 24.04 LTS." >&2
+    echo "Newer Ubuntu (25.10, 26.04) has no Xorg desktop session. Reinstall the VM from the" >&2
+    echo "24.04 ISO: https://releases.ubuntu.com/24.04/ (docs/vm-setup.md)." >&2
+    exit 1
+fi
+
 say "Installing packages"
 sudo apt-get update
 sudo apt-get install -y \
