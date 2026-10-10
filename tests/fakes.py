@@ -103,7 +103,20 @@ class FakeClient:
         for fn in list(self.on_key):
             fn(self, "+".join(keys))
 
+    def position(self):
+        return getattr(self, "pointer", (0, 0))
+
+    def play(self, events):
+        """Planned pointer events: moves move the pointer, a press clicks there."""
+        for e in events:
+            self.wait(e["delay"])
+            if e["type"] == "move":
+                self.pointer = (e["x"], e["y"])
+            elif e["type"] == "up":
+                self.click(self.pointer, e.get("button") or "left")
+
     def click(self, pt, button="left"):
+        self.pointer = tuple(pt)
         if button == "right":
             self.right_clicks.append(tuple(pt))
             return

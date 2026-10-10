@@ -1,0 +1,22 @@
+# Mouse styles to compare (docs/mouse.md). Copy to mouse_styles.yaml next to config.yaml.
+# Each click on a highlight uses the next style in turn; `python -m skillbot mouse-summary`
+# shows which ones land.
+#
+#   path:  human (the library's pointer model) | linear | instant
+#   aim:   human | center (bounding-box centre) | centroid | deepest (furthest from every
+#          edge of the outline) | uniform (a random point inside the outline)
+#   speed: multiplies the pace;  aim_jitter_px: random offset added to the aim
+styles:
+  - {name: box-centre,     path: linear, aim: center}
+  - {name: deepest,        path: linear, aim: deepest}
+  - {name: deepest-fast,   path: instant, aim: deepest}
+  - {name: centroid,       path: linear, aim: centroid}
+  - {name: anywhere-in,    path: linear, aim: uniform}
+  - {name: model-default,  path: human, aim: human}
+
+# Or every combination of some values instead of the list:
+# grid:
+#   profile: intermediate
+#   path: [human, linear]
+#   aim: [center, deepest]
+#   speed: [1, 2]

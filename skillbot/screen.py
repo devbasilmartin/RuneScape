@@ -31,3 +31,6 @@ class Screen:
 
     def to_screen(self, pt) -> tuple[int, int]:
         return self.origin[0] + int(pt[0]), self.origin[1] + int(pt[1])
+
+    def to_canvas(self, pt) -> tuple[int, int]:
+        return int(pt[0]) - self.origin[0], int(pt[1]) - self.origin[1]

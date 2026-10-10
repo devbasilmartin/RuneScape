@@ -54,7 +54,9 @@ class AgilityTask(Task):
             now = g.nearest(im, obs[i])
             moved = now is None or math.dist(now.center, before) > MOVED_PX
             return moved and bool(g.blobs(im, following))
-        return g.wait_until(crossed, timeout=self.step.idle_timeout, poll=(0.8, 1.2))
+        ok = g.wait_until(crossed, timeout=self.step.idle_timeout, poll=(0.8, 1.2))
+        g.click_outcome(ok)
+        return ok
 
     def lap(self) -> None:
         g, obs = self.game, self.step.obstacles

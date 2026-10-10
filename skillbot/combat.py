@@ -99,8 +99,10 @@ class CombatTask(Task):
                                      + (b.center[1] - py) ** 2)):
             return False
         if g.wait_until(lambda im: len(g.inv.tags(im)) > before, timeout=6):
+            g.click_outcome(True)
             self.loot_misses = 0
         else:
+            g.click_outcome(False)
             # untagged loot is fine once, but a pile we can never pick up must not stall us
             self.loot_misses += 1
             if self.loot_misses >= 3:
@@ -151,6 +153,7 @@ class CombatTask(Task):
                 blob = self.follow(img, target)
                 if blob is not None:
                     if self.has_health_bar(img, blob):
+                        g.click_outcome(True)    # the attack started a fight
                         target, misses = blob.center, 0
                         g.wait(0.6, 1.0)
                         continue
@@ -158,6 +161,7 @@ class CombatTask(Task):
                         g.wait(0.6, 1.0)      # still walking over / first hit pending
                         continue
                     misses += 1              # never got into a fight with it
+                    g.click_outcome(False)
                     if misses >= 4:
                         raise BotError(f"{step.name}: attacks aren't starting fights; is the "
                                        "enemy reachable and is the health bar color right?")

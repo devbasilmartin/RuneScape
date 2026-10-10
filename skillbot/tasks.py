@@ -84,6 +84,7 @@ class GatherTask(Task):
             if count != last_count:
                 if count > last_count >= 0:
                     self.progressed(count - last_count)
+                    g.click_outcome(True)        # the click started gathering
                     failed = 0
                 last_count, last_progress = count, g.now()
             if (working and g.now() - last_progress < step.idle_timeout
@@ -94,6 +95,8 @@ class GatherTask(Task):
                 raise BotError(f"{step.name}: clicked {failed} times without gaining an item; "
                                "is everything you gather tagged in Inventory Tags?")
             g.walk(step.walk.get("target"), step.target)
+            if working:
+                g.click_outcome(False)           # clicking again: the last one gained nothing
             if not g.click_nearest(g.grab(), step.target):
                 continue
             failed += working

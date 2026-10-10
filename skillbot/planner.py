@@ -193,6 +193,8 @@ class Planner:
         log.info("step %r: %s %d -> %d", step.name, step.skill,
                  self.levels.get(step.skill), step.until_level)
         task = make_task(g, step)
+        if getattr(g, "mouse", None) is not None:
+            g.mouse.activity = step.name         # mouse-style results are split by step
         self.current, self.tainted = step, False
         level = "trusted"
         if self.trust is not None:

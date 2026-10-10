@@ -260,6 +260,7 @@ python -m skillbot run
 - `digits.py`: learned digit shapes, shared by skill levels and run energy.
 - `supervisor.py`, `heartbeat.py`: keep RuneLite and the bot running ([docs/unattended.md](docs/unattended.md)).
 - `runelite_profile.py`, `runelite/names.yaml`: generate the RuneLite `bot` profile with every highlight ([docs/runelite-profile.md](docs/runelite-profile.md)).
+- `mouse.py`: mouse-style A/B testing, clicks aimed into each highlight's outline ([docs/mouse.md](docs/mouse.md)); off by default.
 - `rotation.py`, `history.py`: rotate between account profiles and log each account's progress ([docs/accounts.md](docs/accounts.md)).
 - `notify.py`, `messages.py`, `status.py`, `discord_core.py`, `discord_bot.py`: notifications, questions and phone commands via Discord ([docs/discord.md](docs/discord.md)).
 - `navigation.py`, `dialog.py`: teleport hubs, world-map targets, path following, chat dialogs ([docs/navigation.md](docs/navigation.md)).

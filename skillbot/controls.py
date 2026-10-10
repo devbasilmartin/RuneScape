@@ -33,6 +33,28 @@ class Controls:
         time.sleep(self.rng.uniform(0.03, 0.08))
         self._pg.click(button=button)
 
+    def position(self) -> tuple[int, int]:
+        """The mouse position in canvas coordinates."""
+        return self.screen.to_canvas(self._pg.position())
+
+    def play(self, events, sleep=time.sleep) -> None:
+        """Play planned pointer events (canvas coordinates): wait each event's delay,
+        then move (instantly: the delays carry the timing), press or release. The
+        failsafe still applies: pyautogui checks the corners on every move."""
+        for e in events:
+            delay = e["delay"] if isinstance(e, dict) else e.delay_before
+            kind = e["type"] if isinstance(e, dict) else e.kind
+            x, y = (e["x"], e["y"]) if isinstance(e, dict) else (e.x, e.y)
+            button = (e.get("button") if isinstance(e, dict) else e.button) or "left"
+            if delay > 0:
+                sleep(delay)
+            if kind == "move":
+                self._pg.moveTo(*self.screen.to_screen((x, y)), duration=0)
+            elif kind == "down":
+                self._pg.mouseDown(button=button)
+            else:
+                self._pg.mouseUp(button=button)
+
     def click_rect(self, rect: Rect, button: str = "left") -> None:
         self.click(self.point_in(rect), button)
 

@@ -247,6 +247,12 @@ plan:
 #   edgeville: {teleport: {item: amulet_of_glory, option: 1}, marker: hub_marker}
 # map_menu_option: 1          # which world-map right-click option is "Set target"
 
+# Mouse-style A/B testing (docs/mouse.md): off unless enabled.
+# mouse:
+#   enabled: false
+#   styles: mouse_styles.yaml
+#   pick: round-robin
+
 # Supervisor (`python -m skillbot supervise`, see docs/unattended.md). Defaults shown.
 # supervisor:
 #   heartbeat_minutes: 3

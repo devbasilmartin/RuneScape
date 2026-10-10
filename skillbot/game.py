@@ -29,6 +29,7 @@ class Game:
         self.reported = set()  # out-of-stock notices already sent
         self.nav = None        # Navigator, when hubs are configured
         self.ledger = None     # prices.Ledger: what gets banked, for sell alerts
+        self.mouse = None      # mouse.MouseLab, when mouse-style testing is on
 
     def keep_running(self) -> None:
         if self.run is not None:
@@ -71,12 +72,35 @@ class Game:
 
     def click_blob(self, img, blob, avoid_danger: bool = True) -> bool:
         danger = self.danger_zones(img) if avoid_danger else []
+        if self.mouse is not None and len(blob.polygon) >= 3:
+            if self.click_styled(blob, danger):
+                return True
         pt = self.safe_point(blob.rect, danger)
         if pt is None:
             return False
         self.keep_running()    # clicking a highlight usually means walking to it
         self.controls.click(pt)
         return True
+
+    def click_styled(self, blob, danger) -> bool:
+        """Mouse-style testing: a planned path to a point inside the blob's outline.
+        False (nothing clicked) if the aim is over a random event: the caller falls back
+        to the usual danger-aware point."""
+        reply = self.mouse.plan(self.controls.position(), blob.polygon)
+        ax, ay = reply["aim"]
+        presses = [(e["x"], e["y"]) for e in reply["events"] if e["type"] != "move"]
+        if any(r.x <= x < r.x + r.w and r.y <= y < r.y + r.h
+               for r in danger for x, y in [(ax, ay), *presses]):
+            self.mouse.forget()
+            return False
+        self.keep_running()
+        self.controls.play(reply["events"])
+        return True
+
+    def click_outcome(self, ok: bool) -> None:
+        """The step's own check of the last highlight click: logged per mouse style."""
+        if self.mouse is not None:
+            self.mouse.outcome(ok)
 
     def click_nearest(self, img, color, avoid_danger: bool = True) -> bool:
         """Click the nearest highlight of ``color`` that a random-event NPC isn't covering."""

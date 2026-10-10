@@ -206,6 +206,7 @@ class Config:
     supervisor: dict = field(default_factory=dict)   # see supervisor.SupervisorConfig
     discord: dict = field(default_factory=dict)      # summary_hour (local time, default 9)
     prices: dict = field(default_factory=dict)       # see prices.PriceConfig
+    mouse: dict = field(default_factory=dict)        # see mouse.MouseConfig (A/B testing)
 
     @classmethod
     def load(cls, path) -> "Config":
@@ -270,6 +271,8 @@ class Config:
         return unique
 
     def validate(self) -> None:
+        from .mouse import MouseConfig
+        MouseConfig.from_dict(self.mouse)
         if self.run not in ("always", "off"):
             raise ValueError("run must be always or off")
         if not 1 <= self.run_min_energy <= 100:
