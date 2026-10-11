@@ -6,6 +6,7 @@ import logging
 import logging.handlers
 
 import cv2
+import numpy as np
 
 from . import vision
 from .config import Config
@@ -75,6 +76,24 @@ def cmd_calibrate_run(cfg: Config, args) -> None:
     print(f"saved run orb colors: {samples}")
 
 
+def _energy_check(img, box) -> None:
+    """energy-check.png: the orb's corner enlarged 8x, the reading box in pink, and below
+    it the pixels the reader counts as digit (white)."""
+    from .run import energy_mask
+    x0, y0 = max(0, box.x - 12), max(0, box.y - 8)
+    crop = img[y0:box.y + box.h + 8, x0:box.x + box.w + 12]
+    top = cv2.cvtColor(crop, cv2.COLOR_RGB2BGR)
+    top = cv2.resize(top, None, fx=8, fy=8, interpolation=cv2.INTER_NEAREST)
+    cv2.rectangle(top, ((box.x - x0) * 8, (box.y - y0) * 8),
+                  ((box.x - x0 + box.w) * 8, (box.y - y0 + box.h) * 8), (255, 0, 255), 1)
+    mask = np.zeros(crop.shape[:2], np.uint8)
+    mask[box.y - y0:box.y - y0 + box.h, box.x - x0:box.x - x0 + box.w] = \
+        energy_mask(box.crop(img)) * 255
+    bottom = cv2.resize(cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR), None, fx=8, fy=8,
+                        interpolation=cv2.INTER_NEAREST)
+    cv2.imwrite("energy-check.png", np.vstack([top, bottom]))
+
+
 def cmd_learn_energy(cfg: Config, args) -> None:
     screen = Screen.load(cfg.data_dir)
     book = GlyphBook.load(cfg.data_dir / "energy_digits.json")
@@ -90,9 +109,11 @@ def cmd_learn_energy(cfg: Config, args) -> None:
                 value = reader.read(img, value, window=1)
             if value is None:
                 text = input("  type the run energy shown next to the orb: ").strip()
-                if not text.isdigit() or not reader.learn(screen.grab(), int(text)):
-                    print("    could not split the number into that many digits; "
-                          "check layout.run_energy_box with `debug`")
+                shot = screen.grab()
+                if not text.isdigit() or not reader.learn(shot, int(text)):
+                    _energy_check(shot, cfg.layout.run_energy_box)
+                    print(f"    could not split it into {len(text)} digits (found "
+                          f"{len(reader.glyphs(shot))} shapes); send energy-check.png")
                     continue
                 value = int(text)
                 print(f"  watching... known digits: {book.known_digits()}")
