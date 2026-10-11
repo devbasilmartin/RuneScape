@@ -36,3 +36,29 @@ def test_near_a_rough_guess_and_nothing_without_a_game():
     assert find_canvas(img, near=(230, 50)) == (212, 61)
     assert find_canvas(np.full((800, 1280, 3), 90, np.uint8)) is None
     assert find_canvas(np.zeros((400, 600, 3), np.uint8)) is None         # screen too small
+
+
+def test_window_origin_from_xdotool():
+    import subprocess
+
+    from skillbot.screen import window_origin
+
+    def run(cmd, **kw):
+        if cmd[1] == "search":
+            out = "11\n22\n"
+        elif cmd[-1] == "11":          # a small window that also matches the name
+            out = "WINDOW=11\nX=5\nY=5\nWIDTH=300\nHEIGHT=200\n"
+        else:
+            out = "WINDOW=22\nX=212\nY=61\nWIDTH=1010\nHEIGHT=503\n"
+        return subprocess.CompletedProcess(cmd, 0, stdout=out)
+
+    assert window_origin(run=run) == (212, 61)
+    assert window_origin(run=lambda *a, **k: subprocess.CompletedProcess(a, 0, stdout="")) \
+        is None
+
+
+def test_a_sharper_rectangle_nearby_doesnt_win_near_the_window():
+    img = desktop((212, 61))
+    img[61:61 + CANVAS_H, 212 + CANVAS_W:212 + CANVAS_W + 22] = (30, 30, 30)   # weak right
+    img[61:61 + CANVAS_H, 212 + CANVAS_W + 22] = (200, 0, 200)                  # sharp, further
+    assert find_canvas(img, near=(212, 61), radius=4) == (212, 61)

@@ -23,13 +23,20 @@ from .skills import SKILLS, SkillReader
 
 
 def cmd_calibrate(cfg: Config, args) -> None:
-    from .screen import find_canvas, grab_desktop
+    from .screen import find_canvas, grab_desktop, window_origin
     cfg.data_dir.mkdir(parents=True, exist_ok=True)
     if args.origin:
         origin = tuple(args.origin)
     else:
         desktop, (left, top) = grab_desktop()
-        found = find_canvas(desktop)
+        win = window_origin(cfg.supervisor.get("window_name", "RuneLite"))
+        if win is not None:
+            # the canvas starts at the window's content area; the edge search only
+            # adjusts by a few pixels (a border), never jumps to another rectangle
+            near = (win[0] - left, win[1] - top)
+            found = find_canvas(desktop, near=near, radius=4) or near
+        else:
+            found = find_canvas(desktop)
         if found is None:
             import pyautogui
             input("Couldn't find the game by itself. Put RuneLite in FIXED mode, log in, hover "

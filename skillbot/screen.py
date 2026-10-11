@@ -90,3 +90,27 @@ def grab_desktop() -> tuple[np.ndarray, tuple[int, int]]:
         mon = sct.monitors[1] if len(sct.monitors) > 1 else sct.monitors[0]
         bgra = np.asarray(sct.grab(mon))
     return bgra[..., 2::-1].copy(), (mon["left"], mon["top"])
+
+
+def window_origin(name: str = "RuneLite", run=None) -> tuple[int, int] | None:
+    """Top-left of the client's content area (below the title bar), from xdotool: in
+    fixed mode the game canvas starts there. The largest matching window wins."""
+    import subprocess
+    run = run or subprocess.run
+    try:
+        ids = run(["xdotool", "search", "--name", name], capture_output=True, text=True,
+                  timeout=5).stdout.split()
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        return None
+    best = None
+    for wid in ids:
+        out = run(["xdotool", "getwindowgeometry", "--shell", wid], capture_output=True,
+                  text=True, timeout=5).stdout
+        geo = dict(line.split("=", 1) for line in out.splitlines() if "=" in line)
+        try:
+            x, y, w, h = (int(geo[k]) for k in ("X", "Y", "WIDTH", "HEIGHT"))
+        except (KeyError, ValueError):
+            continue
+        if w >= CANVAS_W and h >= CANVAS_H and (best is None or w * h > best[2]):
+            best = (x, y, w * h)
+    return best[:2] if best else None
