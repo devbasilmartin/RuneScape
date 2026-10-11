@@ -230,7 +230,7 @@ Used by: Saradomin brews; attack potions; black d'hide bodies; blue d'hide bodie
 Used by: burn maples; burn willows; burn yews
 
 - [ ] Object Marker on Bank booth / Bank chest / Bank / Grand Exchange booth → `bank` (#FF00FF)
-- [ ] Ground Marker labelled `fm_start` (#FFFF00)
+- [ ] Ground Marker labelled `fm_start` (#80C000)
 - automatic: `maple_logs`, `willow_logs`, `yew_logs`
 
 ## hosidius kitchen

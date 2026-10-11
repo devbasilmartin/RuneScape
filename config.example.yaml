@@ -36,11 +36,11 @@ items: all
 # Ground Markers: tiles clicked in order when a target isn't on screen. Each color is
 # used at most once within a route; the bot heads for the furthest one it can see.
 routes:
-  willows_to_bank:  [tile_white]
+  willows_to_bank:  [tile_plum]
   bank_to_willows:  [tile_lilac]
   bank_to_fish:     [tile_rose]
-  fish_to_bank:     [tile_white]
-  cows_to_bank:     [tile_blue, tile_white]
+  fish_to_bank:     [tile_plum]
+  cows_to_bank:     [tile_blue, tile_plum]
   bank_to_cows:     [tile_blue, tile_lilac]
   # Runecrafting: one tile every ~10 squares.
   varrock_to_earth: [tile_lime, tile_teal, tile_blue]

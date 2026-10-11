@@ -9,7 +9,7 @@ panel can import one. This builds that file:
 - Ground Items: the listed loot in `loot`; Player Indicators: others in `other_player`
 - Agility plugin: marks of grace in `mark_of_grace`, its own obstacle boxes off
 - With `--from` an exported profile: Object Markers recolored by object name, Ground
-  Markers recolored by their label (label a tile `tile_white` and it gets that color).
+  Markers recolored by their label (label a tile `tile_plum` and it gets that color).
   Everything else in the export is kept.
 
 Formats follow RuneLite's source: config colors are stored as the signed ARGB integer,

@@ -53,14 +53,14 @@ mark_of_grace:   {rgb: [255, 192, 64],  category: loot}     # Ground Items / Agi
 # --- route tiles (Ground Markers); a route uses each color at most once ---
 afk_spot:        {rgb: [0, 192, 64],    category: route}    # where to stand at crabs
 reset_spot:      {rgb: [64, 0, 192],    category: route}    # where to walk to reset aggression
-tile_white:      {rgb: [255, 255, 255], category: route}
+tile_plum:       {rgb: [128, 64, 192],  category: route}   # not white: that is the game's text color
 tile_lilac:      {rgb: [128, 128, 255], category: route}
 tile_blue:       {rgb: [0, 64, 255],    category: route}
 tile_lime:       {rgb: [128, 255, 0],   category: route}
 tile_lemon:      {rgb: [255, 255, 128], category: route}
 tile_rose:       {rgb: [255, 128, 192], category: route}
 tile_teal:       {rgb: [64, 255, 192],  category: route}
-fm_start:        {rgb: [255, 255, 0],   category: route}
+fm_start:        {rgb: [128, 192, 0],   category: route}   # not yellow: overhead chat
 
 # --- navigation ---
 path:            {rgb: [255, 0, 128],   category: route, area: everywhere}   # Shortest Path: path color (scene + minimap)

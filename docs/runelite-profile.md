@@ -34,7 +34,7 @@ in game with any color, and the bot colors them:
 1. In the `bot` profile, **shift + right-click → Mark object** on each bank booth, tree, rock,
    range, altar and so on that you'll use. The color doesn't matter.
 2. For route tiles, **shift + right-click → Mark tile**, then **Label** it with the registry name
-   (`tile_white`, `tile_blue`, `fm_start`, `afk_spot`...).
+   (`tile_plum`, `tile_blue`, `fm_start`, `afk_spot`...).
 3. **Profiles → Export** (the button on the profile), save the file, then:
    ```sh
    python -m skillbot runelite-profile --from exported.properties

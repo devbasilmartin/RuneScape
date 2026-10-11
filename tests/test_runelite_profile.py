@@ -16,7 +16,7 @@ REG = Registry({
     "bank": Entry("bank", (255, 0, 255), "bank"),
     "altar": Entry("altar", (5, 5, 5), "station"),
     "gilded_altar": Entry("gilded_altar", (6, 6, 6), "station"),
-    "tile_white": Entry("tile_white", (255, 255, 255), "route"),
+    "tile_plum": Entry("tile_plum", (128, 64, 192), "route"),
 })
 NAMES = {
     "npcs": {"cow": ["Cow"], "enemy": ["Hill Giant", "Mystery beast"],
@@ -86,7 +86,7 @@ def test_recolors_an_export_by_object_name_and_tile_label(tmp_path):
              "color": "#FFFF0000"}]),
         "groundMarker.region_12850": json.dumps([
             {"regionId": 12850, "regionX": 7, "regionY": 8, "z": 0, "color": "#FFFF0000",
-             "label": "tile white"},
+             "label": "tile plum"},
             {"regionId": 12850, "regionX": 9, "regionY": 9, "z": 0, "color": "#FFFF0000"}]),
         "someplugin.setting": "kept",
     }
@@ -94,7 +94,7 @@ def test_recolors_an_export_by_object_name_and_tile_label(tmp_path):
     objs = {o["name"]: o["color"] for o in json.loads(props["objectindicators.region_12850"])}
     assert objs == {"Bank booth": "#FFFF00FF", "Altar": -65536, "Chair": "#FFFF0000"}
     tiles = json.loads(props["groundMarker.region_12850"])
-    assert tiles[0]["color"] == "#FFFFFFFF" and tiles[1]["color"] == "#FFFF0000"
+    assert tiles[0]["color"] == "#FF8040C0" and tiles[1]["color"] == "#FFFF0000"
     assert props["someplugin.setting"] == "kept"
     assert props["npcindicators.npcToHighlight"].startswith("Banker, Cow")
     text = "\n".join(report)

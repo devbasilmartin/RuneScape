@@ -60,8 +60,8 @@ def test_scene_collision_is_reported(tmp_path):
 
 def test_same_route_tile_in_both_directions_is_fine():
     assert collisions({"a": (1, 2, 3), "b": (200, 2, 3)}, 25) == []
-    raw = resolve_config({"routes": {"x": ["tile_white"]}, "items": ["logs"]}, Registry.load())
-    assert raw["routes"]["x"] == [(255, 255, 255)] and raw["items"]["logs"] == (0, 255, 0)
+    raw = resolve_config({"routes": {"x": ["tile_plum"]}, "items": ["logs"]}, Registry.load())
+    assert raw["routes"]["x"] == [(128, 64, 192)] and raw["items"]["logs"] == (0, 255, 0)
 
 
 def test_setup_text_lists_everything_for_a_step():
