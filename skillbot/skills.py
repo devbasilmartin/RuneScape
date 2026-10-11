@@ -52,7 +52,11 @@ class SkillReader:
         return self.book.learn(self._glyphs(img, skill), level)
 
     def read_expecting(self, img, skill: str, previous: int, max_jump: int = 1) -> int | None:
-        """Read a level known to be in ``previous .. previous + max_jump``, learning an
+        """Read a level: exactly, when every digit's shape is known (whatever the level
+        was); otherwise only within ``previous .. previous + max_jump``, learning an
         unseen digit if exactly one value in that range fits the screen."""
-        return self.book.read_among(self._glyphs(img, skill),
-                                    range(previous, min(previous + max_jump, 99) + 1))
+        glyphs = self._glyphs(img, skill)
+        exact = self.book.read(glyphs)
+        if exact is not None:
+            return exact
+        return self.book.read_among(glyphs, range(previous, min(previous + max_jump, 99) + 1))

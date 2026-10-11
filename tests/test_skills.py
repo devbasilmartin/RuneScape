@@ -46,6 +46,13 @@ def test_learns_new_digit_when_level_ticks_up_by_one():
     assert reader.read_expecting(skills_tab({"woodcutting": 3}), "woodcutting", 3) == 3
 
 
+def test_known_digits_read_exactly_whatever_the_previous_level():
+    """attack showed 6 with the 6 learned, but was never recorded (assumed 1): read it."""
+    reader = SkillReader(LAYOUT)
+    reader.learn(skills_tab({"cooking": 6}), "cooking", 6)
+    assert reader.read_expecting(skills_tab({"attack": 6}), "attack", 1) == 6
+
+
 def test_refuses_to_guess_when_ambiguous():
     reader = SkillReader(LAYOUT)
     reader.learn(skills_tab({"hitpoints": 10}), "hitpoints", 10)
