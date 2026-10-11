@@ -44,6 +44,18 @@
   .imgs button.sel { border-color: var(--accent); color: var(--accent); }
   #img { max-width: 100%; border: 1px solid var(--line); border-radius: 6px; image-rendering: pixelated; }
   #digits { display: none; }
+  .tabs { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; margin-bottom: 6px; }
+  .tabs button.sel { border-color: var(--accent); color: var(--accent); }
+  .watch { margin-left: auto; color: var(--text); }
+  .num { width: 64px; }
+  select.method { min-width: 260px; }
+  .badge { font-size: 12px; padding: 2px 8px; border-radius: 99px; background: var(--panel2);
+           color: var(--muted); }
+  .badge.trusted { background: var(--good); color: #111; }
+  .badge.trial { background: var(--accent); color: #111; }
+  table.entries { border-collapse: collapse; width: 100%; margin: 6px 0; }
+  table.entries td { padding: 3px 4px 3px 0; vertical-align: middle; }
+  table.entries td.n { color: var(--muted); width: 18px; }
   #digits .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 6px; }
   #digits label { display: flex; justify-content: space-between; gap: 6px; align-items: center; }
   #digits input { width: 52px; }
@@ -62,13 +74,9 @@
   <div>
     <section>
       <h2>Bot</h2>
-      <button class="primary" data-act="run_watched">Start: I'm watching</button>
       <button class="danger" id="stop">Stop</button>
-      <button data-act="run">Start unattended</button>
-      <div class="hint"><b>I'm watching</b> runs every step, new ones too, and stops at the
-        first error. <b>Unattended</b> only runs steps that already ran cleanly while you
-        watched. Moving the mouse into a screen corner also stops the bot.</div>
       <button data-act="pause">Pause</button><button data-act="resume">Resume</button>
+      <div class="hint">Moving the mouse into a screen corner also stops the bot.</div>
       <button data-act="plan">What's next?</button><button data-act="accounts">Accounts</button>
     </section>
     <section>
@@ -102,6 +110,59 @@
     </section>
   </div>
   <div>
+    <section id="run">
+      <h2>Run</h2>
+      <div class="tabs">
+        <button data-tab="quick" class="sel">One activity</button>
+        <button data-tab="sched">Schedules</button>
+        <button data-tab="plan">My plan</button>
+        <label class="watch"><input type="checkbox" id="watching" checked> I'm watching</label>
+      </div>
+      <div class="hint" id="watchhint"></div>
+
+      <div data-pane="quick">
+        <div class="row">
+          <select id="q-method" class="method"></select>
+          <select id="q-skill" hidden></select>
+        </div>
+        <div class="row">
+          <label>for <input id="q-minutes" class="num" inputmode="numeric" placeholder="∞"> min</label>
+          <label>until level <input id="q-level" class="num" inputmode="numeric" placeholder="–"></label>
+          <select id="q-full" hidden><option value="bank">bank</option><option value="drop">drop</option></select>
+          <span class="badge" id="q-badge"></span>
+        </div>
+        <div class="hint">Keeps doing this one thing, past its usual level range, until the
+          time or level you set (whichever comes first), then logs out. Empty: until you stop it.</div>
+        <button class="primary" id="q-start">Start</button>
+      </div>
+
+      <div data-pane="sched" hidden>
+        <div class="row">
+          <select id="s-pick"></select>
+          <input id="s-name" placeholder="name, e.g. bow loop" maxlength="40">
+        </div>
+        <table class="entries"><tbody id="s-rows"></tbody></table>
+        <div class="row">
+          <button id="s-add">+ Add activity</button>
+          <label>repeat
+            <select id="s-repeat"><option value="once">once</option>
+              <option value="forever">forever</option><option value="hours">for hours…</option></select>
+          </label>
+          <input id="s-hours" class="num" inputmode="decimal" placeholder="h" hidden>
+        </div>
+        <div class="hint">Each activity runs for its minutes or until its level (whichever
+          first), then the next. One that runs out of supplies or can't start is skipped (you're
+          told). "For hours" cycles, finishes the current inventory when time's up, then logs out.</div>
+        <button id="s-save">Save</button>
+        <button id="s-delete">Delete</button>
+        <button class="primary" id="s-start">Start</button>
+      </div>
+
+      <div data-pane="plan" hidden>
+        <div class="hint">The steps in your config.yaml, in order, each to its level.</div>
+        <button class="primary" id="p-start">Start my plan</button>
+      </div>
+    </section>
     <section id="digits">
       <h2>Teach levels</h2>
       <div class="hint">Type the <b>lower</b> number in each skill box, exactly as shown.
@@ -154,6 +215,173 @@ document.querySelectorAll("[data-act]").forEach((b) => b.onclick = () => {
   start(act, params);
 });
 $("#stop").onclick = () => post("/api/stop");
+
+// ---- Run: one activity, schedules, my plan ---------------------------------------------
+const methodsById = {};
+let methodOptions = "", schedRows = [];
+const esc = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
+
+document.querySelectorAll("[data-tab]").forEach((b) => b.onclick = () => {
+  document.querySelectorAll("[data-tab]").forEach((x) => x.classList.toggle("sel", x === b));
+  document.querySelectorAll("[data-pane]").forEach((p) => p.hidden = p.dataset.pane !== b.dataset.tab);
+});
+const watching = () => $("#watching").checked;
+function watchHint() {
+  $("#watchhint").innerHTML = watching()
+    ? "<b>Watching:</b> new activities run too; stops at the first error."
+    : "<b>Unattended:</b> activities not yet proven while watched are skipped (you're told).";
+}
+$("#watching").onchange = watchHint; watchHint();
+
+function buildMethodOptions() {
+  const bySkill = {};
+  state.methods.forEach((m) => { methodsById[m.id] = m;
+    (bySkill[m.skills[0]] = bySkill[m.skills[0]] || []).push(m); });
+  methodOptions = Object.keys(bySkill).sort().map((skill) =>
+    `<optgroup label="${esc(skill)}">` + bySkill[skill].map((m) =>
+      `<option value="${esc(m.id)}">${esc(m.name)} · ${m.levels[0]}–${m.levels[1]}</option>`).join("") +
+    "</optgroup>").join("");
+}
+
+function badgeText(m, skill, full) {
+  const t = m.trust[`${skill}|${m.can_drop ? full : ""}`] || "experimental (never run)";
+  const kind = t.startsWith("trusted") ? "trusted" : t.startsWith("trial") ? "trial" : "";
+  const short = t.replace(/^experimental/, "new").replace(/ supervised/, " watched");
+  return [short, kind];
+}
+function setBadge(el, m, skill, full) {
+  const [text, kind] = badgeText(m, skill, full);
+  el.textContent = text; el.title = text;
+  el.classList.toggle("trusted", kind === "trusted"); el.classList.toggle("trial", kind === "trial");
+}
+function lowOk(m, skill) {
+  const have = (state.levels || {})[skill];
+  return have === undefined || have >= m.levels[0];
+}
+
+function skillOptions(sel, m, current) {
+  sel.hidden = m.skills.length < 2;
+  sel.innerHTML = m.skills.map((s) => `<option>${esc(s)}</option>`).join("");
+  if (m.skills.includes(current)) sel.value = current;
+}
+function quickUpdate(fromMethod) {
+  const m = methodsById[$("#q-method").value]; if (!m) return;
+  if (fromMethod) { skillOptions($("#q-skill"), m, $("#q-skill").value);
+                    $("#q-full").hidden = !m.can_drop; if (m.can_drop) $("#q-full").value = m.when_full; }
+  setBadge($("#q-badge"), m, $("#q-skill").value || m.skills[0], $("#q-full").value);
+  if (!lowOk(m, m.skills[0])) $("#q-badge").textContent = `needs ${m.skills[0]} ${m.levels[0]}`;
+}
+$("#q-method").onchange = () => quickUpdate(true);
+$("#q-skill").onchange = $("#q-full").onchange = () => quickUpdate(false);
+$("#q-start").onclick = () => {
+  const m = methodsById[$("#q-method").value];
+  start("run_activity", {method: m.id, minutes: $("#q-minutes").value, until_level: $("#q-level").value,
+    when_full: m.can_drop ? $("#q-full").value : "", skill: m.skills.length > 1 ? $("#q-skill").value : "",
+    watching: watching()});
+};
+
+function rowHtml(i) {
+  return `<tr data-i="${i}"><td class="n">${i + 1}</td>
+    <td><select class="method r-method">${methodOptions}</select> <select class="r-skill"></select></td>
+    <td><input class="num r-minutes" inputmode="numeric" placeholder="∞"> min</td>
+    <td>to lvl <input class="num r-level" inputmode="numeric" placeholder="–"></td>
+    <td><select class="r-full"><option value="bank">bank</option><option value="drop">drop</option></select></td>
+    <td><span class="badge r-badge"></span></td>
+    <td><button class="r-up" title="up">↑</button><button class="r-down" title="down">↓</button><button class="r-del" title="remove">✕</button></td></tr>`;
+}
+function readRows() {
+  return [...document.querySelectorAll("#s-rows tr")].map((tr) => {
+    const m = methodsById[tr.querySelector(".r-method").value];
+    const e = {method: m.id};
+    const min = tr.querySelector(".r-minutes").value.trim(), lvl = tr.querySelector(".r-level").value.trim();
+    if (min) e.minutes = Number(min);
+    if (lvl) e.until_level = Number(lvl);
+    if (m.can_drop) e.when_full = tr.querySelector(".r-full").value;
+    if (m.skills.length > 1) e.skill = tr.querySelector(".r-skill").value;
+    return e;
+  });
+}
+function renderRows(entries) {
+  $("#s-rows").innerHTML = entries.map((_, i) => rowHtml(i)).join("");
+  document.querySelectorAll("#s-rows tr").forEach((tr, i) => {
+    const e = entries[i], m = methodsById[e.method] || state.methods[0];
+    const msel = tr.querySelector(".r-method"); msel.value = m.id;
+    const refresh = (fromMethod) => {
+      const mm = methodsById[msel.value];
+      if (fromMethod) { skillOptions(tr.querySelector(".r-skill"), mm, e.skill);
+        tr.querySelector(".r-full").hidden = !mm.can_drop;
+        if (mm.can_drop) tr.querySelector(".r-full").value = e.when_full || mm.when_full; }
+      const skill = tr.querySelector(".r-skill").value || mm.skills[0];
+      setBadge(tr.querySelector(".r-badge"), mm, skill, tr.querySelector(".r-full").value);
+      if (!lowOk(mm, mm.skills[0])) tr.querySelector(".r-badge").textContent = `needs ${mm.skills[0]} ${mm.levels[0]}`;
+    };
+    refresh(true);
+    tr.querySelector(".r-minutes").value = e.minutes || "";
+    tr.querySelector(".r-level").value = e.until_level || "";
+    msel.onchange = () => { e.skill = e.when_full = undefined; refresh(true); };
+    tr.querySelector(".r-skill").onchange = tr.querySelector(".r-full").onchange = () => refresh(false);
+    tr.querySelector(".r-up").onclick = () => move(i, -1);
+    tr.querySelector(".r-down").onclick = () => move(i, 1);
+    tr.querySelector(".r-del").onclick = () => { const r = readRows(); r.splice(i, 1); renderRows(r); };
+  });
+}
+function move(i, d) {
+  const r = readRows(), j = i + d; if (j < 0 || j >= r.length) return;
+  [r[i], r[j]] = [r[j], r[i]]; renderRows(r);
+}
+$("#s-add").onclick = () => renderRows([...readRows(), {method: $("#q-method").value || state.methods[0].id}]);
+$("#s-repeat").onchange = () => $("#s-hours").hidden = $("#s-repeat").value !== "hours";
+function loadSchedule(name) {
+  const raw = state.schedules[name];
+  $("#s-name").value = name || "";
+  if (!raw) { renderRows([]); $("#s-repeat").value = "once"; $("#s-hours").hidden = true; return; }
+  const rep = raw.repeat || "once";
+  $("#s-repeat").value = typeof rep === "object" ? "hours" : rep;
+  $("#s-hours").value = typeof rep === "object" ? rep.hours : "";
+  $("#s-hours").hidden = typeof rep !== "object";
+  renderRows(raw.entries || []);
+}
+$("#s-pick").onchange = () => loadSchedule($("#s-pick").value);
+function scheduleBody() {
+  const rep = $("#s-repeat").value;
+  return {repeat: rep === "hours" ? {hours: Number($("#s-hours").value)} : rep, entries: readRows()};
+}
+$("#s-save").onclick = async () => {
+  const name = $("#s-name").value.trim();
+  if (await post("/api/schedule/save", {name, schedule: scheduleBody()})) {
+    $("#msg").textContent = ""; pendingPick = name;
+  }
+};
+$("#s-delete").onclick = async () => {
+  const name = $("#s-pick").value;
+  if (name && confirm(`Delete schedule "${name}"?`) && await post("/api/schedule/delete", {name})) {
+    pendingPick = ""; loadSchedule("");
+  }
+};
+$("#s-start").onclick = async () => {
+  const name = $("#s-name").value.trim();
+  if (await post("/api/schedule/save", {name, schedule: scheduleBody()}))   // run what you see
+    start("run_schedule", {name, watching: watching()});
+};
+$("#p-start").onclick = () => start(watching() ? "run_watched" : "run", {});
+let pendingPick = null;
+function renderRun() {
+  if (!methodOptions && state.methods.length) {
+    buildMethodOptions();
+    $("#q-method").innerHTML = methodOptions; quickUpdate(true);
+    renderRows([]);
+  }
+  const names = Object.keys(state.schedules);
+  const html = `<option value="">new schedule…</option>` + names.map((n) => `<option>${esc(n)}</option>`).join("");
+  if ($("#s-pick").dataset.html !== html) {
+    const cur = pendingPick !== null ? pendingPick : $("#s-pick").value;
+    $("#s-pick").innerHTML = html; $("#s-pick").dataset.html = html;
+    $("#s-pick").value = names.includes(cur) ? cur : "";
+    if (pendingPick !== null) { pendingPick = null; }
+  }
+  const running = state.job && state.job.running;
+  ["#q-start", "#s-start", "#p-start"].forEach((id) => $(id).disabled = !!running);
+}
 $("#send").onclick = () => { post("/api/send", {text: $("#answer").value}); $("#answer").value = ""; };
 $("#answer").onkeydown = (e) => { if (e.key === "Enter") $("#send").onclick(); };
 $("#enter").onclick = () => post("/api/send", {text: ""});
@@ -197,7 +425,8 @@ function render() {
   const running = job && job.running;
   $("#botstate").textContent = running ? `running: ${job.name}` : "idle";
   $("#botstate").className = "pill" + (running ? " on" : "");
-  $("#step").textContent = st.step ? `${st.step}: ${st.skill} ${st.level} → ${st.target}` : "no step";
+  $("#step").textContent = st.step ? `${st.step}: ${st.skill} ${st.level}` +
+    (st.target && st.target < 100 ? ` → ${st.target}` : "") : "no step";
   const age = state.heartbeat_age;
   $("#beat").textContent = "heartbeat: " + (age == null ? "never" : age < 90 ? `${Math.round(age)}s ago` : `${Math.round(age / 60)}m ago`);
   $("#paused").hidden = !state.paused;
@@ -206,6 +435,7 @@ function render() {
   $("#showdigits").disabled = $("#senddigits").disabled = !!running;
   fillSelect($("#stepsel"), state.steps, false);
   fillSelect($("#export"), state.exports, true);
+  renderRun();
 
   if (job) {
     $("#jobline").textContent = running ? `${job.name}: running` :

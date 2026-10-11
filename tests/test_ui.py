@@ -17,14 +17,16 @@ SLOW = "import time\ntry:\n    time.sleep(30)\nexcept KeyboardInterrupt:\n    pr
 def app(tmp_path, monkeypatch):
     real = ui.actions
 
-    def fake(steps, exports):
-        acts = real(steps, exports)
+    def fake(*a):
+        acts = real(*a)
         acts["ask"] = lambda p: [sys.executable, "-u", "-c", ASKS]
         acts["slow"] = lambda p: [sys.executable, "-u", "-c", SLOW]
         return acts
 
     monkeypatch.setattr(ui, "actions", fake)
-    return ui.App(tmp_path, ["normal trees"], cwd=tmp_path)
+    from test_schedule import LIB
+    return ui.App(tmp_path, ["normal trees"], cwd=tmp_path, library=LIB,
+                  schedules_dir=tmp_path / "schedules")
 
 
 def wait_for(cond, timeout=10):
@@ -97,3 +99,34 @@ def test_http(app, tmp_path):
         assert e.value.code == 400
     finally:
         server.shutdown()
+
+
+def test_activity_and_schedule_actions_are_checked(app):
+    acts = ui.actions([], [], app.library, ["bow loop"])
+    argv = acts["run_activity"]({"method": "trees", "minutes": "60", "until_level": "",
+                                 "when_full": "bank", "watching": True})
+    assert argv[-8:] == ["run", "--supervised", "--activity", "trees", "--minutes", "60",
+                         "--when-full", "bank"]
+    argv = acts["run_activity"]({"method": "fish", "watching": False})
+    assert argv[-3:] == ["run", "--activity", "fish"]
+    with pytest.raises(ValueError, match="always banks"):
+        acts["run_activity"]({"method": "alch", "when_full": "drop"})
+    with pytest.raises(ValueError, match="no method"):
+        acts["run_activity"]({"method": "; rm -rf /"})
+    assert acts["run_schedule"]({"name": "bow loop"})[-2:] == ["--schedule", "bow loop"]
+    with pytest.raises(ValueError, match="saved schedule"):
+        acts["run_schedule"]({"name": "../x"})
+
+
+def test_schedules_are_saved_listed_and_deleted(app):
+    app.save_schedule("loop", {"repeat": {"hours": 2},
+                               "entries": [{"method": "trees", "minutes": 60}]})
+    assert app.state()["schedules"]["loop"]["entries"][0]["minutes"] == 60
+    with pytest.raises(ValueError):
+        app.save_schedule("bad", {"entries": [{"method": "nope"}]})
+    with pytest.raises(ValueError):
+        app.save_schedule("../evil", {"entries": [{"method": "trees"}]})
+    app.delete_schedule("loop")
+    assert app.state()["schedules"] == {}
+    trees = next(m for m in app.state()["methods"] if m["id"] == "trees")
+    assert trees["can_drop"] and set(trees["trust"]) == {"woodcutting|bank", "woodcutting|drop"}

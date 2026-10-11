@@ -23,9 +23,35 @@ IMAGES = ("debug.png", "debug-skills.png", "calibrate.png", "skills-check.png",
 MAX_LINES = 2000
 
 
-def actions(steps: list[str], exports: list[str]) -> dict:
+def actions(steps: list[str], exports: list[str], library: dict | None = None,
+            schedules=()) -> dict:
     """name -> function(params) -> argv. Parameters are checked against what exists."""
     sb = [sys.executable, "-u", "-m", "skillbot"]
+
+    def watching(p):
+        return ["run", "--supervised"] if p.get("watching", True) else ["run"]
+
+    def activity(p):
+        from .schedule import Schedule
+        entry = {"method": p.get("method")}
+        for key in ("minutes", "until_level"):
+            if p.get(key) not in (None, "", 0, "0"):
+                entry[key] = float(p[key]) if key == "minutes" else int(p[key])
+        for key in ("when_full", "skill"):
+            if p.get(key):
+                entry[key] = p[key]
+        Schedule.from_dict({"entries": [entry]}, library or {})     # checks everything
+        argv = sb + watching(p) + ["--activity", entry["method"]]
+        for key, flag in (("minutes", "--minutes"), ("until_level", "--until-level"),
+                          ("when_full", "--when-full"), ("skill", "--skill")):
+            if key in entry:
+                argv += [flag, f"{entry[key]:g}" if key == "minutes" else str(entry[key])]
+        return argv
+
+    def schedule(p):
+        if p.get("name") not in schedules:
+            raise ValueError("pick a saved schedule")
+        return sb + watching(p) + ["--schedule", p["name"]]
 
     def step(p):
         if p.get("step") not in steps:
@@ -60,7 +86,8 @@ def actions(steps: list[str], exports: list[str]) -> dict:
         "accounts": sb + ["accounts"],
     }
     out = {name: (lambda p, argv=argv: argv) for name, argv in plain.items()}
-    out.update(check_setup=step, runelite_profile=profile, calibrate_origin=origin)
+    out.update(check_setup=step, runelite_profile=profile, calibrate_origin=origin,
+               run_activity=activity, run_schedule=schedule)
     return out
 
 
@@ -128,8 +155,15 @@ class Job:
 
 
 class App:
-    def __init__(self, data_dir: Path, steps: list[str], cwd: Path = REPO_DIR, levels=None):
+    def __init__(self, data_dir: Path, steps: list[str], cwd: Path = REPO_DIR, library=None,
+                 schedules_dir: Path | None = None):
+        from .schedule import Store
         self.data_dir, self.steps, self.cwd = Path(data_dir), steps, Path(cwd)
+        if library is None:
+            from .library import load_library
+            library = load_library()
+        self.library = library
+        self.store = Store(schedules_dir or REPO_DIR / "schedules")
         self.job: Job | None = None
         self.next_id = 1
         self.lock = threading.Lock()
@@ -145,7 +179,7 @@ class App:
         return found
 
     def start(self, name: str, params: dict) -> Job:
-        acts = actions(self.steps, self.exports())
+        acts = actions(self.steps, self.exports(), self.library, self.store.names())
         if name not in acts:
             raise ValueError(f"unknown action {name!r}")
         argv = acts[name](params)
@@ -165,7 +199,40 @@ class App:
         return {"job": self.job.state() if self.job else None, "status": snap["status"],
                 "paused": snap["paused"], "heartbeat_age": snap["heartbeat_age"],
                 "levels": snap["levels"], "images": images, "steps": self.steps,
-                "exports": self.exports()}
+                "exports": self.exports(), "methods": self.methods(),
+                "schedules": self.schedules()}
+
+    def methods(self) -> list[dict]:
+        """The library for the pickers, with each variant's trust progress."""
+        from .schedule import step_name
+        from .trust import TrustStore
+        trust = TrustStore(self.data_dir / "trust.json")
+        out = []
+        for m in sorted(self.library.values(), key=lambda m: (m.skills[0], m.levels[0])):
+            choices = ("bank", "drop") if m.can_drop else (None,)
+            out.append({
+                "id": m.id, "name": m.name, "skills": list(m.skills),
+                "levels": list(m.levels), "can_drop": m.can_drop,
+                "when_full": m.step.get("when_full") if m.can_drop else None,
+                "trust": {f"{skill}|{wf or ''}": trust.progress(step_name(m, skill, wf))
+                          for skill in m.skills for wf in choices}})
+        return out
+
+    def schedules(self) -> dict:
+        out = {}
+        for name in self.store.names():
+            try:
+                out[name] = self.store.raw(name)
+            except (OSError, ValueError):
+                continue
+        return out
+
+    def save_schedule(self, name: str, raw: dict) -> None:
+        from .schedule import Schedule
+        self.store.save(name, Schedule.from_dict(raw, self.library))
+
+    def delete_schedule(self, name: str) -> None:
+        self.store.delete(name)
 
 
 def make_handler(app: App):
@@ -211,6 +278,12 @@ def make_handler(app: App):
                 if self.path == "/api/send":
                     if app.job:
                         app.job.send(str(body.get("text", "")))
+                    return self._json(200, {})
+                if self.path == "/api/schedule/save":
+                    app.save_schedule(str(body.get("name", "")), body.get("schedule") or {})
+                    return self._json(200, {})
+                if self.path == "/api/schedule/delete":
+                    app.delete_schedule(str(body.get("name", "")))
                     return self._json(200, {})
                 if self.path == "/api/stop":
                     if app.job:

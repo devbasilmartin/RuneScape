@@ -53,11 +53,21 @@ class Method:
                    int(d.get("reliability", 3)), d.get("location"),
                    dict(d.get("styles") or {}), dict(d.get("step") or {}), d.get("trade"))
 
+    @property
+    def task(self) -> str:
+        return self.step.get("task", "")
+
+    @property
+    def can_drop(self) -> bool:
+        """Gathering can bank or drop when the inventory is full; other tasks always bank."""
+        return self.task == "gather"
+
     def to_step(self, skill: str, until_level: int, max_minutes: float,
-                registry: Registry, spells: dict | None = None) -> Step:
+                registry: Registry, spells: dict | None = None,
+                overrides: dict | None = None) -> Step:
         raw = {"name": f"{self.name}" + (f" ({skill})" if len(self.skills) > 1 else ""),
                "skill": skill, "until_level": until_level, "max_minutes": max_minutes,
-               **self.step}
+               **self.step, **(overrides or {})}
         if self.location and "location" not in raw:
             raw["location"] = self.location
         if skill in self.styles:

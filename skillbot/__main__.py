@@ -596,6 +596,35 @@ def write_stopped(data_dir: Path, kind: str, detail: str) -> None:
         {"kind": kind, "detail": detail, "time": time.time()}))
 
 
+SCHEDULES_DIR = Path(__file__).resolve().parent.parent / "schedules"
+
+
+def schedule_runner(cfg: Config, args, planner):
+    """``run --schedule NAME`` or ``run --activity METHOD``: what to run instead of the plan."""
+    from .colors import Registry
+    from .library import load_library
+    from .schedule import Schedule, Store, run_schedule
+    library = load_library()
+    try:
+        if args.schedule:
+            schedule, label = Store(SCHEDULES_DIR).load(args.schedule, library), args.schedule
+        else:
+            entry = {"method": args.activity, "minutes": args.minutes or 0}
+            if args.until_level:
+                entry["until_level"] = args.until_level
+            if args.when_full:
+                entry["when_full"] = args.when_full
+            if args.skill:
+                entry["skill"] = args.skill
+            schedule = Schedule.from_dict({"repeat": "once", "entries": [entry]}, library)
+            label = "activity"
+    except ValueError as e:
+        raise SystemExit(str(e))
+    registry = Registry.load(cfg.colors_file)
+    logging.info("%s: %s", label, schedule.to_dict())
+    return lambda: run_schedule(planner, schedule, library, registry, cfg.spells, label)
+
+
 def cmd_run(cfg: Config, args) -> None:
     import pyautogui
 
@@ -641,12 +670,15 @@ def cmd_run(cfg: Config, args) -> None:
                             notify=notify)
     from .history import log_event
     from .planner import HANDOVER
+    work = planner.run
+    if args.schedule or args.activity:
+        work = schedule_runner(cfg, args, planner)
     logging.info("starting; move the mouse to a screen corner to stop")
     (cfg.data_dir / "handover").unlink(missing_ok=True)      # stale, from a killed supervisor
     log_event(cfg.data_dir, "session_start", levels=dict(levels.levels))
     kind, detail = "stopped", ""
     try:
-        planner.run()
+        work()
     except StopBot as e:
         detail = str(e)
         logging.info("stopped: %s", e)
@@ -725,6 +757,12 @@ def main(argv=None) -> None:
     c.add_argument("--goals", help="goals file to use instead of goals.yaml (rotation turns)")
     c.add_argument("--supervised", action="store_true",
                    help="you're watching: allow experimental steps, stop at the first error")
+    c.add_argument("--schedule", metavar="NAME", help="run a saved schedule (schedules/NAME.yaml)")
+    c.add_argument("--activity", metavar="METHOD", help="run one library method, then log out")
+    c.add_argument("--minutes", type=float, help="--activity: for this long")
+    c.add_argument("--until-level", type=int, help="--activity: until this level")
+    c.add_argument("--when-full", choices=("bank", "drop"), help="--activity: gathering only")
+    c.add_argument("--skill", help="--activity: which skill, for methods training several")
     c = sub.add_parser("plan", help="what the goals planner would train next, and why")
     c.add_argument("--explain", action="store_true", help="(the default) show the reasoning")
     c = sub.add_parser("sold", help="you sold an item: clear it from the sell-alert ledger")
