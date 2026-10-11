@@ -64,9 +64,11 @@ class Layout:
     hp_bar: Rect = field(default_factory=lambda: Rect(547, 212, 8, 250))
 
     # skills tab: 3 columns x 8 rows; level_box is where the base level is drawn in a cell
-    skill_origin: tuple[int, int] = (550, 210)
-    skill_step: tuple[int, int] = (63, 32)
-    skill_level_box: tuple[int, int, int, int] = (36, 15, 24, 13)
+    # measured on a real client: rows are 30 px apart; the base level is the lower number,
+    # centred near the cell's right, below the current level (which ends 2 px above the box)
+    skill_origin: tuple[int, int] = (550, 209)
+    skill_step: tuple[int, int] = (63, 30)
+    skill_level_box: tuple[int, int, int, int] = (43, 12, 14, 12)
 
     # bank interface item grid (8 columns)
     bank_origin: tuple[int, int] = (73, 83)
