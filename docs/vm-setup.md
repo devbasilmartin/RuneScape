@@ -163,6 +163,8 @@ Everything should be **PASS**, except **calibration**, which stays WARN until th
 
 ## 10. Calibrate and send me a screenshot
 
+After this step, [first-run.md](first-run.md) takes you to the first real run.
+
 With RuneLite logged in, in fixed mode:
 
 ```sh
