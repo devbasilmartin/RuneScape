@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Skillbot</title>
+<style>
+  :root {
+    --bg: #15171a; --panel: #1e2125; --panel2: #262a2f; --line: #33383e;
+    --text: #e6e6e6; --muted: #9aa1a9; --accent: #e0b44c; --good: #6cc070;
+    --bad: #e26a5a; --mono: ui-monospace, "DejaVu Sans Mono", monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 14px/1.4 system-ui, "Ubuntu", sans-serif; }
+  header { display: flex; gap: 18px; align-items: center; padding: 10px 16px;
+           background: var(--panel); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  header h1 { font-size: 16px; margin: 0; color: var(--accent); letter-spacing: .5px; }
+  .pill { padding: 2px 10px; border-radius: 99px; background: var(--panel2); color: var(--muted); }
+  .pill.on { color: #111; background: var(--good); }
+  .pill.warn { color: #111; background: var(--accent); }
+  main { display: grid; grid-template-columns: 300px 1fr; gap: 14px; padding: 14px; }
+  @media (max-width: 800px) { main { grid-template-columns: 1fr; } }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+            padding: 12px; margin-bottom: 14px; }
+  section h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 1px;
+               color: var(--muted); margin: 0 0 8px; }
+  button { background: var(--panel2); color: var(--text); border: 1px solid var(--line);
+           border-radius: 6px; padding: 7px 10px; margin: 0 4px 6px 0; cursor: pointer; font: inherit; }
+  button:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); color: #111; border-color: var(--accent); font-weight: 600; }
+  button.danger { background: var(--bad); color: #111; border-color: var(--bad); font-weight: 600; }
+  button:disabled { opacity: .45; cursor: default; }
+  select, input { background: var(--bg); color: var(--text); border: 1px solid var(--line);
+                  border-radius: 6px; padding: 6px; font: inherit; max-width: 100%; }
+  .row { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; flex-wrap: wrap; }
+  .hint { color: var(--muted); font-size: 12px; margin: 2px 0 8px; }
+  #out { background: #0d0e10; border: 1px solid var(--line); border-radius: 6px; height: 340px;
+         overflow: auto; padding: 8px; font: 12.5px/1.45 var(--mono); white-space: pre-wrap; }
+  #out .me { color: var(--accent); }
+  #jobline { color: var(--muted); margin-bottom: 6px; }
+  #answer { flex: 1; min-width: 160px; }
+  .imgs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+  .imgs button.sel { border-color: var(--accent); color: var(--accent); }
+  #img { max-width: 100%; border: 1px solid var(--line); border-radius: 6px; image-rendering: pixelated; }
+  #digits { display: none; }
+  #digits .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 6px; }
+  #digits label { display: flex; justify-content: space-between; gap: 6px; align-items: center; }
+  #digits input { width: 52px; }
+  .err { color: var(--bad); }
+</style>
+</head>
+<body>
+<header>
+  <h1>SKILLBOT</h1>
+  <span id="botstate" class="pill">idle</span>
+  <span id="step" class="pill">no step</span>
+  <span id="beat" class="pill">heartbeat: never</span>
+  <span id="paused" class="pill" hidden>paused</span>
+</header>
+<main>
+  <div>
+    <section>
+      <h2>Bot</h2>
+      <button class="primary" data-act="run_watched">Start (watching)</button>
+      <button data-act="run">Start</button>
+      <button class="danger" id="stop">Stop</button>
+      <div class="hint">"Watching" stops at the first error. Moving the mouse into a screen
+        corner also stops the bot.</div>
+      <button data-act="pause">Pause</button><button data-act="resume">Resume</button>
+      <button data-act="plan">What's next?</button><button data-act="accounts">Accounts</button>
+    </section>
+    <section>
+      <h2>Check</h2>
+      <button data-act="debug">Screenshot (debug)</button>
+      <button data-act="doctor">Doctor</button>
+      <div class="row">
+        <select id="stepsel"></select>
+        <button data-act="check_setup">Check step</button>
+      </div>
+    </section>
+    <section>
+      <h2>Setup</h2>
+      <button data-act="update">Update bot</button>
+      <button data-act="calibrate">Calibrate</button>
+      <div class="row">
+        <select id="export"><option value="">no export: highlights only</option></select>
+      </div>
+      <button data-act="runelite_profile">Build RuneLite profile</button>
+      <div class="hint">With an export picked, its object and tile markers get the bot's
+        colors. Then import <b>bot-profile.properties</b> in RuneLite.</div>
+    </section>
+    <section>
+      <h2>Learn</h2>
+      <div class="hint">Open the skills tab in game first.</div>
+      <button id="showdigits">Teach levels…</button>
+      <button data-act="levels">Read levels</button>
+      <button data-act="debug_skills">Skills screenshot</button>
+      <button data-act="calibrate_run">Run orb</button>
+      <button data-act="learn_energy">Run energy</button>
+    </section>
+  </div>
+  <div>
+    <section id="digits">
+      <h2>Teach levels</h2>
+      <div class="hint">Type the <b>lower</b> number in each skill box, exactly as shown.
+        Leave a box empty if unsure: a wrong number teaches a wrong digit.</div>
+      <div class="grid" id="digitgrid"></div>
+      <div class="row" style="margin-top:8px">
+        <button class="primary" id="senddigits">Teach</button>
+        <button id="hidedigits">Cancel</button>
+      </div>
+    </section>
+    <section>
+      <h2>Output</h2>
+      <div id="jobline">nothing has run yet</div>
+      <div id="out"></div>
+      <div class="row" style="margin-top:8px">
+        <input id="answer" placeholder="answer the question above, then Enter">
+        <button id="send">Send</button>
+        <button id="enter">Just Enter</button>
+      </div>
+      <div id="msg" class="err"></div>
+    </section>
+    <section>
+      <h2>Images</h2>
+      <div class="imgs" id="imgtabs"></div>
+      <img id="img" alt="">
+    </section>
+  </div>
+</main>
+<script>
+const $ = (s) => document.querySelector(s);
+let state = null, shownImg = null, shownMtime = {}, lastLines = -1, lastJob = null;
+const SKILLS = ["attack","hitpoints","mining","strength","agility","smithing","defence",
+  "herblore","fishing","ranged","thieving","cooking","prayer","crafting","firemaking",
+  "magic","fletching","woodcutting","runecraft","slayer","farming","construction","hunter"];
+
+async function post(path, body) {
+  const r = await fetch(path, {method: "POST", headers: {"Content-Type": "application/json"},
+                               body: JSON.stringify(body || {})});
+  const data = await r.json().catch(() => ({}));
+  $("#msg").textContent = r.ok ? "" : (data.error || "failed");
+  return r.ok;
+}
+
+function start(action, params) { return post("/api/start", {action, params}); }
+
+document.querySelectorAll("[data-act]").forEach((b) => b.onclick = () => {
+  const act = b.dataset.act, params = {};
+  if (act === "check_setup") params.step = $("#stepsel").value;
+  if (act === "runelite_profile") params.export = $("#export").value;
+  start(act, params);
+});
+$("#stop").onclick = () => post("/api/stop");
+$("#send").onclick = () => { post("/api/send", {text: $("#answer").value}); $("#answer").value = ""; };
+$("#answer").onkeydown = (e) => { if (e.key === "Enter") $("#send").onclick(); };
+$("#enter").onclick = () => post("/api/send", {text: ""});
+
+$("#showdigits").onclick = () => {
+  const grid = $("#digitgrid"); grid.innerHTML = "";
+  SKILLS.forEach((s) => {
+    const known = state && state.levels[s];
+    grid.insertAdjacentHTML("beforeend",
+      `<label>${s}<input inputmode="numeric" data-skill="${s}" value="${known || ""}"></label>`);
+  });
+  $("#digits").style.display = "block";
+};
+$("#hidedigits").onclick = () => $("#digits").style.display = "none";
+$("#senddigits").onclick = async () => {
+  const answers = SKILLS.map((s) => $(`[data-skill="${s}"]`).value.trim());
+  if (await start("learn_digits", {answers})) $("#digits").style.display = "none";
+};
+
+function fillSelect(sel, values, keepFirst) {
+  const cur = sel.value, first = keepFirst ? sel.options[0].outerHTML : "";
+  const html = first + values.map((v) => `<option>${v.replace(/</g, "&lt;")}</option>`).join("");
+  if (sel.dataset.html !== html) {
+    sel.innerHTML = html; sel.dataset.html = html;
+    if ([...sel.options].some((o) => o.value === cur)) sel.value = cur;   // keep a choice
+  }
+}
+
+function showImage(name) {
+  shownImg = name;
+  const img = state.images.find((i) => i.name === name);
+  if (!img) return;
+  $("#img").src = `/img/${name}?t=${img.mtime}`;
+  shownMtime[name] = img.mtime;
+  document.querySelectorAll("#imgtabs button").forEach((b) =>
+    b.classList.toggle("sel", b.textContent === name));
+}
+
+function render() {
+  const job = state.job, st = state.status || {};
+  const running = job && job.running;
+  $("#botstate").textContent = running ? `running: ${job.name}` : "idle";
+  $("#botstate").className = "pill" + (running ? " on" : "");
+  $("#step").textContent = st.step ? `${st.step}: ${st.skill} ${st.level} → ${st.target}` : "no step";
+  const age = state.heartbeat_age;
+  $("#beat").textContent = "heartbeat: " + (age == null ? "never" : age < 90 ? `${Math.round(age)}s ago` : `${Math.round(age / 60)}m ago`);
+  $("#paused").hidden = !state.paused;
+  $("#paused").className = "pill warn";
+  document.querySelectorAll("[data-act]").forEach((b) => b.disabled = !!running);
+  $("#showdigits").disabled = $("#senddigits").disabled = !!running;
+  fillSelect($("#stepsel"), state.steps, false);
+  fillSelect($("#export"), state.exports, true);
+
+  if (job) {
+    $("#jobline").textContent = running ? `${job.name}: running` :
+      `${job.name}: finished` + (job.returncode ? ` (exit ${job.returncode})` : "");
+    if (job.id !== lastJob || job.lines.length !== lastLines) {
+      const out = $("#out"), atEnd = out.scrollTop + out.clientHeight >= out.scrollHeight - 30;
+      out.innerHTML = job.lines.map((l) => {
+        const esc = l.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+        const i = esc.lastIndexOf("&gt; ");
+        return l.includes("> ") && i >= 0 ? esc.slice(0, i) + `<span class="me">${esc.slice(i)}</span>` : esc;
+      }).join("\n");
+      if (atEnd || job.id !== lastJob) out.scrollTop = out.scrollHeight;
+      lastJob = job.id; lastLines = job.lines.length;
+    }
+  }
+
+  const tabs = $("#imgtabs"), names = state.images.map((i) => i.name).join();
+  if (tabs.dataset.names !== names) {
+    tabs.dataset.names = names; tabs.innerHTML = "";
+    state.images.forEach((i) => {
+      const b = document.createElement("button"); b.textContent = i.name;
+      b.onclick = () => showImage(i.name); tabs.appendChild(b);
+    });
+  }
+  // a freshly written image comes to the front
+  const newest = [...state.images].sort((a, b) => b.mtime - a.mtime)[0];
+  if (newest && (shownImg === null || newest.mtime > (shownMtime[newest.name] || 0))) showImage(newest.name);
+}
+
+async function poll() {
+  try {
+    const r = await fetch("/api/state");
+    state = await r.json();
+    render();
+  } catch (e) {
+    $("#botstate").textContent = "UI server stopped"; $("#botstate").className = "pill";
+  }
+  setTimeout(poll, 1000);
+}
+poll();
+</script>
+</body>
+</html>

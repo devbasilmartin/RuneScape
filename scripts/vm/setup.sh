@@ -77,4 +77,7 @@ if [[ ! -f "$REPO_DIR/config.yaml" ]]; then
     echo "created config.yaml from config.example.yaml"
 fi
 
+say "Skillbot app icon (opens the control panel)"
+(cd "$REPO_DIR" && "$REPO_DIR/.venv/bin/python" -m skillbot ui --install) || true
+
 say "Done. Reboot now (sudo reboot), then run: bash scripts/vm/check.sh"

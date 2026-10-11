@@ -567,6 +567,15 @@ def cmd_profile(cfg: Config, args) -> None:
             print(f"active profile: {args.name}")
 
 
+def cmd_ui(cfg: Config, args) -> None:
+    from .ui import App, install_shortcut, serve
+    if args.install:
+        print(f"installed {install_shortcut()}: look for Skillbot in the app grid "
+              "(and on the desktop)")
+        return
+    serve(App(cfg.data_dir, [s.name for s in cfg.plan]), args.port, not args.no_browser)
+
+
 def cmd_pause(cfg: Config, args) -> None:
     (cfg.data_dir / "paused").write_text("")
     print("paused: the supervisor stops the bot within ~15s. Switch RuneLite to your own "
@@ -706,6 +715,10 @@ def main(argv=None) -> None:
     c = sub.add_parser("profile", help="list, create or switch account profiles")
     c.add_argument("action", choices=["list", "create", "use"])
     c.add_argument("name", nargs="?")
+    c = sub.add_parser("ui", help="open the control panel in the browser")
+    c.add_argument("--port", type=int, default=8765)
+    c.add_argument("--no-browser", action="store_true")
+    c.add_argument("--install", action="store_true", help="add a Skillbot app icon")
     sub.add_parser("pause", help="stop the bot (supervisor keeps it stopped) so you can play")
     sub.add_parser("resume", help="hand control back to the bot")
     c = sub.add_parser("run", help="work through the plan")
@@ -775,7 +788,7 @@ def main(argv=None) -> None:
      "debug": cmd_debug, "doctor": cmd_doctor, "supervise": cmd_supervise, "discord": cmd_discord, "ask": cmd_ask,
      "add-destination": cmd_add_destination, "travel": cmd_travel,
      "trust": cmd_trust, "plan": cmd_plan, "sold": cmd_sold, "prices": cmd_prices, "quest-done": cmd_quest_done, "quest": cmd_quest, "logout": cmd_logout, "mouse-summary": cmd_mouse_summary, "marker-list": cmd_marker_list, "runelite-profile": cmd_runelite_profile, "accounts": cmd_accounts, "switch": cmd_switch, "rotation": cmd_rotation, "slayer-task": cmd_slayer_task, "learn-slayer": cmd_learn_slayer, "setup": cmd_setup, "check-setup": cmd_check_setup, "colors": cmd_colors,
-     "profile": cmd_profile, "pause": cmd_pause,
+     "profile": cmd_profile, "pause": cmd_pause, "ui": cmd_ui,
      "resume": cmd_resume, "run": cmd_run}[args.cmd](cfg, args)
 
 
