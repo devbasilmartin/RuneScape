@@ -71,8 +71,9 @@ def find_canvas(rgb: np.ndarray, near: tuple[int, int] | None = None,
     """Top-left (x, y) of the fixed-mode game canvas in a screenshot, or None.
     With ``near``, only origins within ``radius`` pixels of it are considered. With
     ``within`` (a window's x, y, w, h), only canvases inside that window, and of the good
-    ones the top-left-most: the canvas sits in the window's top-left corner, while a
-    rectangle shifted right (onto RuneLite's sidebar edge) can score as high."""
+    ones the leftmost, then the lowest: in fixed mode the canvas fills the window's
+    bottom-left, with the title bar above it and RuneLite's sidebar to its right, and a
+    rectangle shifted onto either of those can score as high as the canvas."""
     gray = rgb[..., :3].astype(np.float32) @ np.array([0.299, 0.587, 0.114], np.float32)
     scores = edge_scores(gray)
     if scores.size == 0:
@@ -91,7 +92,7 @@ def find_canvas(rgb: np.ndarray, near: tuple[int, int] | None = None,
         if best < MIN_EDGE:
             return None
         ys, xs = np.nonzero(scores >= max(MIN_EDGE, 0.5 * best))
-        i = int(np.argmin(xs + ys))
+        i = int(np.lexsort((-ys, xs))[0])          # smallest x, then largest y
         return int(xs[i]), int(ys[i])
     y, x = np.unravel_index(int(np.argmax(scores)), scores.shape)
     return (int(x), int(y)) if scores[y, x] >= MIN_EDGE else None

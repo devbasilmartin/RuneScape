@@ -69,3 +69,14 @@ def test_inside_the_window_the_top_left_canvas_wins():
     img[61:61 + CANVAS_H, 212 + CANVAS_W:212 + CANVAS_W + 22] = (30, 30, 30)
     img[61:61 + CANVAS_H, 212 + CANVAS_W + 22] = (200, 0, 200)
     assert find_canvas(img, within=(170, 0, 1010, 620)) == (212, 61)
+
+
+def test_title_bar_shadow_and_sidebar_inside_the_window_area():
+    """The real layout: an 824x569 area with a ~15 px shadow all round, RuneLite's own
+    white title bar, the canvas at the bottom-left and the sidebar to its right."""
+    x, y = 400, 137
+    img = desktop((x, y))
+    img[y - 40:y - 2, x:x + 790] = (245, 245, 245)                  # white title bar
+    img[y:y + CANVAS_H, x + CANVAS_W:x + CANVAS_W + 25] = (30, 30, 30)
+    img[y:y + CANVAS_H, x + CANVAS_W + 25] = (200, 0, 200)
+    assert find_canvas(img, within=(x - 17, y - 52, 824, 569)) == (x, y)
