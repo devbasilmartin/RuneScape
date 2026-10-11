@@ -107,12 +107,23 @@ def cmd_learn_energy(cfg: Config, args) -> None:
 def cmd_learn_digits(cfg: Config, args) -> None:
     img = Screen.load(cfg.data_dir).grab()
     reader = SkillReader.load(cfg.layout, cfg.data_dir)
+    # what the reader looks at, enlarged: the side panel with each level box drawn on it
+    lay = cfg.layout
+    panel = cv2.cvtColor(img[200:470, 520:765], cv2.COLOR_RGB2BGR)
+    panel = cv2.resize(panel, None, fx=4, fy=4, interpolation=cv2.INTER_NEAREST)
+    for i in range(len(SKILLS)):
+        r = lay.skill_level(i)
+        cv2.rectangle(panel, ((r.x - 520) * 4, (r.y - 200) * 4),
+                      ((r.x + r.w - 520) * 4, (r.y + r.h - 200) * 4), (255, 0, 255), 1)
+    cv2.imwrite("skills-check.png", panel)
     print("With the skills tab open, type the level shown for each skill "
           "(Enter to skip; skip unreadable ones).")
     for skill in SKILLS:
         text = input(f"  {skill}: ").strip()
         if text.isdigit() and not reader.learn(img, skill, int(text)):
-            print(f"    could not split {skill} into {len(text)} digits; check skill_level_box")
+            found = len(reader._glyphs(img, skill))
+            print(f"    could not split {skill} into {len(text)} digits (found {found} "
+                  "shapes); send skills-check.png")
     reader.save()
     print(f"known digits: {reader.known_digits() or 'none'}. The rest are learned as you level.")
 
