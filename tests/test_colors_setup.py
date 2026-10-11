@@ -113,3 +113,9 @@ def test_add_writes_valid_yaml_for_long_names(tmp_path):
     again = Registry.load(path)
     assert set(again.entries) == {"bank", "a_very_long_item_name_here", "ok"}
     assert again.check(25) == []
+
+
+def test_renamed_colors_still_resolve():
+    reg = Registry.load()
+    assert reg.resolve("tile_white") == reg.resolve("tile_plum")
+    assert reg.resolve("tile_rose") == reg.resolve("tile_mint")

@@ -25,6 +25,8 @@ HEALTH_BARS = ((0, 255, 0), (255, 0, 0))
 TEXT_COLORS = ((255, 255, 255), (255, 255, 0), (0, 255, 255), (255, 0, 0), (0, 255, 0),
                (255, 144, 64), (102, 178, 255), (153, 255, 153), (255, 150, 0),
                (255, 102, 178))
+# old names still accepted in config files written before a rename
+RENAMED = {"tile_white": "tile_plum", "tile_rose": "tile_mint"}
 NO_TEXT_THERE = ("status_hp",)        # only read beside the inventory, where there's no text
 TEXT_MARGIN = 10                      # the font is drawn pixel-exact: tolerance + 10 is safe
 
@@ -102,6 +104,7 @@ class Registry:
         if value is None:
             return None
         if isinstance(value, str):
+            value = RENAMED.get(value, value)
             if value not in self.entries:
                 raise ValueError(f"unknown color name {value!r}; add it to colors.yaml "
                                  "(`python -m skillbot colors` lists free colors)")
