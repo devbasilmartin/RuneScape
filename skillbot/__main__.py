@@ -16,26 +16,42 @@ from .notify import setup as notify_setup
 from .planner import Levels, Planner
 from .digits import GlyphBook
 from .run import EnergyReader, RunManager, orb_sample
+from .layout import CANVAS_H, CANVAS_W
 from .screen import Screen
 from .session import Session, sample
 from .skills import SKILLS, SkillReader
 
 
 def cmd_calibrate(cfg: Config, args) -> None:
+    from .screen import find_canvas, grab_desktop
     cfg.data_dir.mkdir(parents=True, exist_ok=True)
     if args.origin:
         origin = tuple(args.origin)
     else:
-        import pyautogui
-        input("Put RuneLite in FIXED mode and log in. Hover the mouse over the top-left pixel "
-              "of the game canvas (not the window title bar) and press Enter...")
-        origin = tuple(pyautogui.position())
+        desktop, (left, top) = grab_desktop()
+        found = find_canvas(desktop)
+        if found is None:
+            import pyautogui
+            input("Couldn't find the game by itself. Put RuneLite in FIXED mode, log in, hover "
+                  "the mouse near the top-left corner of the game picture and press Enter...")
+            x, y = pyautogui.position()
+            found = find_canvas(desktop, near=(x - left, y - top))
+            if found is None:
+                raise SystemExit("Still couldn't find a 765x503 game area there. Is RuneLite "
+                                 "in fixed mode, fully visible, and is the screen at least "
+                                 "1280x800? Or give it: calibrate --origin X Y")
+        origin = (found[0] + left, found[1] + top)
+        shot = cv2.cvtColor(desktop, cv2.COLOR_RGB2BGR)
+        cv2.rectangle(shot, found, (found[0] + CANVAS_W - 1, found[1] + CANVAS_H - 1),
+                      (0, 255, 0), 2)
+        cv2.imwrite("calibrate.png", shot)
     (cfg.data_dir / "origin.json").write_text(json.dumps({"origin": origin}))
     img = Screen(origin).grab()
     fp = sample(img, cfg.layout.fingerprint_points)
     (cfg.data_dir / "fingerprint.json").write_text(json.dumps(fp))
-    print(f"canvas origin = {origin}; logged-in fingerprint saved. "
-          "Run `python -m skillbot debug` to check it.")
+    print(f"canvas origin = {origin}; logged-in fingerprint saved.\n"
+          "Check calibrate.png: the green box should frame exactly the game picture. "
+          "Then run `python -m skillbot debug`.")
 
 
 def cmd_calibrate_run(cfg: Config, args) -> None:

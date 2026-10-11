@@ -64,7 +64,7 @@ and set the bank's withdraw/deposit quantity to what your steps expect (All, or 
 Log in first, then:
 
 ```sh
-python -m skillbot calibrate          # hover the top-left pixel of the game canvas, press Enter
+python -m skillbot calibrate          # finds the game canvas by itself (see calibrate.png)
 python -m skillbot debug              # writes debug.png
 ```
 

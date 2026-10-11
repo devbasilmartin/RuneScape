@@ -167,11 +167,12 @@ With RuneLite logged in, in fixed mode:
 
 ```sh
 source .venv/bin/activate
-python -m skillbot calibrate          # hover the top-left pixel of the game area, press Enter
+python -m skillbot calibrate          # finds the game by itself; check calibrate.png
 python -m skillbot debug              # writes debug.png
 ```
 
-Open `debug.png` (double-click it in the Files app) and send it to me. Then open the skills
+`calibrate.png` shows the whole screen with a green box where it found the game: it
+should frame exactly the game picture. Then open `debug.png` (double-click it in the Files app) and send it to me. Then open the skills
 tab and run `python -m skillbot debug --skills --out debug-skills.png` and send that too.
 From those two I'll correct every screen position in one go before the first real run.
 
