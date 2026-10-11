@@ -80,7 +80,7 @@ cows_lumbridge:
     task: combat
     target: cow
     loot: loot
-    items: [cowhide]
+    items: [cowhide, raw_beef]
     bury: [bones]
     food: [cooked_meat, shrimps, anchovies, trout]
     eat_below: 0.5

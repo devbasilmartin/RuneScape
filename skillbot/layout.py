@@ -60,8 +60,9 @@ class Layout:
     # combat options tab: the four attack style buttons, in game order
     combat_styles: tuple = ((603, 270), (683, 270), (603, 322), (683, 322))
 
-    # RuneLite Status Bars plugin: the health bar beside the inventory
-    hp_bar: Rect = field(default_factory=lambda: Rect(547, 212, 8, 250))
+    # RuneLite Status Bars plugin: the health bar left of the inventory (the middle of
+    # it; measured on a real client: the bar is 18 px wide at x 524-543, y 210-459)
+    hp_bar: Rect = field(default_factory=lambda: Rect(529, 210, 10, 250))
 
     # skills tab: 3 columns x 8 rows; level_box is where the base level is drawn in a cell
     # measured on a real client: rows are 30 px apart; the base level is the lower number,

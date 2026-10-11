@@ -189,3 +189,12 @@ def test_no_hp_bar_stops_instead_of_eating_everything():
     with pytest.raises(BotError, match="Status Bars"):
         task.run_batch()
     assert ("eat",) not in field.log
+
+
+def test_hp_bar_heart_icon_on_top_isnt_counted():
+    game, fake, _ = setup()
+    task = make_task(game, combat_step())
+    draw_hp(fake.img, 0.4)
+    bar = LAYOUT.hp_bar
+    fake.img[bar.y:bar.y + 15, bar.x:bar.x + bar.w] = (200, 30, 30)     # the heart
+    assert abs(task.hp(fake.img) - 0.4) < 0.02

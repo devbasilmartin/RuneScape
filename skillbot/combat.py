@@ -41,8 +41,17 @@ class CombatTask(Task):
         rgb = crop[..., :3].astype(np.int16)
         red = (rgb[..., 0] >= 90) & (rgb[..., 0] - np.maximum(rgb[..., 1], rgb[..., 2]) >= 50)
         rows = (red | color_mask(crop, color, tolerance)).any(axis=1)
-        filled = np.flatnonzero(rows)
-        return 0.0 if not len(filled) else (len(rows) - filled[0]) / len(rows)
+        # the fill grows from the bottom; the heart icon at the top is red too, so only
+        # the unbroken run from the bottom counts (a gap of a few rows is a tick line)
+        top, gap = len(rows), 0
+        for i in range(len(rows) - 1, -1, -1):
+            if rows[i]:
+                top, gap = i, 0
+            else:
+                gap += 1
+                if gap > 3:
+                    break
+        return (len(rows) - top) / len(rows)
 
     def hp(self, img) -> float:
         cfg = self.game.cfg

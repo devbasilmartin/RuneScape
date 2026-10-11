@@ -263,7 +263,7 @@ Used by: bagged plants (garden); mahogany tables (dining room); oak dungeon door
 Used by: cows (Lumbridge)
 
 - [ ] Object Marker on Bank booth / Bank chest / Bank / Grand Exchange booth → `bank` (#FF00FF)
-- automatic: `anchovies`, `bones`, `cooked_meat`, `cow`, `cowhide`, `loot`, `shrimps`, `trout`
+- automatic: `anchovies`, `bones`, `cooked_meat`, `cow`, `cowhide`, `loot`, `raw_beef`, `shrimps`, `trout`
 
 ## lumbridge trees
 
