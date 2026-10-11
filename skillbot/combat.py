@@ -168,9 +168,11 @@ class CombatTask(Task):
                 continue
             if step.bury and self.bury_bones(img):
                 continue
-            if g.inv.is_full(img, step.tools + len(self.tagged(img, step.food))):
+            full = g.inv.is_full(img, step.tools)
+            if full and self.tagged(img, step.items):
                 self.full_inventory()
                 break
+            # full of food (nothing to drop or bank): keep fighting, just don't loot
             if target is not None:
                 blob = self.follow(img, target)
                 if blob is not None:
@@ -194,7 +196,7 @@ class CombatTask(Task):
                     g.wait(1.0, 1.6)         # the drop appears a moment after death
                 target = None
                 continue
-            if self.pick_up(img):
+            if not full and self.pick_up(img):
                 continue
             g.walk(step.walk.get("target"), step.target)
             target = self.attack(g.grab())

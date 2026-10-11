@@ -32,7 +32,7 @@ class ThieveTask(CombatTask):
                 if step.when_out_of_food == "stop" or not self.restock():
                     return "exhausted"
                 continue
-            if step.items and g.inv.is_full(img, step.tools + len(self.tagged(img, step.food))):
+            if step.items and g.inv.is_full(img, step.tools):
                 self.full_inventory()
             if step.pouch and n and n % step.open_every == 0:
                 slots = self.tagged(img, [step.pouch])

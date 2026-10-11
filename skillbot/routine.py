@@ -64,8 +64,7 @@ class RoutineTask(CombatTask):
             if key == "count_at_least" and any(counts.get(n, 0) < k for n, k in v.items()):
                 return False
             if key == "full":
-                food = len(self.tagged(img, step.food))
-                if g.inv.is_full(img, step.tools + food) != bool(v):
+                if g.inv.is_full(img, step.tools) != bool(v):     # food is tagged: counted
                     return False
             if key == "hp_below" and not self.hp(img) < v:
                 return False

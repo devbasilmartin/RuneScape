@@ -198,3 +198,11 @@ def test_hp_bar_heart_icon_on_top_isnt_counted():
     bar = LAYOUT.hp_bar
     fake.img[bar.y:bar.y + 15, bar.x:bar.x + bar.w] = (200, 30, 30)     # the heart
     assert abs(task.hp(fake.img) - 0.4) < 0.02
+
+
+def test_inventory_full_of_food_still_fights():
+    game, fake, field = setup(food=27)
+    task = make_task(game, combat_step(kills_per_batch=2))
+    assert task.run_batch() == "ok"
+    assert task.stats["kills"] == 2
+    assert "cowhide" not in fake.items().values()        # no room: it doesn't loot
