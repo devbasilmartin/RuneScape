@@ -17,8 +17,9 @@ class FakeLevels:
     def get(self, skill):
         return self.levels.get(skill, 1)
 
-    def refresh(self, skills):
+    def refresh(self, skills, max_jump=1):
         self.refreshes += 1
+        self.jumps = getattr(self, "jumps", []) + [max_jump]
 
 
 class ScriptedTask(Task):
@@ -187,3 +188,22 @@ def test_handover_flag_stops_between_batches_and_logs_the_step(scripted, tmp_pat
     assert scripted.log == ["trees"] * 3
     (step,) = [e for e in read_events(tmp_path) if e["event"] == "step"]
     assert step["from"] == 1 and step["to"] == 4 and step["skill"] == "woodcutting"
+
+
+def test_while_learning_digits_the_skills_tab_is_read_once_a_minute(scripted, monkeypatch):
+    """Not after every item: one look per minute of work, allowing a few levels' jump."""
+    class Chopper(ScriptedTask):
+        def run_batch(self):
+            for _ in range(22):                 # 22 logs, 6 s apart: over two minutes
+                self.game.wait(6)
+                self.progressed(1)
+            self.levels.levels[self.step.skill] += 1
+            return "ok"
+
+    monkeypatch.setitem(TASK_TYPES, "gather", Chopper)
+    Chopper.levels = levels = FakeLevels({"woodcutting": 1}, reader_complete=False)
+    game, fake = make_game(config(steps(("trees", "woodcutting", 2))))
+    with pytest.raises(StopBot):
+        Planner(game, levels).run()
+    during = [j for j in levels.jumps if j > 1]
+    assert len(during) == 2                     # at ~60 s and ~120 s, not 22 times

@@ -36,6 +36,8 @@ def make_task(game: Game, step: Step):
 
 log = logging.getLogger("skillbot")
 HANDOVER = "handover"            # StopBot reason: the rotation's turn is over
+LEARN_LOOK_SECONDS = 60          # while digits are unknown: skills tab at most this often
+LEARN_MAX_JUMP = 3               # levels that can pass between two looks
 
 
 class Levels:
@@ -59,13 +61,13 @@ class Levels:
 
     on_level_up = None          # fn(skill, old, new): upgrade notices
 
-    def refresh(self, skills) -> None:
+    def refresh(self, skills, max_jump: int = 1) -> None:
         g = self.game
         g.open_tab("skills")
         img = g.grab()
         g.open_tab("inventory")
         for skill in skills:
-            level = self.reader.read_expecting(img, skill, self.get(skill))
+            level = self.reader.read_expecting(img, skill, self.get(skill), max_jump)
             if level is None:
                 log.warning("could not read the %s level (known digits: %s); keeping %d",
                             skill, self.reader.known_digits() or "none", self.get(skill))
@@ -203,9 +205,18 @@ class Planner:
         slice_minutes = step.max_minutes
         if level == "trial" and not self.supervised:
             slice_minutes = min(step.max_minutes or TRIAL_SLICE_MINUTES, TRIAL_SLICE_MINUTES)
-        # Until every digit is known, read after each item so levels change one at a time.
-        task.on_progress = lambda: (None if self.levels.reader.complete()
-                                    else self.levels.refresh([step.skill]))
+        # Until every digit is known, look at the skills tab now and then while working, so
+        # a new digit is learned from a small, unambiguous level change. Not after every
+        # item: flipping tabs that often is pointless (levels take minutes).
+        last_look = [g.now()]
+
+        def look_while_learning():
+            if self.levels.reader.complete() or g.now() - last_look[0] < LEARN_LOOK_SECONDS:
+                return
+            last_look[0] = g.now()
+            self.levels.refresh([step.skill], max_jump=LEARN_MAX_JUMP)
+
+        task.on_progress = look_while_learning
         started, batches = g.now(), 0
         first_level = self.levels.get(step.skill)
         self.report(step, task, started)
