@@ -487,7 +487,11 @@ def cmd_runelite_profile(cfg: Config, args) -> None:
     from .runelite_profile import WikiIds, build, read_properties, write_properties
     base = None
     if args.from_file:
-        base = read_properties(Path(args.from_file).read_text(encoding="latin-1"))
+        src = Path(args.from_file).expanduser()
+        if not src.exists():
+            raise SystemExit(f"no file {src}. Find your export with:\n"
+                             "  find ~ -name '*.properties' -mmin -30")
+        base = read_properties(src.read_text(encoding="latin-1"))
     wiki = WikiIds(args.mailbox_dir / "runelite_ids.json")
     print("looking up item and NPC ids on the OSRS Wiki (cached after the first run)...")
     try:
