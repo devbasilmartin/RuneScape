@@ -39,11 +39,23 @@ def test_registry_rejects_unknown_names_and_categories(tmp_path):
 def test_items_and_world_colors_are_checked_separately(tmp_path):
     path = tmp_path / "c.yaml"
     path.write_text(yaml.safe_dump({
-        "tile": {"rgb": [255, 255, 255], "category": "route"},
-        "bones": {"rgb": [255, 255, 255], "category": "item"},       # fine: different places
-        "tile2": {"rgb": [250, 250, 250], "category": "route"},      # clash with tile
+        "tile": {"rgb": [128, 64, 192], "category": "route"},
+        "bones": {"rgb": [128, 64, 192], "category": "item"},        # fine: different places
+        "tile2": {"rgb": [130, 66, 190], "category": "route"},       # clash with tile
     }))
     assert Registry.load(path).check(25) == ["tile and tile2 are too similar"]
+
+
+def test_world_colors_must_stay_off_the_games_text_colors(tmp_path):
+    path = tmp_path / "c.yaml"
+    path.write_text(yaml.safe_dump({
+        "tile": {"rgb": [255, 255, 255], "category": "route"},       # ground-item names
+        "bones": {"rgb": [255, 255, 255], "category": "item"},       # fine: inventory only
+        "status_hp": {"rgb": [255, 0, 0], "category": "other"},      # fine: beside the inventory
+    }))
+    assert Registry.load(path).check(25) == [
+        "tile (255, 255, 255) is too close to the game's text color (255, 255, 255)"]
+    assert Registry.load().check(25) == []                           # the shipped registry
 
 
 def test_scene_collision_is_reported(tmp_path):
@@ -67,7 +79,7 @@ def test_same_route_tile_in_both_directions_is_fine():
 def test_setup_text_lists_everything_for_a_step():
     cfg = Config.load("config.example.yaml")
     text = setup_text(cfg, find_step(cfg, "fire runes (Al Kharid)"), Registry.load())
-    for expected in ("altar #00C080", "ruins #FF8000", "altar_portal #8000C0",
+    for expected in ("altar #00C080", "ruins #40FF00", "altar_portal #8000C0",
                      "fire_to_alkharid", "rune_essence: rune_essence", "bank #FF00FF"):
         assert expected in text
     with pytest.raises(SystemExit):

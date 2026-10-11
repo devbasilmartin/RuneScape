@@ -19,6 +19,18 @@ DEFAULT_FILE = REPO_DIR / "colors.yaml"
 CATEGORIES = ("resource", "station", "bank", "enemy", "loot", "danger", "route", "portal",
               "item", "other")
 HEALTH_BARS = ((0, 255, 0), (255, 0, 0))
+# Text the game and RuneLite draw over the 3D view: white names, yellow overhead chat,
+# cyan, and the Ground Items plugin's value colors. A world highlight in one of these
+# would match the text (tile_white once matched every ground-item name).
+TEXT_COLORS = ((255, 255, 255), (255, 255, 0), (0, 255, 255), (255, 0, 0), (0, 255, 0),
+               (255, 144, 64), (102, 178, 255), (153, 255, 153), (255, 150, 0),
+               (255, 102, 178))
+NO_TEXT_THERE = ("status_hp",)        # only read beside the inventory, where there's no text
+TEXT_MARGIN = 10                      # the font is drawn pixel-exact: tolerance + 10 is safe
+
+
+def clear_of_text(c, tolerance: int) -> bool:
+    return all(gap(c, t) > tolerance + TEXT_MARGIN for t in TEXT_COLORS)
 
 
 def gap(a, b) -> int:
@@ -46,6 +58,8 @@ def palette(tolerance: int = 25) -> list[tuple[int, int, int]]:
         if max(c) < 192 or max(c) - min(c) < 128:
             continue
         if any(not distinct(c, bar, tolerance) for bar in HEALTH_BARS):
+            continue
+        if not clear_of_text(c, tolerance):
             continue
         out.append(c)
     return out
@@ -151,6 +165,13 @@ class Registry:
             for b in entries[i + 1:]:
                 if self.can_meet(a, b) and not distinct(a.rgb, b.rgb, tolerance):
                     problems.append(f"{a.name} and {b.name} are too similar")
+        for e in entries:
+            if e.category == "item" or e.name in NO_TEXT_THERE:
+                continue
+            near = [t for t in TEXT_COLORS if gap(e.rgb, t) <= tolerance + TEXT_MARGIN]
+            if near:
+                problems.append(f"{e.name} {e.rgb} is too close to the game's text color "
+                                f"{near[0]}")
         return problems
 
 

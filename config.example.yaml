@@ -38,7 +38,7 @@ items: all
 routes:
   willows_to_bank:  [tile_plum]
   bank_to_willows:  [tile_lilac]
-  bank_to_fish:     [tile_rose]
+  bank_to_fish:     [tile_mint]
   fish_to_bank:     [tile_plum]
   cows_to_bank:     [tile_blue, tile_plum]
   bank_to_cows:     [tile_blue, tile_lilac]

@@ -16,7 +16,7 @@ furnace:         {rgb: [192, 255, 64],  category: station}
 anvil:           {rgb: [64, 0, 255],    category: station}
 
 # --- resources (Object Markers / NPC Indicators) ---
-tree:            {rgb: [0, 255, 255],   category: resource}
+tree:            {rgb: [64, 192, 255],   category: resource}
 oak_tree:        {rgb: [0, 192, 192],   category: resource}
 willow_tree:     {rgb: [0, 128, 192],   category: resource}
 fishing_spot:    {rgb: [0, 255, 128],   category: resource}
@@ -37,7 +37,7 @@ respawn:         {rgb: [255, 64, 192],  category: other, area: everywhere}    # 
 other_player:    {rgb: [64, 192, 64],   category: other, area: everywhere}    # Player Indicators: others
 
 # --- runecrafting (Object Markers) ---
-ruins:           {rgb: [255, 128, 0],   category: portal}
+ruins:           {rgb: [64, 255, 0],   category: portal}
 altar_portal:    {rgb: [128, 0, 192],   category: portal}
 
 # --- agility (Object Markers on each obstacle, in course order; long courses reuse them) ---
@@ -58,7 +58,7 @@ tile_lilac:      {rgb: [128, 128, 255], category: route}
 tile_blue:       {rgb: [0, 64, 255],    category: route}
 tile_lime:       {rgb: [128, 255, 0],   category: route}
 tile_lemon:      {rgb: [255, 255, 128], category: route}
-tile_rose:       {rgb: [255, 128, 192], category: route}
+tile_mint:       {rgb: [64, 255, 64], category: route}
 tile_teal:       {rgb: [64, 255, 192],  category: route}
 fm_start:        {rgb: [128, 192, 0],   category: route}   # not yellow: overhead chat
 

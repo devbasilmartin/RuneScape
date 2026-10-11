@@ -28,7 +28,7 @@ Used by: fire runes (Al Kharid)
 - [ ] Object Marker, color set by hand: `altar` #00C080 (shares the name Altar with another color)
 - [ ] Object Marker, color set by hand: `altar_portal` #8000C0 (shares the name Portal with another color)
 - [ ] Object Marker on Bank booth / Bank chest / Bank / Grand Exchange booth → `bank` (#FF00FF)
-- [ ] Object Marker on Mysterious ruins → `ruins` (#FF8000)
+- [ ] Object Marker on Mysterious ruins → `ruins` (#40FF00)
 - automatic: `fire_talisman`, `rune_essence`
 
 ## al kharid rooftop start
@@ -269,7 +269,7 @@ Used by: cows (Lumbridge)
 
 Used by: trees (Lumbridge)
 
-- [ ] Object Marker on Tree / Dead tree / Evergreen → `tree` (#00FFFF)
+- [ ] Object Marker on Tree / Dead tree / Evergreen → `tree` (#40C0FF)
 - automatic: `logs`
 
 ## motherlode mine
@@ -368,7 +368,7 @@ Used by: earth runes (Varrock)
 - [ ] Object Marker, color set by hand: `altar` #00C080 (shares the name Altar with another color)
 - [ ] Object Marker, color set by hand: `altar_portal` #8000C0 (shares the name Portal with another color)
 - [ ] Object Marker on Bank booth / Bank chest / Bank / Grand Exchange booth → `bank` (#FF00FF)
-- [ ] Object Marker on Mysterious ruins → `ruins` (#FF8000)
+- [ ] Object Marker on Mysterious ruins → `ruins` (#40FF00)
 - automatic: `earth_talisman`, `rune_essence`
 
 ## varrock rooftop start
