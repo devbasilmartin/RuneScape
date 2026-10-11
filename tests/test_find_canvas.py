@@ -41,24 +41,31 @@ def test_near_a_rough_guess_and_nothing_without_a_game():
 def test_window_origin_from_xdotool():
     import subprocess
 
-    from skillbot.screen import window_origin
+    from skillbot.screen import window_rect
 
     def run(cmd, **kw):
         if cmd[1] == "search":
             out = "11\n22\n"
         elif cmd[-1] == "11":          # a small window that also matches the name
-            out = "WINDOW=11\nX=5\nY=5\nWIDTH=300\nHEIGHT=200\n"
+            out = ("  Absolute upper-left X:  5\n  Absolute upper-left Y:  5\n"
+                   "  Relative upper-left X:  0\n  Width: 300\n  Height: 200\n")
         else:
-            out = "WINDOW=22\nX=212\nY=61\nWIDTH=1010\nHEIGHT=503\n"
+            out = ("xwininfo: Window id: 0x22 \"RuneLite - megaman19999\"\n\n"
+                   "  Absolute upper-left X:  212\n  Absolute upper-left Y:  61\n"
+                   "  Relative upper-left X:  0\n  Relative upper-left Y:  0\n"
+                   "  Width: 1010\n  Height: 503\n")
         return subprocess.CompletedProcess(cmd, 0, stdout=out)
 
-    assert window_origin(run=run) == (212, 61)
-    assert window_origin(run=lambda *a, **k: subprocess.CompletedProcess(a, 0, stdout="")) \
+    assert window_rect(run=run) == (212, 61, 1010, 503)
+    assert window_rect(run=lambda *a, **k: subprocess.CompletedProcess(a, 0, stdout="")) \
         is None
 
 
-def test_a_sharper_rectangle_nearby_doesnt_win_near_the_window():
+def test_inside_the_window_the_top_left_canvas_wins():
+    """As on the real client: the canvas's right edge meets the dark sidebar (weak), the
+    sidebar's outer edge meets the desktop (sharp); the window rect includes the title bar
+    and frame."""
     img = desktop((212, 61))
-    img[61:61 + CANVAS_H, 212 + CANVAS_W:212 + CANVAS_W + 22] = (30, 30, 30)   # weak right
-    img[61:61 + CANVAS_H, 212 + CANVAS_W + 22] = (200, 0, 200)                  # sharp, further
-    assert find_canvas(img, near=(212, 61), radius=4) == (212, 61)
+    img[61:61 + CANVAS_H, 212 + CANVAS_W:212 + CANVAS_W + 22] = (30, 30, 30)
+    img[61:61 + CANVAS_H, 212 + CANVAS_W + 22] = (200, 0, 200)
+    assert find_canvas(img, within=(170, 0, 1010, 620)) == (212, 61)

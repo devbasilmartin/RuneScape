@@ -67,9 +67,12 @@ MIN_EDGE = 8     # mean brightness jump a real canvas edge has, at the least
 
 
 def find_canvas(rgb: np.ndarray, near: tuple[int, int] | None = None,
-                radius: int = 40) -> tuple[int, int] | None:
+                radius: int = 40, within: tuple | None = None) -> tuple[int, int] | None:
     """Top-left (x, y) of the fixed-mode game canvas in a screenshot, or None.
-    With ``near``, only origins within ``radius`` pixels of it are considered."""
+    With ``near``, only origins within ``radius`` pixels of it are considered. With
+    ``within`` (a window's x, y, w, h), only canvases inside that window, and of the good
+    ones the top-left-most: the canvas sits in the window's top-left corner, while a
+    rectangle shifted right (onto RuneLite's sidebar edge) can score as high."""
     gray = rgb[..., :3].astype(np.float32) @ np.array([0.299, 0.587, 0.114], np.float32)
     scores = edge_scores(gray)
     if scores.size == 0:
@@ -79,6 +82,17 @@ def find_canvas(rgb: np.ndarray, near: tuple[int, int] | None = None,
         x, y = near
         mask[max(0, y - radius):y + radius + 1, max(0, x - radius):x + radius + 1] = True
         scores = np.where(mask, scores, 0)
+    if within is not None:
+        wx, wy, ww, wh = within
+        mask = np.zeros_like(scores, bool)
+        mask[max(0, wy):max(0, wy + wh - CANVAS_H + 1), max(0, wx):max(0, wx + ww - CANVAS_W + 1)] = True
+        scores = np.where(mask, scores, 0)
+        best = scores.max()
+        if best < MIN_EDGE:
+            return None
+        ys, xs = np.nonzero(scores >= max(MIN_EDGE, 0.5 * best))
+        i = int(np.argmin(xs + ys))
+        return int(xs[i]), int(ys[i])
     y, x = np.unravel_index(int(np.argmax(scores)), scores.shape)
     return (int(x), int(y)) if scores[y, x] >= MIN_EDGE else None
 
@@ -92,9 +106,11 @@ def grab_desktop() -> tuple[np.ndarray, tuple[int, int]]:
     return bgra[..., 2::-1].copy(), (mon["left"], mon["top"])
 
 
-def window_origin(name: str = "RuneLite", run=None) -> tuple[int, int] | None:
-    """Top-left of the client's content area (below the title bar), from xdotool: in
-    fixed mode the game canvas starts there. The largest matching window wins."""
+def window_rect(name: str = "RuneLite", run=None) -> tuple[int, int, int, int] | None:
+    """The client window's content area (x, y, w, h), without the window manager's title
+    bar, frame or shadow: xdotool finds the window, xwininfo gives its absolute position
+    (xdotool's own geometry can be the frame's). The largest matching window wins."""
+    import re
     import subprocess
     run = run or subprocess.run
     try:
@@ -104,13 +120,21 @@ def window_origin(name: str = "RuneLite", run=None) -> tuple[int, int] | None:
         return None
     best = None
     for wid in ids:
-        out = run(["xdotool", "getwindowgeometry", "--shell", wid], capture_output=True,
-                  text=True, timeout=5).stdout
-        geo = dict(line.split("=", 1) for line in out.splitlines() if "=" in line)
         try:
-            x, y, w, h = (int(geo[k]) for k in ("X", "Y", "WIDTH", "HEIGHT"))
-        except (KeyError, ValueError):
+            out = run(["xwininfo", "-id", wid], capture_output=True, text=True,
+                      timeout=5).stdout
+        except (FileNotFoundError, subprocess.TimeoutExpired):
+            return None
+        vals = {}
+        for key, pat in (("x", r"Absolute upper-left X:\s*(-?\d+)"),
+                         ("y", r"Absolute upper-left Y:\s*(-?\d+)"),
+                         ("w", r"Width:\s*(\d+)"), ("h", r"Height:\s*(\d+)")):
+            m = re.search(pat, out)
+            if m:
+                vals[key] = int(m.group(1))
+        if len(vals) < 4:
             continue
-        if w >= CANVAS_W and h >= CANVAS_H and (best is None or w * h > best[2]):
-            best = (x, y, w * h)
-    return best[:2] if best else None
+        x, y, w, h = vals["x"], vals["y"], vals["w"], vals["h"]
+        if w >= CANVAS_W and h >= CANVAS_H and (best is None or w * h > best[2] * best[3]):
+            best = (x, y, w, h)
+    return best

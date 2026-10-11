@@ -23,19 +23,21 @@ from .skills import SKILLS, SkillReader
 
 
 def cmd_calibrate(cfg: Config, args) -> None:
-    from .screen import find_canvas, grab_desktop, window_origin
+    from .screen import find_canvas, grab_desktop, window_rect
     cfg.data_dir.mkdir(parents=True, exist_ok=True)
     if args.origin:
         origin = tuple(args.origin)
     else:
         desktop, (left, top) = grab_desktop()
-        win = window_origin(cfg.supervisor.get("window_name", "RuneLite"))
+        win = window_rect(cfg.supervisor.get("window_name", "RuneLite"))
+        found = None
         if win is not None:
-            # the canvas starts at the window's content area; the edge search only
-            # adjusts by a few pixels (a border), never jumps to another rectangle
-            near = (win[0] - left, win[1] - top)
-            found = find_canvas(desktop, near=near, radius=4) or near
-        else:
+            # fixed mode draws the canvas at the content area's top-left; the edge
+            # search may only nudge it by a pixel or two
+            print(f"RuneLite content area: {win[2]}x{win[3]} at ({win[0]}, {win[1]})")
+            client = (win[0] - left, win[1] - top)
+            found = find_canvas(desktop, near=client, radius=2) or client
+        if found is None:
             found = find_canvas(desktop)
         if found is None:
             import pyautogui
