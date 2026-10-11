@@ -18,7 +18,8 @@ only this VM can reach it.
 
 ## What's on it
 
-- **Bot**: Start (watching) = `run --supervised`, stops at the first error; Start = `run`;
+- **Bot**: Start: I'm watching = `run --supervised`, runs new steps too and stops at the
+  first error; Start unattended = `run`, only steps proven while you watched;
   Stop (same as Ctrl+C); Pause / Resume; What's next? (`plan`); Accounts.
 - **Check**: Screenshot (`debug`, shown below), Doctor, Check step (`check-setup`).
 - **Setup**: Update bot (`git pull`; then close and reopen the panel), Calibrate,

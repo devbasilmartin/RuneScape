@@ -62,11 +62,12 @@
   <div>
     <section>
       <h2>Bot</h2>
-      <button class="primary" data-act="run_watched">Start (watching)</button>
-      <button data-act="run">Start</button>
+      <button class="primary" data-act="run_watched">Start: I'm watching</button>
       <button class="danger" id="stop">Stop</button>
-      <div class="hint">"Watching" stops at the first error. Moving the mouse into a screen
-        corner also stops the bot.</div>
+      <button data-act="run">Start unattended</button>
+      <div class="hint"><b>I'm watching</b> runs every step, new ones too, and stops at the
+        first error. <b>Unattended</b> only runs steps that already ran cleanly while you
+        watched. Moving the mouse into a screen corner also stops the bot.</div>
       <button data-act="pause">Pause</button><button data-act="resume">Resume</button>
       <button data-act="plan">What's next?</button><button data-act="accounts">Accounts</button>
     </section>
