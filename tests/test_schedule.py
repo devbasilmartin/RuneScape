@@ -154,3 +154,20 @@ def test_store_and_bank_override(tmp_path):
     assert step.when_full == "bank" and step.name == "trees [bank]" and step.max_minutes == 60
     same = Schedule.from_dict({"entries": [{"method": "fish", "when_full": "bank"}]}, LIB)
     assert entry_step(same.entries[0], LIB["fish"], Registry.load(), {}).name == "fish"
+
+
+def test_combat_can_drop_and_then_stops_when_out_of_food():
+    cows = Method.from_dict("cows", {"name": "cows", "skills": ["attack", "strength"],
+                                     "levels": [1, 40], "step": {
+                                         "task": "combat", "target": "cow", "loot": "loot",
+                                         "items": ["cowhide"], "food": ["trout"],
+                                         "when_full": "bank"}})
+    assert cows.can_drop
+    s = Schedule.from_dict({"entries": [{"method": "cows", "skill": "strength",
+                                         "when_full": "drop"}]}, {"cows": cows})
+    step = entry_step(s.entries[0], cows, Registry.load(), {})
+    assert step.when_full == "drop" and step.when_out_of_food == "stop"
+    assert step.name == "cows (strength) [drop]"
+    banked = entry_step(Schedule.from_dict({"entries": [{"method": "cows"}]},
+                                           {"cows": cows}).entries[0], cows, Registry.load(), {})
+    assert banked.when_out_of_food == "bank"

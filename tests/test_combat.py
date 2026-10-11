@@ -1,4 +1,7 @@
+import pytest
+
 from skillbot.config import Step
+from skillbot.game import BotError
 from skillbot.planner import make_task
 
 from fakes import BG, LAYOUT, config, make_game, outline, put_item, slot_at
@@ -168,3 +171,21 @@ def test_ignores_loot_it_cannot_pick_up():
     for _ in range(3):
         assert task.pick_up(fake.grab())
     assert not task.pick_up(fake.grab())
+
+
+def test_hp_bar_drawn_see_through_still_reads():
+    game, fake, _ = setup()
+    task = make_task(game, combat_step())
+    bar = LAYOUT.hp_bar
+    fake.img[bar.y:bar.y + bar.h, bar.x:bar.x + bar.w] = (25, 22, 17)
+    fake.img[bar.y + bar.h // 2:bar.y + bar.h, bar.x:bar.x + bar.w] = (142, 44, 21)
+    assert abs(task.hp(fake.img) - 0.5) < 0.02
+
+
+def test_no_hp_bar_stops_instead_of_eating_everything():
+    game, fake, field = setup()
+    draw_hp(fake.img, 0)
+    task = make_task(game, combat_step())
+    with pytest.raises(BotError, match="Status Bars"):
+        task.run_batch()
+    assert ("eat",) not in field.log

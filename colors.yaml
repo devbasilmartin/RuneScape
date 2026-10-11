@@ -115,6 +115,7 @@ lobster:         {rgb: [64, 128, 0], category: item}
 swordfish:       {rgb: [64, 128, 64], category: item}
 knife:           {rgb: [64, 128, 128], category: item}
 coin_pouch:      {rgb: [64, 128, 192], category: item}
+cooked_meat:     {rgb: [255, 160, 160], category: item}
 yew_tree:        {rgb: [0, 0, 192], category: resource}
 redwood_tree:    {rgb: [0, 64, 192], category: resource}
 maple_tree:      {rgb: [0, 128, 255], category: resource}

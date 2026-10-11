@@ -34,8 +34,13 @@ class CombatTask(Task):
     # ---- reading the screen --------------------------------------------------------------
     @staticmethod
     def hp_fraction(img, bar: Rect, color, tolerance: int) -> float:
-        """Fraction of the Status Bars health bar that is filled (it fills from the bottom)."""
-        rows = color_mask(bar.crop(img), color, tolerance).any(axis=1)
+        """Fraction of the Status Bars health bar that is filled (it fills from the bottom).
+        RuneLite draws the fill half see-through, so besides ``color`` any clearly red
+        pixel counts (red over the stone panel comes out darker than the color itself)."""
+        crop = bar.crop(img)
+        rgb = crop[..., :3].astype(np.int16)
+        red = (rgb[..., 0] >= 90) & (rgb[..., 0] - np.maximum(rgb[..., 1], rgb[..., 2]) >= 50)
+        rows = (red | color_mask(crop, color, tolerance)).any(axis=1)
         filled = np.flatnonzero(rows)
         return 0.0 if not len(filled) else (len(rows) - filled[0]) / len(rows)
 
@@ -66,6 +71,13 @@ class CombatTask(Task):
             g.wait(0.4, 0.7)
             g.open_tab("inventory")
         self.style_set = True
+
+    def check_hp_bar(self, img) -> None:
+        """An empty bar means it isn't there (you'd be dead): don't eat everything."""
+        if self.hp(img) == 0:
+            raise BotError(f"{self.step.name}: can't see your HP: turn on RuneLite's Status "
+                           "Bars plugin (Hitpoints on the left; the bot profile does this) "
+                           "and check the hp box in debug.png")
 
     def eat(self, img) -> bool:
         food = self.tagged(img, self.step.food)
@@ -139,6 +151,7 @@ class CombatTask(Task):
         kills, target, engaged_at, misses = 0, None, 0.0, 0
         while kills < step.kills_per_batch:
             img = g.grab()
+            self.check_hp_bar(img)
             if self.hp(img) < step.eat_below and not self.eat(img):
                 log.info("%s: out of food at %.0f%% HP", step.name, 100 * self.hp(img))
                 if step.when_out_of_food == "stop" or not self.restock():
@@ -234,6 +247,7 @@ class StandingCombatTask(CombatTask):
         fighting = False
         while g.now() - start < self.BATCH_MINUTES * 60:
             img = g.grab()
+            self.check_hp_bar(img)
             if self.hp(img) < step.eat_below and not self.eat(img):
                 if step.when_out_of_food == "stop" or not self.restock():
                     return "exhausted"

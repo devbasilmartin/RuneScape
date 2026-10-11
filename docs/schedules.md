@@ -26,7 +26,7 @@ repeat: {hours: 3}          # once (then log out) | forever | {hours: N}
 entries:
   - method: oaks_draynor
     minutes: 60
-    when_full: bank         # gathering only: bank | drop (default: the method's)
+    when_full: bank         # gathering/combat: bank | drop (default: the method's)
   - method: burn_willows
     minutes: 30
 ```
@@ -41,7 +41,10 @@ python -m skillbot run --supervised --schedule "oak loop"
 - **Repeat once** logs out after the last activity. **For N hours** cycles until the time
   is up, finishes the current inventory, then logs out. **Forever** runs until you stop it
   (and stops if a whole cycle couldn't do anything).
-- **Bank or drop** applies to gathering. Banking needs the bank marked (see
+- **Bank or drop** applies to gathering and combat (drop: hides are dropped when the
+  inventory fills; it never goes to the bank, so running out of food ends the activity
+  and the run logs out). Combat eats below 50% HP: cooked meat, shrimps, anchovies or
+  trout, whichever you carry, and reads your HP from RuneLite's Status Bars. Banking needs the bank marked (see
   [markers.md](markers.md)); where it's out of view from the activity, a route of marked
   tiles too. A bank/drop choice other than the method's default is its own activity for
   trust: it earns its "proven" status separately.

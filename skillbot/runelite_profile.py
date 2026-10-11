@@ -8,6 +8,7 @@ panel can import one. This builds that file:
   (ids from the NPC's OSRS Wiki page), default color `enemy`
 - Ground Items: the listed loot in `loot`; Player Indicators: others in `other_player`
 - Agility plugin: marks of grace in `mark_of_grace`, its own obstacle boxes off
+- Status Bars: on, Hitpoints on the left of the inventory (combat reads your HP there)
 - With `--from` an exported profile: Object Markers recolored by object name, Ground
   Markers recolored by their label (label a tile `tile_plum` and it gets that color).
   Everything else in the export is kept.
@@ -28,7 +29,7 @@ NAMES_FILE = REPO_DIR / "runelite" / "names.yaml"
 WIKI = "https://oldschool.runescape.wiki/api.php"
 PLUGINS = ("npcindicatorsplugin", "objectindicatorsplugin", "groundmarkerplugin",
            "inventorytagsplugin", "grounditemsplugin", "playerindicatorsplugin",
-           "agilityplugin")
+           "agilityplugin", "statusbarsplugin")
 
 
 # ---- Java properties ---------------------------------------------------------------------
@@ -193,6 +194,7 @@ def build(registry, names: dict | None = None, wiki: WikiIds | None = None,
 
     for plugin in PLUGINS:
         props[f"runelite.{plugin}"] = "true"
+    props["statusbars.leftBarMode"] = "HITPOINTS"     # combat reads your HP from it
 
     # Inventory Tags
     tagged, missing = 0, []

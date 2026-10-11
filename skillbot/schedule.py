@@ -8,7 +8,7 @@ schedules/<name>.yaml (shared by every account):
       - method: oaks_draynor      # a method id from library/*.yaml
         minutes: 60               # optional: then the next entry
         until_level: 30           # optional: then the next entry (whichever comes first)
-        when_full: bank           # optional, gathering only: bank | drop (default: the method's)
+        when_full: bank           # optional, gathering/combat: bank | drop (default: the method's)
       - method: burn_willows
         minutes: 30
 
@@ -90,8 +90,8 @@ class Schedule:
                 if e.when_full not in ("bank", "drop"):
                     raise ValueError(f"entry {i}: when_full must be bank or drop")
                 if not m.can_drop:
-                    raise ValueError(f"entry {i}: {m.name} always banks (only gathering can "
-                                     "choose bank or drop)")
+                    raise ValueError(f"entry {i}: {m.name} always banks (only gathering and "
+                                     "combat can choose bank or drop)")
             if e.skill is not None and e.skill not in m.skills:
                 raise ValueError(f"entry {i}: {m.name} trains {', '.join(m.skills)}")
             entries.append(e)
@@ -152,6 +152,8 @@ def entry_step(entry: Entry, method, registry, spells):
     overrides = {}
     if entry.when_full and entry.when_full != method.step.get("when_full"):
         overrides["when_full"] = entry.when_full
+    if entry.when_full == "drop" and method.task == "combat":
+        overrides["when_out_of_food"] = "stop"     # no bank trips: out of food ends it
     step = method.to_step(skill, entry.until_level or NEVER, entry.minutes, registry, spells,
                           overrides)
     step.name = step_name(method, skill, entry.when_full)

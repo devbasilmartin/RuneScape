@@ -82,7 +82,7 @@ cows_lumbridge:
     loot: loot
     items: [cowhide]
     bury: [bones]
-    food: [trout]
+    food: [cooked_meat, shrimps, anchovies, trout]
     eat_below: 0.5
     bank_tab: food
     withdraw: [{slot: 0, item: trout, quantity: x}]

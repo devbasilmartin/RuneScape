@@ -59,8 +59,9 @@ class Method:
 
     @property
     def can_drop(self) -> bool:
-        """Gathering can bank or drop when the inventory is full; other tasks always bank."""
-        return self.task == "gather"
+        """Gathering and combat can bank or drop what fills the inventory (logs, hides);
+        other tasks always bank."""
+        return self.task in ("gather", "combat")
 
     def to_step(self, skill: str, until_level: int, max_minutes: float,
                 registry: Registry, spells: dict | None = None,

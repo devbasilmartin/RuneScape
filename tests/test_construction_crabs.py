@@ -111,6 +111,8 @@ CRAB, STAND, RESET = (255, 128, 128), (0, 192, 64), (64, 0, 192)
 def test_crabs_stand_fight_and_reset_aggression():
     game, fake = make_game(config(extra_items=EXTRA))
     fakes.put_item(fake.img, 1, "trout")
+    bar = LAYOUT.hp_bar
+    fake.img[bar.y:bar.y + bar.h, bar.x:bar.x + bar.w] = (255, 0, 0)     # full HP
     state = {"where": "stand", "aggro_until": 120.0, "resets": 0}
 
     def draw():
