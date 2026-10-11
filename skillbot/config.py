@@ -176,6 +176,10 @@ class Step:
 class Config:
     data_dir: Path = Path("data")
     color_tolerance: int = 25
+    # Inventory Tags outlines are drawn in the exact color, while item sprites are full of
+    # earthy tones that a loose match would mistake for tags (untagged logs read as
+    # eye_of_newt at 25), so inventory slots match much tighter
+    tag_tolerance: int = 8
     bank_color: tuple = (255, 0, 255)
     health_bar_colors: tuple = ((0, 255, 0), (255, 0, 0))   # the game's own bars over NPCs
     hp_bar_color: tuple = (255, 0, 0)                        # Status Bars health fill

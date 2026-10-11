@@ -153,7 +153,7 @@ def check_setup(cfg: Config, step: Step, img, registry: Registry) -> list[Check]
                             f"{d(color)} not visible from here (fine if it's elsewhere)"))
     if cfg.danger_color and seen(cfg.danger_color):
         checks.append(Check("random event", WARN, "a random-event NPC is on screen"))
-    tags = Inventory(cfg.layout, cfg.items, tolerance=tol).tags(img)
+    tags = Inventory(cfg.layout, cfg.items, tolerance=cfg.tag_tolerance).tags(img)
     wanted = set(step.items) | set(step.food) | set(step.keep) | (
         {step.enter_with} if step.enter_with else set()) | (
         {step.with_item} if step.with_item else set())

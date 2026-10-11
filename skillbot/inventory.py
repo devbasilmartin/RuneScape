@@ -14,7 +14,7 @@ SLOTS = 28
 
 class Inventory:
     def __init__(self, layout: Layout, items: dict[str, tuple], tools: int = 1,
-                 tolerance: int = 25, min_pixels: int = 6):
+                 tolerance: int = 8, min_pixels: int = 6):
         self.layout = layout
         self.items = {name: tuple(rgb) for name, rgb in items.items()}
         self.tools = tools

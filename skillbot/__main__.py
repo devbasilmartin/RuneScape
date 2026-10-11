@@ -23,37 +23,35 @@ from .skills import SKILLS, SkillReader
 
 
 def cmd_calibrate(cfg: Config, args) -> None:
-    from .screen import find_canvas, grab_desktop, window_rect
+    from .screen import FRAME_MIN, frame_points, grab_desktop, match_frame, sample_frame, \
+        window_rect
     cfg.data_dir.mkdir(parents=True, exist_ok=True)
+    desktop, (left, top) = grab_desktop()
     if args.origin:
-        origin = tuple(args.origin)
+        origin, learn = tuple(args.origin), True
     else:
-        desktop, (left, top) = grab_desktop()
         win = window_rect(cfg.supervisor.get("window_name", "RuneLite"))
-        found = None
-        if win is not None:
-            # fixed mode draws the canvas at the content area's top-left; the edge
-            # search may only nudge it by a pixel or two
-            print(f"RuneLite content area: {win[2]}x{win[3]} at ({win[0]}, {win[1]})")
-            client = (win[0] - left, win[1] - top)
-            found = find_canvas(desktop, near=client, radius=2) or client
-        if found is None:
-            found = find_canvas(desktop)
-        if found is None:
+        area = (win[0] - left, win[1] - top, win[2], win[3]) if win else None
+        pts = frame_points(cfg.data_dir)
+        found, share = match_frame(desktop, pts, within=area) if area else (None, 0.0)
+        if share < FRAME_MIN:
+            found, share = match_frame(desktop, pts)
+        if share >= FRAME_MIN:
+            print(f"found the game ({share:.0%} of the frame's points match)")
+            origin, learn = (found[0] + left, found[1] + top), False
+        else:
             import pyautogui
-            input("Couldn't find the game by itself. Put RuneLite in FIXED mode, log in, hover "
-                  "the mouse near the top-left corner of the game picture and press Enter...")
-            x, y = pyautogui.position()
-            found = find_canvas(desktop, near=(x - left, y - top))
-            if found is None:
-                raise SystemExit("Still couldn't find a 765x503 game area there. Is RuneLite "
-                                 "in fixed mode, fully visible, and is the screen at least "
-                                 "1280x800? Or give it: calibrate --origin X Y")
-        origin = (found[0] + left, found[1] + top)
-        shot = cv2.cvtColor(desktop, cv2.COLOR_RGB2BGR)
-        cv2.rectangle(shot, found, (found[0] + CANVAS_W - 1, found[1] + CANVAS_H - 1),
-                      (0, 255, 0), 2)
-        cv2.imwrite("calibrate.png", shot)
+            print(f"Couldn't find the game's frame by itself (best match {share:.0%}).")
+            input("Put RuneLite in FIXED mode and log in. Hover the mouse over the top-left "
+                  "pixel of the game picture and press Enter...")
+            origin, learn = tuple(pyautogui.position()), True
+    if learn:
+        # remember this client's frame, so the next calibrate finds it by itself
+        (cfg.data_dir / "frame.json").write_text(json.dumps(sample_frame(Screen(origin).grab())))
+    x, y = origin[0] - left, origin[1] - top
+    shot = cv2.cvtColor(desktop, cv2.COLOR_RGB2BGR)
+    cv2.rectangle(shot, (x, y), (x + CANVAS_W - 1, y + CANVAS_H - 1), (0, 255, 0), 2)
+    cv2.imwrite("calibrate.png", shot)
     (cfg.data_dir / "origin.json").write_text(json.dumps({"origin": origin}))
     img = Screen(origin).grab()
     fp = sample(img, cfg.layout.fingerprint_points)
@@ -143,7 +141,7 @@ def cmd_debug(cfg: Config, args) -> None:
     for label, color in targets:
         for b in vision.find_blobs(img, color, cfg.color_tolerance, region=lay.viewport):
             box(b.rect, (0, 255, 0), label[:14])
-    inv = Inventory(lay, cfg.items, tolerance=cfg.color_tolerance)
+    inv = Inventory(lay, cfg.items, tolerance=cfg.tag_tolerance)
     tags = inv.tags(img)
     for i in range(SLOTS):
         box(lay.slot(i), (0, 0, 255) if i in tags else (160, 160, 160), tags.get(i, "")[:7])
@@ -265,7 +263,7 @@ def live_game(cfg: Config):
     from .controls import Controls
     screen = Screen.load(cfg.data_dir)
     game = Game(cfg, screen, Controls(screen), Inventory(cfg.layout, cfg.items,
-                                                         tolerance=cfg.color_tolerance))
+                                                         tolerance=cfg.tag_tolerance))
     game.nav = make_navigator(cfg, game)
     return game
 
@@ -566,7 +564,7 @@ def cmd_run(cfg: Config, args) -> None:
     controls = Controls(screen)
     screen.heartbeat = controls.heartbeat = Heartbeat(cfg.data_dir / "heartbeat.json")
     game = Game(cfg, screen, controls, Inventory(cfg.layout, cfg.items,
-                                                 tolerance=cfg.color_tolerance))
+                                                 tolerance=cfg.tag_tolerance))
     if cfg.run == "always":
         game.run = RunManager.load(game, cfg.data_dir)
     game.nav = make_navigator(cfg, game)

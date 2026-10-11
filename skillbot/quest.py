@@ -46,7 +46,7 @@ class QuestTask(Task):
         g = self.game
         for i in range(28):
             area = g.layout.slot(i).grow(2).crop(img)
-            if int(color_mask(area, self.item, g.cfg.color_tolerance).sum()) >= 6:
+            if int(color_mask(area, self.item, g.cfg.tag_tolerance).sum()) >= 6:
                 return i
         return None
 

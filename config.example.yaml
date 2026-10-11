@@ -2,7 +2,8 @@
 # [r, g, b] works too. RuneLite's plugin colors must match them exactly (fully opaque).
 # `python -m skillbot colors` shows the registry; `python -m skillbot setup STEP` prints
 # exactly what to mark for a step.
-color_tolerance: 25
+color_tolerance: 25            # world highlights (Object Markers, NPC Indicators...)
+tag_tolerance: 8               # Inventory Tags outlines: drawn in the exact color
 
 bank_color: bank               # Object Markers on every bank booth you use
 hp_bar_color: status_hp        # Status Bars plugin: health fill color (combat)
