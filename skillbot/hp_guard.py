@@ -98,8 +98,9 @@ class HPGuard:
         acted = False
         with g.guard_paused():
             slots = self.food_slots(img)
-            if not slots and not self.warned and not g.inv.any_tag_visible(img):
-                g.open_tab("inventory")         # another tab was open: look again
+            falling = g.now() - self.dropped_at <= FALLING_SECONDS
+            if not slots and (falling or hp < CRITICAL) and not g.inv.any_tag_visible(img):
+                g.open_tab("inventory")         # another tab was open: look before fleeing
                 slots, acted = self.food_slots(g.grab()), True
             if slots:
                 g.controls.click_rect(g.layout.slot(slots[0]))

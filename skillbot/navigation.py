@@ -31,6 +31,8 @@ from .vision import color_mask
 
 log = logging.getLogger("skillbot")
 
+LOST = "?"      # nav.here after a failed walk or a teleport: somewhere, but not a known place
+
 
 @dataclass
 class Hub:
@@ -73,7 +75,7 @@ class Navigator:
         self.game = game
         self.places = places or {}      # F2P places by world coordinate
         self.scale = scale              # world map pixels per tile (calibrate-map)
-        self.here = None                # the place we're at, when known
+        self.here = None                # the place we're at; None: not moved yet this run
         self.hubs = hubs
         self.destinations = destinations
         self.path_color = tuple(path_color)
@@ -103,6 +105,7 @@ class Navigator:
                 g.wait(0.8, 1.2)                 # jewelry: "Rub" opens a list of places
                 g.controls.press(str(t["option"]))
             g.wait(hub.wait, hub.wait + 1)
+        self.here = LOST
         if hub.marker and not g.wait_until(lambda img: bool(g.blobs(img, hub.marker)), 10):
             raise BotError(f"teleport to {hub_name} didn't arrive (no hub marker in sight)")
 
@@ -112,9 +115,9 @@ class Navigator:
         return point[0], point[1] + lay.menu_header + lay.menu_row * (option - 1) + lay.menu_row // 2
 
     def set_target(self, dest: str) -> None:
-        self.set_target_at(self.destinations.data[dest]["offset"])
+        self.set_target_at(self.destinations.data[dest]["offset"], drag=False)
 
-    def set_target_at(self, offset) -> None:
+    def set_target_at(self, offset, drag: bool = True) -> None:
         """Open the world map and "Set target" ``offset`` pixels from its centre (you),
         dragging the map first when that's outside the part we can click."""
         g, lay = self.game, self.game.layout
@@ -125,7 +128,7 @@ class Navigator:
         x, y = cx + offset[0], cy + offset[1]
         for _ in range(12):
             inside = view.x <= x < view.x + view.w and view.y <= y < view.y + view.h
-            if inside:
+            if inside or not drag:
                 break
             # drag the map so the target moves towards the centre (the map follows the mouse)
             step_x = max(-view.w // 2 + 10, min(view.w // 2 - 10, cx - x))
@@ -134,7 +137,7 @@ class Navigator:
             g.controls.drag(start, (start[0] + step_x, start[1] + step_y))
             g.wait(0.3, 0.5)
             x, y = x + step_x, y + step_y
-        else:
+        if drag and not (view.x <= x < view.x + view.w and view.y <= y < view.y + view.h):
             g.close_interfaces()
             raise BotError("the destination is too far across the world map")
         point = (x, y)
@@ -201,7 +204,7 @@ class Navigator:
         if until_color is not None and g.blobs(g.grab(), until_color):
             self.here = dest
             return
-        if dest in self.places:
+        if dest in self.places and dest not in self.destinations.data:
             return self.walk_to(dest, until_color)
         if dest.startswith("hub:"):                 # e.g. your house: the teleport is the trip
             self.teleport(dest[4:])
@@ -217,15 +220,19 @@ class Navigator:
         self.teleport(spot["hub"])
         self.set_target(dest)
         self.follow(until_color)
+        self.here = dest
 
     # ---- F2P: walking between known places ---------------------------------------------
     def walk_to(self, dest: str, until_color) -> None:
         g = self.game
         if self.here is None or self.here == dest:
-            # Unknown: the run was started here, or it's where we already are and the
-            # highlight is just gone for a moment (everything chopped, cows dead).
+            # Not moved yet this run (it was started here), or it's where we already are and
+            # the highlight is just gone for a moment (everything chopped, cows dead).
             self.here = dest
             return
+        if self.here == LOST:
+            raise BotError(f"can't walk to {dest}: I don't know where I am (after a failed "
+                           "walk or a teleport). Walk me back and restart the run")
         if self.here not in self.places:
             raise BotError(f"don't know where {self.here!r} is (not in library/places/f2p.yaml)")
         if self.scale is None:
@@ -234,7 +241,7 @@ class Navigator:
         here, there = self.places[self.here], self.places[dest]
         log.info("walking from %s to %s", here.name, dest)
         self.moves(here.leave)
-        self.here = None                    # on the way: if it fails, we don't know
+        self.here = LOST                    # on the way: if it fails, we don't know
         self.set_target_at(map_offset(here, there, self.scale))
         g.wait(1.0, 1.5)                    # Shortest Path needs a moment to draw
         self.follow(None if there.arrive else until_color)

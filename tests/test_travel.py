@@ -172,7 +172,7 @@ def test_arriving_somewhere_else_is_an_error_and_forgets_where_we_are():
     game.nav.here = "cows"
     with pytest.raises(BotError, match="isn't in sight"):
         game.nav.travel("trees", (1, 2, 3))
-    assert game.nav.here is None
+    assert game.nav.here == "?"
 
 
 def test_map_offset_and_scale():
@@ -199,3 +199,23 @@ def test_every_f2p_activity_and_bank_is_a_place():
             if name and not m.get("requires", {}).get("levels"):
                 assert name in places, f"{mid}: {name!r} isn't in library/places/f2p.yaml"
     assert places["lumbridge bank"].arrive[1].key == "1"
+
+
+def test_after_a_failed_walk_it_knows_it_is_lost():
+    game, fake, world = setup(at="cows")
+    game.nav.here = "cows"
+    with pytest.raises(BotError):
+        game.nav.travel("trees", (1, 2, 3))
+    with pytest.raises(BotError, match="don't know where I am"):
+        game.nav.travel("cows", (9, 9, 9))
+
+
+def test_a_recorded_teleport_destination_wins_over_a_place():
+    game, fake, world = setup(at="cows")
+    game.nav.destinations.data["trees"] = {"hub": "varrock", "offset": [10, 10]}
+    calls = []
+    game.nav.teleport = lambda hub: calls.append(hub)
+    game.nav.set_target = lambda dest: calls.append(dest)
+    game.nav.follow = lambda until: calls.append("follow")
+    game.nav.travel("trees", TREE)
+    assert calls == ["varrock", "trees", "follow"] and game.nav.here == "trees"

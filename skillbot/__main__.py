@@ -404,7 +404,8 @@ def cmd_add_destination(cfg: Config, args) -> None:
 def cmd_travel(cfg: Config, args) -> None:
     from .registry_lookup import resolve_color
     game = live_game(cfg)
-    game.nav.here = args.start
+    from .navigation import LOST
+    game.nav.here = args.start or LOST      # without --from it can't know where you are
     game.nav.travel(args.name, resolve_color(cfg, args.until) if args.until else None)
     print("arrived")
 

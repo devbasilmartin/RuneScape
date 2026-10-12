@@ -197,14 +197,13 @@ class Game:
         slots = sorted(i for i, n in tags.items() if names is None or n in names)
         log.info("dropping %d items", len(slots))
         self.controls.key_down("shift")
-        self.guard_hold += 1
-        try:
-            for i in slots:
-                self.controls.click_rect(self.layout.slot(i))
-                self.wait(0.08, 0.2)
-        finally:
-            self.controls.key_up("shift")
-            self.guard_hold -= 1
+        with self.guard_paused():
+            try:
+                for i in slots:
+                    self.controls.click_rect(self.layout.slot(i))
+                    self.wait(0.08, 0.2)
+            finally:
+                self.controls.key_up("shift")
         self.wait(0.4, 0.8)
 
     # ---- bank ----------------------------------------------------------------------------

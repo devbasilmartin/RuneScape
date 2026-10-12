@@ -64,7 +64,8 @@ class Levels:
     def refresh(self, skills, max_jump: int = 1) -> None:
         g = self.game
         g.open_tab("skills")
-        img = g.grab()
+        with g.guard_paused():          # the HP guard would switch back to the inventory
+            img = g.grab()
         g.open_tab("inventory")
         for skill in skills:
             level = self.reader.read_expecting(img, skill, self.get(skill), max_jump)
@@ -100,6 +101,7 @@ class Planner:
         self.current = None             # the step being run, for error accounting
         self.tainted = False            # a supervised run of the current step hit an error
         self.skipped = set()
+        self.dangerous = set()          # skipped because the HP guard had to flee there
         self.levels = levels
         self.session = session
         self.errors = 0
@@ -127,7 +129,12 @@ class Planner:
             if all(self.done(s) for s in plan):
                 raise StopBot("plan complete")
             if not progressed:
-                if self.skipped and all(self.done(s) or s.name in self.skipped for s in plan):
+                if self.dangerous and all(self.done(s) or s.name in self.skipped | self.dangerous
+                                          for s in plan) and not self.skipped:
+                    raise StopBot("only steps that are too dangerous at your level are left "
+                                  "(data/danger.json)")
+                if self.skipped and all(self.done(s) or s.name in self.skipped | self.dangerous
+                                        for s in plan):
                     raise StopBot("only experimental steps are left: run them with "
                                   "`run --supervised` while you watch")
                 raise StopBot("no step could make progress (out of supplies everywhere?)")
@@ -152,20 +159,30 @@ class Planner:
                 self.notify(f"{decision.skill.title()}: switching from {last} to "
                             f"{decision.method.id} ({self.chooser.profit(decision.method):+,.0f} gp/h)")
             self.last_method[decision.skill] = decision.method.id
+            if not self.safe(decision.step):
+                self.chooser.rest(decision.method.id, g.now() + 6 * 3600)
+                continue
             if self.run_step(decision.step, deadline) == 0:
                 self.chooser.rest(decision.method.id, g.now() + 1800)   # out of supplies
 
-    def allowed(self, step: Step) -> bool:
-        """Experimental steps only run supervised (you're watching). Steps where the HP
-        guard had to flee too often wait until you're past that level."""
+    def safe(self, step: Step) -> bool:
+        """False (and one message) when the HP guard had to flee from this step too often:
+        it waits until you're past that level."""
         guard = getattr(self.game, "hp_guard", None)
         until = guard.danger.dangerous_until(step.name) if guard is not None else None
-        if until is not None and self.levels.get(step.skill) <= until:
-            if step.name not in self.skipped:
-                self.skipped.add(step.name)
-                self.notify(f"skipping {step.name!r}: ran out of food and had to log out "
-                            f"there more than once; it waits until {step.skill} is past "
-                            f"{until} (data/danger.json)")
+        if until is None or self.levels.get(step.skill) > until:
+            return True
+        if step.name not in self.dangerous:
+            self.dangerous.add(step.name)
+            self.notify(f"skipping {step.name!r}: ran out of food and had to log out there "
+                        f"more than once; it waits until {step.skill} is past {until} "
+                        "(data/danger.json)")
+        return False
+
+    def allowed(self, step: Step) -> bool:
+        """Experimental steps only run supervised (you're watching); dangerous ones wait
+        (see safe)."""
+        if not self.safe(step):
             return False
         if self.trust is None or self.supervised:
             return True

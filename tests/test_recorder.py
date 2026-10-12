@@ -38,8 +38,8 @@ def test_records_parts_at_a_steady_rate(tmp_path, monkeypatch):
     assert not rec.running and not rec.error
     info = json.loads((tmp_path / "rec" / "info.json").read_text())
     assert info["fps"] == 10 and len(info["parts"]) >= 3
-    total = sum(p["frames"] for p in info["parts"])
-    assert 12 <= total <= 18
+    for part in info["parts"][:-1]:          # half a second each at 10 fps
+        assert 4 <= part["frames"] <= 7
     for p in info["parts"]:
         assert (tmp_path / "rec" / p["file"]).stat().st_size > 0
 

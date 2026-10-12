@@ -205,7 +205,7 @@ class App:
     def record(self, params: dict) -> str:
         """Start recording: the game (or the whole screen), optionally only the last few
         minutes. Runs next to whatever command is running."""
-        from .recorder import Recorder, game_region, screen_grab
+        from .recorder import MAX_MINUTES, Recorder, game_region, screen_grab
         if self.recorder is not None and self.recorder.running:
             raise ValueError("already recording")
         region = None if params.get("screen") else game_region(self.data_dir)
@@ -217,7 +217,8 @@ class App:
             shutil.rmtree(old, ignore_errors=True)
         folder = recordings / time.strftime("%Y-%m-%d_%H-%M-%S")
         self.recorder = Recorder(folder, screen_grab(region), region=region,
-                                 log=self.data_dir / "skillbot.log", keep_minutes=keep)
+                                 log=self.data_dir / "skillbot.log", keep_minutes=keep,
+                                 max_minutes=24 * 60 if keep else MAX_MINUTES)
         self.recorder.start()
         return f"recording {'the whole screen' if region is None else 'the game'}"
 

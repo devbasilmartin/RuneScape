@@ -250,6 +250,8 @@ def frames(folder: Path, start: str = "", end: str = "", count: int = SHEET_FRAM
         cap.release()
         if ok:
             out.append((t, img))
+    if not out:
+        raise ValueError("couldn't read any frames back from the video")
     return out
 
 
