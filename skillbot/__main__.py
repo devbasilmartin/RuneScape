@@ -156,6 +156,22 @@ def cmd_levels(cfg: Config, args) -> None:
         print(f"{skill:>13}: {reader.read(img, skill)}")
 
 
+def cmd_screenshot(cfg: Config, args) -> None:
+    """The whole VM screen as it is now (for Claude in the VM, or to send)."""
+    from .share import screen_png
+    png = screen_png()
+    if png is None:
+        raise SystemExit("couldn't grab the screen (is DISPLAY set?)")
+    Path(args.out).write_bytes(png)
+    print(f"wrote {args.out}")
+
+
+def cmd_share(cfg: Config, args) -> None:
+    from .share import send
+    folder, files = send(Path(__file__).resolve().parent.parent, cfg.data_dir)
+    print(f"sent {', '.join(files)} to {folder}")
+
+
 def cmd_debug(cfg: Config, args) -> None:
     """Save an annotated screenshot showing everything the bot detects."""
     img = vision.load_png(args.image) if args.image else Screen.load(cfg.data_dir).grab()
@@ -722,6 +738,9 @@ def main(argv=None) -> None:
     c.add_argument("--bank", action="store_true", help="show bank slot numbers")
     c.add_argument("--out", default="debug.png")
     sub.add_parser("doctor", help="check this machine is ready for the bot")
+    c = sub.add_parser("screenshot", help="save the whole VM screen as a PNG")
+    c.add_argument("--out", default="screen.png")
+    sub.add_parser("share", help="send screen, images and log to the shared folder (PC)")
     sub.add_parser("supervise", help="run the client and the bot, restarting them as needed")
     sub.add_parser("discord", help="run the Discord service (notifications, questions, commands)")
     c = sub.add_parser("ask", help="send a test question through Discord")
@@ -828,6 +847,7 @@ def main(argv=None) -> None:
      "add-destination": cmd_add_destination, "travel": cmd_travel,
      "trust": cmd_trust, "plan": cmd_plan, "sold": cmd_sold, "prices": cmd_prices, "quest-done": cmd_quest_done, "quest": cmd_quest, "logout": cmd_logout, "mouse-summary": cmd_mouse_summary, "marker-list": cmd_marker_list, "runelite-profile": cmd_runelite_profile, "accounts": cmd_accounts, "switch": cmd_switch, "rotation": cmd_rotation, "slayer-task": cmd_slayer_task, "learn-slayer": cmd_learn_slayer, "setup": cmd_setup, "check-setup": cmd_check_setup, "colors": cmd_colors,
      "profile": cmd_profile, "pause": cmd_pause, "ui": cmd_ui,
+     "screenshot": cmd_screenshot, "share": cmd_share,
      "resume": cmd_resume, "run": cmd_run}[args.cmd](cfg, args)
 
 

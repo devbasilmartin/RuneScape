@@ -9,3 +9,9 @@ goals.yaml
 rotation.yaml
 calibrate.png
 schedules/
+screen.png
+skills-check.png
+energy-check.png
+bot-profile.properties
+bot-export.properties
+bot.properties

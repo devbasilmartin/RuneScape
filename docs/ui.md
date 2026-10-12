@@ -24,7 +24,8 @@ only this VM can reach it.
   three.
 
 - **Bot**: Stop (same as Ctrl+C); Pause / Resume; What's next? (`plan`); Accounts.
-- **Check**: Screenshot (`debug`, shown below), Doctor, Check step (`check-setup`).
+- **Check**: Screenshot (`debug`, shown below), Doctor, Send to PC (screen, images and log
+  into the shared folder: [file-sharing.md](file-sharing.md)), Check step (`check-setup`).
 - **Setup**: Update bot (`git pull`; then close and reopen the panel), Calibrate,
   Build RuneLite profile (pick an export to recolor its markers).
 - **Learn**: Teach levels (a form with a box per skill), Read levels, Skills screenshot,

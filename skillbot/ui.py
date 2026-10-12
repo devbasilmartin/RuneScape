@@ -15,11 +15,10 @@ import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
+from .share import IMAGES
 from .status import snapshot
 
 REPO_DIR = Path(__file__).resolve().parent.parent
-IMAGES = ("debug.png", "debug-skills.png", "calibrate.png", "skills-check.png",
-          "energy-check.png")
 MAX_LINES = 2000
 
 
@@ -192,6 +191,13 @@ class App:
             self.job.send(str(line))
         return self.job
 
+    def share(self) -> str:
+        """Send to PC: screen, images, log and the Output into the shared folder."""
+        from .share import send
+        lines = self.job.state()["lines"] if self.job else []
+        folder, files = send(self.cwd, self.data_dir, lines)
+        return f"sent {', '.join(files)} to {folder}"
+
     def state(self) -> dict:
         snap = snapshot(self.data_dir)
         images = [{"name": n, "mtime": (self.cwd / n).stat().st_mtime}
@@ -285,6 +291,8 @@ def make_handler(app: App):
                 if self.path == "/api/schedule/delete":
                     app.delete_schedule(str(body.get("name", "")))
                     return self._json(200, {})
+                if self.path == "/api/share":
+                    return self._json(200, {"message": app.share()})
                 if self.path == "/api/stop":
                     if app.job:
                         threading.Thread(target=app.job.stop, daemon=True).start()

@@ -83,6 +83,7 @@
       <h2>Check</h2>
       <button data-act="debug">Screenshot (debug)</button>
       <button data-act="doctor">Doctor</button>
+      <button id="share" title="Screen, images, log and Output into the shared folder">Send to PC</button>
       <div class="row">
         <select id="stepsel"></select>
         <button data-act="check_setup">Check step</button>
@@ -203,10 +204,19 @@ async function post(path, body) {
                                body: JSON.stringify(body || {})});
   const data = await r.json().catch(() => ({}));
   $("#msg").textContent = r.ok ? "" : (data.error || "failed");
+  $("#msg").classList.add("err");
   return r.ok;
 }
 
 function start(action, params) { return post("/api/start", {action, params}); }
+
+$("#share").onclick = async () => {
+  const r = await fetch("/api/share", {method: "POST", headers: {"Content-Type": "application/json"},
+                                       body: "{}"});
+  const data = await r.json().catch(() => ({}));
+  $("#msg").textContent = r.ok ? data.message : (data.error || "failed");
+  $("#msg").classList.toggle("err", !r.ok);
+};
 
 document.querySelectorAll("[data-act]").forEach((b) => b.onclick = () => {
   const act = b.dataset.act, params = {};
