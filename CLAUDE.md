@@ -76,9 +76,10 @@ Working on the real client: calibration, inventory tags, reading levels, woodcut
 (chop and drop, oaks), cows (combat with eating below 50% HP, drop hides and beef, wait
 for respawns, don't start a second fight), the control panel, schedules (one activity or
 a named schedule, then log out). Discord `/run` starts an activity through the panel
-(Discord not set up on the VM yet).
+(Discord not set up on the VM yet). The HP guard (`skillbot/hp_guard.py`, hooked into
+`Game.grab`) eats or flees during every activity; not yet tried on the real client.
 
-Next, in order (`docs/modes-plan.md`): the HP guard for every activity,
+Next, in order (`docs/modes-plan.md`):
 F2P travel (walking), F2P mode, cows + fire cooking, more F2P methods. **F2P only for
 now**: no new members work until the owner says so.
 

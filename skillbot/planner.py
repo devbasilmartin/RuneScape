@@ -156,7 +156,17 @@ class Planner:
                 self.chooser.rest(decision.method.id, g.now() + 1800)   # out of supplies
 
     def allowed(self, step: Step) -> bool:
-        """Experimental steps only run supervised (you're watching)."""
+        """Experimental steps only run supervised (you're watching). Steps where the HP
+        guard had to flee too often wait until you're past that level."""
+        guard = getattr(self.game, "hp_guard", None)
+        until = guard.danger.dangerous_until(step.name) if guard is not None else None
+        if until is not None and self.levels.get(step.skill) <= until:
+            if step.name not in self.skipped:
+                self.skipped.add(step.name)
+                self.notify(f"skipping {step.name!r}: ran out of food and had to log out "
+                            f"there more than once; it waits until {step.skill} is past "
+                            f"{until} (data/danger.json)")
+            return False
         if self.trust is None or self.supervised:
             return True
         code = fingerprint(step, TASK_TYPES[step.task])
@@ -198,6 +208,9 @@ class Planner:
         if getattr(g, "mouse", None) is not None:
             g.mouse.activity = step.name         # mouse-style results are split by step
         self.current, self.tainted = step, False
+        guard = getattr(g, "hp_guard", None)
+        if guard is not None:
+            guard.step = step
         level = "trusted"
         if self.trust is not None:
             self.trust.record(step.name, fingerprint(step, TASK_TYPES[step.task]))
@@ -231,6 +244,8 @@ class Planner:
             raise
         finally:
             self.current = None
+            if guard is not None:
+                guard.step = None
             if self.status_dir is not None:
                 log_event(self.status_dir, "step", step=step.name, skill=step.skill,
                           **{"from": first_level}, to=self.levels.get(step.skill),

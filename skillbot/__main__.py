@@ -715,6 +715,9 @@ def cmd_run(cfg: Config, args) -> None:
         planner.chooser = make_chooser(cfg, goals_path, planner.trust, args.supervised,
                                        prices_dir=args.mailbox_dir / "prices")
         logging.info("goals mode: %s", goals_path)
+    from .hp_guard import DangerLog, HPGuard
+    game.hp_guard = HPGuard(game, planner.session, DangerLog(cfg.data_dir / "danger.json"),
+                            level=levels.get)
     from .safety import Safety, SafetyConfig
     planner.safety = Safety(game, SafetyConfig.from_dict(cfg.safety), cfg.genie_color,
                             cfg.respawn_color, cfg.grave_color, cfg.other_player_color,

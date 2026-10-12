@@ -1,6 +1,7 @@
 """Actions shared by every task: finding highlights, walking, banking, tabs."""
 import logging
 import time
+from contextlib import contextmanager
 
 from . import vision
 from .config import Config
@@ -30,13 +31,27 @@ class Game:
         self.nav = None        # Navigator, when hubs are configured
         self.ledger = None     # prices.Ledger: what gets banked, for sell alerts
         self.mouse = None      # mouse.MouseLab, when mouse-style testing is on
+        self.hp_guard = None   # hp_guard.HPGuard: eat or escape whenever HP is low
+        self.guard_hold = 0    # >0 while the guard mustn't click (shift held, bank open)
 
     def keep_running(self) -> None:
         if self.run is not None:
             self.run.maintain()
 
     def grab(self):
-        return self.screen.grab()
+        img = self.screen.grab()
+        if self.hp_guard is not None and not self.guard_hold and self.hp_guard.check(img):
+            img = self.screen.grab()     # it ate: the caller gets the screen after that
+        return img
+
+    @contextmanager
+    def guard_paused(self):
+        """No eating in here: a click on food would drop it (shift) or bank it."""
+        self.guard_hold += 1
+        try:
+            yield
+        finally:
+            self.guard_hold -= 1
 
     def wait(self, lo, hi=None):
         self.controls.wait(lo, hi)
@@ -182,12 +197,14 @@ class Game:
         slots = sorted(i for i, n in tags.items() if names is None or n in names)
         log.info("dropping %d items", len(slots))
         self.controls.key_down("shift")
+        self.guard_hold += 1
         try:
             for i in slots:
                 self.controls.click_rect(self.layout.slot(i))
                 self.wait(0.08, 0.2)
         finally:
             self.controls.key_up("shift")
+            self.guard_hold -= 1
         self.wait(0.4, 0.8)
 
     # ---- bank ----------------------------------------------------------------------------
@@ -250,12 +267,14 @@ class Game:
     def bank(self, route: str | None, withdraw=(), keep=(), tab: str | None = None) -> list[str]:
         """Deposit, withdraw and close. Returns the names of withdrawn items that are out
         of stock."""
-        before = self.open_bank(route)
-        self.deposit(before, keep)
-        self.withdraw(withdraw, tab)
-        self.close_interfaces()
-        if tab and withdraw:
-            self.close_interfaces()      # the first Esc may only end the search
+        self.walk(route, self.cfg.bank_color)        # eating on the way is fine
+        with self.guard_paused():
+            before = self.open_bank(route)
+            self.deposit(before, keep)
+            self.withdraw(withdraw, tab)
+            self.close_interfaces()
+            if tab and withdraw:
+                self.close_interfaces()      # the first Esc may only end the search
         return self.missing(withdraw)
 
     def out_of_stock(self, step_name: str, items) -> None:
