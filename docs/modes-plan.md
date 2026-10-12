@@ -30,7 +30,7 @@ well. Built in this order.
 
 ## Next
 
-1. **Owner, at the VM**: shared folder, try Record, log the VM into GitHub then make the
+1. **Owner, at the VM** ([tonight.md](tonight.md)): shared folder, try Record, log the VM into GitHub then make the
    repo private, teach the digit 9 (Teach levels with a 9 on the skills tab), set up
    Discord ([discord.md](discord.md)).
 2. **F2P mode**: library methods tagged F2P or members; an account's type and default
