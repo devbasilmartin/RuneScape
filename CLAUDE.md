@@ -41,6 +41,10 @@ Start with `README.md`, `ROADMAP.md` (the original design decisions) and
   http://127.0.0.1:8765) runs the same commands with buttons, and is how the owner
   usually works; its **Send to PC** puts the screen, images and log in the VirtualBox
   shared folder (`docs/file-sharing.md`).
+- Videos: the panel's **Record** (or `record`) films the game with the time, mouse and
+  latest log line under each frame; `frames --from HH:MM:SS --to HH:MM:SS` turns a stretch
+  into `frames.png`, 9 frames in one picture, which is how to look at a recording
+  (`docs/recording.md`).
 - Per-machine state lives in `data/` and `config.yaml` (both ignored by git): the
   calibrated canvas origin, learned digit glyphs (`digits.json`, `energy_digits.json`),
   trust, progress.

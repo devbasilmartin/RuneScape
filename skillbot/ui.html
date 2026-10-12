@@ -90,6 +90,25 @@
       </div>
     </section>
     <section>
+      <h2>Record</h2>
+      <button id="rec">Record</button>
+      <label><input type="checkbox" id="recscreen"> whole screen</label>
+      <div class="row">
+        <select id="reckeep">
+          <option value="">keep everything (up to 60 min)</option>
+          <option value="5">keep the last 5 minutes</option>
+          <option value="15">keep the last 15 minutes</option>
+        </select>
+      </div>
+      <div id="recstate" class="hint">Records the game next to whatever is running. The time
+        under the picture is what to tell Claude.</div>
+      <div class="row">
+        <input id="recfrom" style="width:84px" placeholder="from"> <input id="recto" style="width:84px" placeholder="to">
+        <button id="recshare" title="frames.png, the video, screen, images and log into the shared folder">Send recording to PC</button>
+      </div>
+      <div class="hint">Times like 20:41:05; empty = the last 30 seconds.</div>
+    </section>
+    <section>
       <h2>Setup</h2>
       <button data-act="update">Update bot</button>
       <button data-act="calibrate">Calibrate</button>
@@ -210,13 +229,19 @@ async function post(path, body) {
 
 function start(action, params) { return post("/api/start", {action, params}); }
 
-$("#share").onclick = async () => {
-  const r = await fetch("/api/share", {method: "POST", headers: {"Content-Type": "application/json"},
-                                       body: "{}"});
+async function tell(path, body) {
+  $("#msg").textContent = "working…"; $("#msg").classList.remove("err");
+  const r = await fetch(path, {method: "POST", headers: {"Content-Type": "application/json"},
+                               body: JSON.stringify(body || {})});
   const data = await r.json().catch(() => ({}));
   $("#msg").textContent = r.ok ? data.message : (data.error || "failed");
   $("#msg").classList.toggle("err", !r.ok);
-};
+}
+$("#share").onclick = () => tell("/api/share");
+$("#rec").onclick = () => state && state.recording && state.recording.running
+  ? tell("/api/record/stop")
+  : tell("/api/record", {screen: $("#recscreen").checked, keep_minutes: $("#reckeep").value});
+$("#recshare").onclick = () => tell("/api/record/share", {start: $("#recfrom").value, end: $("#recto").value});
 
 document.querySelectorAll("[data-act]").forEach((b) => b.onclick = () => {
   const act = b.dataset.act, params = {};
@@ -443,6 +468,17 @@ function render() {
   $("#paused").className = "pill warn";
   document.querySelectorAll("[data-act]").forEach((b) => b.disabled = !!running);
   $("#showdigits").disabled = $("#senddigits").disabled = !!running;
+  const rec = state.recording, recOn = rec && rec.running;
+  $("#rec").textContent = recOn ? "Stop recording" : "Record";
+  $("#rec").className = recOn ? "danger" : "";
+  $("#recscreen").disabled = $("#reckeep").disabled = !!recOn;
+  if (rec) {
+    const m = Math.floor(rec.seconds / 60), sec = String(rec.seconds % 60).padStart(2, "0");
+    $("#recstate").textContent = rec.error ? `recording stopped: ${rec.error}` :
+      recOn ? `recording ${m}:${sec}` + (rec.keep_minutes ? ` (keeping the last ${rec.keep_minutes} min)` : "")
+            : `last recording: ${m}:${sec}`;
+    $("#recstate").classList.toggle("err", !!rec.error);
+  }
   fillSelect($("#stepsel"), state.steps, false);
   fillSelect($("#export"), state.exports, true);
   renderRun();

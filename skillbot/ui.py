@@ -7,6 +7,7 @@ server only listens on this machine.
 """
 import json
 import os
+import shutil
 import signal
 import subprocess
 import sys
@@ -20,6 +21,7 @@ from .status import snapshot
 
 REPO_DIR = Path(__file__).resolve().parent.parent
 MAX_LINES = 2000
+KEEP_RECORDINGS = 5
 
 
 def actions(steps: list[str], exports: list[str], library: dict | None = None,
@@ -164,6 +166,7 @@ class App:
         self.library = library
         self.store = Store(schedules_dir or REPO_DIR / "schedules")
         self.job: Job | None = None
+        self.recorder = None
         self.next_id = 1
         self.lock = threading.Lock()
 
@@ -198,6 +201,48 @@ class App:
         folder, files = send(self.cwd, self.data_dir, lines)
         return f"sent {', '.join(files)} to {folder}"
 
+    def record(self, params: dict) -> str:
+        """Start recording: the game (or the whole screen), optionally only the last few
+        minutes. Runs next to whatever command is running."""
+        from .recorder import Recorder, game_region, screen_grab
+        if self.recorder is not None and self.recorder.running:
+            raise ValueError("already recording")
+        region = None if params.get("screen") else game_region(self.data_dir)
+        if region is None and not params.get("screen"):
+            raise ValueError("not calibrated: Calibrate first, or record the whole screen")
+        keep = int(params.get("keep_minutes") or 0) or None
+        recordings = self.data_dir / "recordings"
+        for old in sorted(p for p in recordings.glob("*") if p.is_dir())[:-KEEP_RECORDINGS + 1]:
+            shutil.rmtree(old, ignore_errors=True)
+        folder = recordings / time.strftime("%Y-%m-%d_%H-%M-%S")
+        self.recorder = Recorder(folder, screen_grab(region), region=region,
+                                 log=self.data_dir / "skillbot.log", keep_minutes=keep)
+        self.recorder.start()
+        return f"recording {'the whole screen' if region is None else 'the game'}"
+
+    def stop_recording(self) -> str:
+        if self.recorder is None or not self.recorder.running:
+            return "not recording"
+        self.recorder.stop()
+        return f"saved in {self.recorder.folder}"
+
+    def share_recording(self, params: dict) -> str:
+        """Send to PC plus frames.png (frames between two clock times, default the last
+        30 seconds) and the video parts of the current or newest recording."""
+        from .recorder import copy_parts, newest, write_sheet
+        from .share import send
+        folder = self.recorder.folder if self.recorder else newest(self.data_dir / "recordings")
+        if folder is None:
+            raise ValueError("nothing recorded yet: press Record first")
+        if self.recorder is not None and self.recorder.running:
+            self.recorder.cut()
+        write_sheet(folder, self.cwd / "frames.png", str(params.get("start") or ""),
+                    str(params.get("end") or ""))
+        lines = self.job.state()["lines"] if self.job else []
+        dest, files = send(self.cwd, self.data_dir, lines)
+        files += copy_parts(folder, dest)
+        return f"sent frames.png and {len(files) - 1} other files to {dest}"
+
     def state(self) -> dict:
         snap = snapshot(self.data_dir)
         images = [{"name": n, "mtime": (self.cwd / n).stat().st_mtime}
@@ -206,7 +251,8 @@ class App:
                 "paused": snap["paused"], "heartbeat_age": snap["heartbeat_age"],
                 "levels": snap["levels"], "images": images, "steps": self.steps,
                 "exports": self.exports(), "methods": self.methods(),
-                "schedules": self.schedules()}
+                "schedules": self.schedules(),
+                "recording": self.recorder.state() if self.recorder else None}
 
     def methods(self) -> list[dict]:
         """The library for the pickers, with each variant's trust progress."""
@@ -293,11 +339,17 @@ def make_handler(app: App):
                     return self._json(200, {})
                 if self.path == "/api/share":
                     return self._json(200, {"message": app.share()})
+                if self.path == "/api/record":
+                    return self._json(200, {"message": app.record(body)})
+                if self.path == "/api/record/stop":
+                    return self._json(200, {"message": app.stop_recording()})
+                if self.path == "/api/record/share":
+                    return self._json(200, {"message": app.share_recording(body)})
                 if self.path == "/api/stop":
                     if app.job:
                         threading.Thread(target=app.job.stop, daemon=True).start()
                     return self._json(200, {})
-            except (ValueError, TypeError) as e:
+            except (ValueError, TypeError, OSError) as e:
                 return self._json(400, {"error": str(e)})
             self._json(404, {"error": "not found"})
 
@@ -316,6 +368,7 @@ def serve(app: App, port: int = 8765, open_browser: bool = True) -> None:
     except KeyboardInterrupt:
         pass
     finally:
+        app.stop_recording()
         if app.job:
             app.job.stop()
 

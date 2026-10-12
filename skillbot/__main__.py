@@ -172,6 +172,40 @@ def cmd_share(cfg: Config, args) -> None:
     print(f"sent {', '.join(files)} to {folder}")
 
 
+def cmd_record(cfg: Config, args) -> None:
+    """Record until Ctrl+C or --minutes (the panel's Record does the same next to a run)."""
+    import time
+    from .recorder import Recorder, game_region, screen_grab
+    region = None if args.screen else game_region(cfg.data_dir)
+    if region is None and not args.screen:
+        raise SystemExit("not calibrated: run calibrate first, or use --screen")
+    folder = cfg.data_dir / "recordings" / time.strftime("%Y-%m-%d_%H-%M-%S")
+    rec = Recorder(folder, screen_grab(region), region=region,
+                   log=cfg.data_dir / "skillbot.log", keep_minutes=args.keep,
+                   max_minutes=args.minutes)
+    rec.start()
+    print(f"recording into {folder} (Ctrl+C to stop)")
+    try:
+        while rec.running:
+            time.sleep(0.5)
+    except KeyboardInterrupt:
+        pass
+    rec.stop()
+    print(rec.error or f"saved {len(rec.parts)} part(s) in {folder}")
+
+
+def cmd_frames(cfg: Config, args) -> None:
+    """frames.png from the newest recording: what Claude can look at."""
+    from .recorder import newest, write_sheet
+    folder = newest(cfg.data_dir / "recordings")
+    if folder is None:
+        raise SystemExit("nothing recorded yet")
+    try:
+        print(f"wrote {write_sheet(folder, Path(args.out), args.start, args.end)}")
+    except ValueError as e:
+        raise SystemExit(str(e))
+
+
 def cmd_debug(cfg: Config, args) -> None:
     """Save an annotated screenshot showing everything the bot detects."""
     img = vision.load_png(args.image) if args.image else Screen.load(cfg.data_dir).grab()
@@ -741,6 +775,14 @@ def main(argv=None) -> None:
     c = sub.add_parser("screenshot", help="save the whole VM screen as a PNG")
     c.add_argument("--out", default="screen.png")
     sub.add_parser("share", help="send screen, images and log to the shared folder (PC)")
+    c = sub.add_parser("record", help="record a video of the game until Ctrl+C")
+    c.add_argument("--screen", action="store_true", help="the whole screen, not just the game")
+    c.add_argument("--minutes", type=int, default=60, help="stop after this long")
+    c.add_argument("--keep", type=int, metavar="MINUTES", help="keep only the last few minutes")
+    c = sub.add_parser("frames", help="frames.png: frames from the newest recording")
+    c.add_argument("--from", dest="start", default="", help="clock time, e.g. 20:41:05")
+    c.add_argument("--to", dest="end", default="", help="clock time (default: the end)")
+    c.add_argument("--out", default="frames.png")
     sub.add_parser("supervise", help="run the client and the bot, restarting them as needed")
     sub.add_parser("discord", help="run the Discord service (notifications, questions, commands)")
     c = sub.add_parser("ask", help="send a test question through Discord")
@@ -847,7 +889,8 @@ def main(argv=None) -> None:
      "add-destination": cmd_add_destination, "travel": cmd_travel,
      "trust": cmd_trust, "plan": cmd_plan, "sold": cmd_sold, "prices": cmd_prices, "quest-done": cmd_quest_done, "quest": cmd_quest, "logout": cmd_logout, "mouse-summary": cmd_mouse_summary, "marker-list": cmd_marker_list, "runelite-profile": cmd_runelite_profile, "accounts": cmd_accounts, "switch": cmd_switch, "rotation": cmd_rotation, "slayer-task": cmd_slayer_task, "learn-slayer": cmd_learn_slayer, "setup": cmd_setup, "check-setup": cmd_check_setup, "colors": cmd_colors,
      "profile": cmd_profile, "pause": cmd_pause, "ui": cmd_ui,
-     "screenshot": cmd_screenshot, "share": cmd_share,
+     "screenshot": cmd_screenshot, "share": cmd_share, "record": cmd_record,
+     "frames": cmd_frames,
      "resume": cmd_resume, "run": cmd_run}[args.cmd](cfg, args)
 
 

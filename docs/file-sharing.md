@@ -45,6 +45,8 @@ has `screen.png` (the whole VM screen), `debug.png` and the other images, `skill
 (the end of the bot's log) and `panel-output.txt` (the panel's Output). Drag what's
 relevant into the chat. The newest 10 sends are kept.
 
+To show something that happens over time, record it: [recording.md](recording.md).
+
 ## 2. Claude Code in the VM
 
 A session on the VM can run the bot's commands, look at the images they write, take

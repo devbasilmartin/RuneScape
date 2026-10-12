@@ -3,7 +3,7 @@ shared folder, so it shows up on the PC at once.
 
 Each send is a folder `skillbot/<time>/` in the share with:
 - screen.png: the whole VM screen right now
-- the bot's images (debug.png, calibrate.png, ...) that exist
+- the bot's images (debug.png, calibrate.png, frames.png from a recording, ...)
 - skillbot-log.txt: the end of the bot's log
 - panel-output.txt: what the control panel's Output shows
 Only the newest KEEP sends are kept.
@@ -16,7 +16,7 @@ from pathlib import Path
 KEEP = 10
 LOG_LINES = 300
 IMAGES = ("debug.png", "debug-skills.png", "calibrate.png", "skills-check.png",
-          "energy-check.png")
+          "energy-check.png", "frames.png")
 
 
 def find_share() -> Path | None:
