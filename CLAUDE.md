@@ -77,8 +77,9 @@ Working on the real client: calibration, inventory tags, reading levels, woodcut
 for respawns, don't start a second fight), the control panel, schedules (one activity or
 a named schedule, then log out).
 
-Next, in order (`docs/modes-plan.md`): the HP guard for every activity, F2P/members
-modes, cows + fire cooking, more F2P gathering methods.
+Next, in order (`docs/modes-plan.md`): Discord `/run`, the HP guard for every activity,
+F2P travel (walking), F2P mode, cows + fire cooking, more F2P methods. **F2P only for
+now**: no new members work until the owner says so.
 
 Open:
 - No travel destinations are recorded, so an activity has to be started where it
