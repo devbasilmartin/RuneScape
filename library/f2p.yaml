@@ -314,3 +314,36 @@ burn_oaks:
   step: {task: firemaking, target: fm_start, items: [oak_logs], bank_tab: firemaking,
          bank_location: "grand exchange",
          withdraw: [{slot: 4, item: oak_logs, quantity: all}]}
+
+# --- Fish, cook the load on a fire, then bank (or drop) the cooked fish: Fishing and
+# Cooking XP together. Mark the fire in `range`. ---
+fish_cook_draynor:
+  name: "fish + cook shrimps (Draynor)"
+  skills: [fishing]
+  levels: [1, 20]
+  xp_per_hour: 10000
+  reliability: 4
+  location: "draynor fishing"
+  step:
+    task: gather
+    target: fishing_spot
+    items: [raw_shrimps, raw_anchovies, shrimps, anchovies, burnt_fish]
+    process: {target: range, items: [raw_shrimps, raw_anchovies], use_item: any}
+    when_full: bank
+    bank_location: "draynor bank"
+
+fly_fish_cook_barbarian:
+  name: "fly fish + cook (Barbarian Village)"
+  skills: [fishing]
+  levels: [20, 99]
+  requires: {levels: {cooking: 25}}     # salmon
+  xp_per_hour: 30000
+  reliability: 4
+  location: "barbarian village fishing"
+  step:
+    task: gather
+    target: fishing_spot
+    items: [raw_trout, raw_salmon, trout, salmon, burnt_fish]
+    process: {target: range, items: [raw_trout, raw_salmon], use_item: any}
+    when_full: bank
+    bank_location: "edgeville bank"

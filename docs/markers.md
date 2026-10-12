@@ -75,10 +75,12 @@ Used by: Ardougne rooftop
 
 ## barbarian village fishing
 
-Used by: fly fishing (Barbarian Village)
+Used by: fly fish + cook (Barbarian Village); fly fishing (Barbarian Village)
 
+- [ ] Inventory Tag by hand on the item you use: `burnt_fish` #FF0000
+- [ ] Object Marker on Range / Cooking range / Clay oven → `range` (#FF4080)
 - [ ] `bank` (Object Marker on the booth) at edgeville bank
-- automatic: `fishing_spot`, `raw_salmon`, `raw_trout`
+- automatic: `fishing_spot`, `raw_salmon`, `raw_trout`, `salmon`, `trout`
 
 ## blast furnace
 
@@ -128,9 +130,10 @@ Used by: cook beef (Draynor fire); cook salmon (Draynor fire); cook shrimps (Dra
 
 ## draynor fishing
 
-Used by: net fishing (Draynor)
+Used by: fish + cook shrimps (Draynor); net fishing (Draynor)
 
 - [ ] Inventory Tag by hand on the item you use: `burnt_fish` #FF0000
+- [ ] Object Marker on Range / Cooking range / Clay oven → `range` (#FF4080)
 - [ ] `bank` (Object Marker on the booth) at draynor bank
 - automatic: `anchovies`, `fishing_spot`, `raw_anchovies`, `raw_shrimps`, `shrimps`
 
