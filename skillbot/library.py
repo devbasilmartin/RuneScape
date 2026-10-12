@@ -4,7 +4,8 @@
       name: "willows (Draynor)"
       skills: [woodcutting]
       levels: [30, 60]                 # use from 30; move on at 60
-      requires: {levels: {}, quests: []}
+      requires: {levels: {}, quests: [], combat: 0}   # combat: e.g. aggressive monsters
+      members: false                   # default: true, except in library/f2p.yaml
       xp_per_hour: 40000               # rough estimates, for planning only
       profit_per_hour: 30000           # gp; negative = costs money
       reliability: 5                   # 1-5: how well it runs unattended
@@ -40,6 +41,17 @@ class Method:
     styles: dict = field(default_factory=dict)
     step: dict = field(default_factory=dict)
     trade: dict | None = None         # {inputs: {item: per hour}, outputs: {item: per hour}}
+    members: bool = True
+    requires_combat: int = 0
+
+    def blocked(self, account: str, levels: dict) -> str | None:
+        """Why this account can't use the method at these levels (None: it can)."""
+        from .skills import combat_level
+        if account == "f2p" and self.members:
+            return "members only"
+        if self.requires_combat and combat_level(levels) < self.requires_combat:
+            return f"needs combat {self.requires_combat} (aggressive monsters there)"
+        return None
 
     @classmethod
     def from_dict(cls, mid: str, d: dict) -> "Method":
@@ -51,7 +63,8 @@ class Method:
                    dict(req.get("levels") or {}), tuple(req.get("quests") or ()),
                    float(d.get("xp_per_hour", 0)), float(d.get("profit_per_hour", 0)),
                    int(d.get("reliability", 3)), d.get("location"),
-                   dict(d.get("styles") or {}), dict(d.get("step") or {}), d.get("trade"))
+                   dict(d.get("styles") or {}), dict(d.get("step") or {}), d.get("trade"),
+                   bool(d.get("members", True)), int(req.get("combat", 0)))
 
     @property
     def task(self) -> str:
@@ -91,6 +104,7 @@ def load_library(folder: Path | None = None) -> dict[str, Method]:
     methods = {}
     for path in sorted(folder.glob("*.yaml")):
         for mid, spec in (yaml.safe_load(path.read_text()) or {}).items():
+            spec.setdefault("members", path.stem != "f2p")
             if mid in methods:
                 raise ValueError(f"method {mid} is defined twice ({path.name})")
             methods[mid] = Method.from_dict(mid, spec)

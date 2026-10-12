@@ -265,7 +265,7 @@ class App:
         for m in sorted(self.library.values(), key=lambda m: (m.skills[0], m.levels[0])):
             choices = ("bank", "drop") if m.can_drop else (None,)
             out.append({
-                "id": m.id, "name": m.name, "skills": list(m.skills),
+                "id": m.id, "name": m.name, "skills": list(m.skills), "members": m.members,
                 "levels": list(m.levels), "can_drop": m.can_drop,
                 "when_full": m.step.get("when_full") if m.can_drop else None,
                 "trust": {f"{skill}|{wf or ''}": trust.progress(step_name(m, skill, wf))

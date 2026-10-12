@@ -197,6 +197,7 @@ class Config:
     items: dict = field(default_factory=dict)      # Inventory Tags: name -> RGB
     routes: dict = field(default_factory=dict)     # name -> Ground Marker colors in order
     plan: list = field(default_factory=list)       # list[Step]
+    account: str = "members"                       # f2p: only F2P methods (library members: false)
     on_logout: str = "stop"                        # stop | relogin
     login_attempts: int = 0                        # 0 = keep trying (server restarts)
     max_consecutive_errors: int = 5
@@ -275,6 +276,8 @@ class Config:
         return unique
 
     def validate(self) -> None:
+        if self.account not in ("f2p", "members"):
+            raise ValueError("account must be f2p or members")
         from .mouse import MouseConfig
         MouseConfig.from_dict(self.mouse)
         if self.run not in ("always", "off"):

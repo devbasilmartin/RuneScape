@@ -25,6 +25,10 @@ well. Built in this order.
   on the world map from the map's measured scale (dragging the map for far places), climbs
   the Lumbridge castle stairs. F2P library methods have their banks. Not yet tried on the
   real client: owner sets up Shortest Path, marks the stairs, runs Calibrate map.
+- **F2P mode** ([schedules.md](schedules.md#f2p-accounts)): `account: f2p` in config;
+  methods tagged members or F2P (library/f2p.yaml and the real-game F2P ones elsewhere);
+  combat gates (`requires: {combat: N}`; Draynor willows 41). Still to do: rotation
+  resuming a schedule where it left off, per-account default mode.
 - **Run from the phone**: Discord `/run <activity>` and `/stoprun`, through the control
   panel ([discord.md](discord.md)); waits on the owner setting Discord up.
 
@@ -33,16 +37,12 @@ well. Built in this order.
 1. **Owner, at the VM** ([tonight.md](tonight.md)): shared folder, try Record, log the VM into GitHub then make the
    repo private, teach the digit 9 (Teach levels with a 9 on the skills tab), set up
    Discord ([discord.md](discord.md)).
-2. **F2P mode**: library methods tagged F2P or members; an account's type and default
-   mode (F2P progression, or a saved schedule); rotation turns run the account's mode and
-   resume a schedule where it left off; combat gates for spots with aggressive monsters
-   (Draynor willows: dark wizards, about combat 41).
-3. **Cows + fire cooking**: kill cows, loot raw beef (no hides), chop one log, light it,
+2. **Cows + fire cooking**: kill cows, loot raw beef (no hides), chop one log, light it,
    find the fire by its color next to the player (a one-time "Teach fire" button records
    the flames), cook on it, keep ~5 cooked as food, drop the rest and burnt; relight when
    the fire is lost; after 3 failed relights pause cooking 30 min (keep fighting) and
    notify. Axe and tinderbox stay in the inventory, untagged.
-4. **More F2P methods**, each tried on the real client: fishing (shrimp → fly fishing),
+3. **More F2P methods**, each tried on the real client: fishing (shrimp → fly fishing),
    power-mining copper/tin → iron, firemaking lines, cooking at a range.
 
 Small fixes, whenever the owner is at the VM: run energy's "1" (`energy-check.png`), the

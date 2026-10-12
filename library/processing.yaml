@@ -71,6 +71,7 @@ fletch_magic_longbows:
 
 burn_maples:
   name: "burn maples"
+  members: false
   skills: [firemaking]
   levels: [45, 60]
   xp_per_hour: 100000
@@ -82,6 +83,7 @@ burn_maples:
 
 burn_yews:
   name: "burn yews"
+  members: false
   skills: [firemaking]
   levels: [60, 99]
   xp_per_hour: 150000

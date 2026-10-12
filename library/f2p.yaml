@@ -30,6 +30,7 @@ willows_draynor:
   profit_per_hour: 15000
   reliability: 5
   location: "draynor willows"
+  requires: {combat: 41}          # dark wizards nearby attack anyone below combat 41
   trade: {outputs: {willow_logs: 500}}
   step:
     bank_location: "draynor bank"
@@ -138,6 +139,7 @@ fire_runes_alkharid:
 
 ourania_altar:
   name: "Ourania altar (ZMI)"
+  members: true
   skills: [runecraft]
   levels: [1, 99]
   requires: {quests: ["Lunar Diplomacy"], levels: {magic: 71}}

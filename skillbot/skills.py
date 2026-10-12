@@ -13,6 +13,15 @@ from .layout import Layout
 from .vision import color_mask
 
 # Order of the skills tab, left to right, top to bottom.
+def combat_level(levels: dict) -> int:
+    """The game's combat level (unknown skills count as 1, hitpoints as 10)."""
+    g = lambda s: levels.get(s, 10 if s == "hitpoints" else 1)  # noqa: E731
+    base = 0.25 * (g("defence") + g("hitpoints") + g("prayer") // 2)
+    best = max(0.325 * (g("attack") + g("strength")), 0.325 * (g("ranged") * 3 // 2),
+               0.325 * (g("magic") * 3 // 2))
+    return int(base + best)
+
+
 SKILLS = ("attack", "hitpoints", "mining", "strength", "agility", "smithing", "defence",
           "herblore", "fishing", "ranged", "thieving", "cooking", "prayer", "crafting",
           "firemaking", "magic", "fletching", "woodcutting", "runecraft", "slayer", "farming",

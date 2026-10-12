@@ -49,6 +49,13 @@ python -m skillbot run --supervised --schedule "oak loop"
   tiles too. A bank/drop choice other than the method's default is its own activity for
   trust: it earns its "proven" status separately.
 
+## F2P accounts
+
+Put `account: f2p` in `config.yaml` (or the profile's config). Then members methods are
+skipped with a message, and the planner never picks them; the panel marks them
+"members". Some spots also need a combat level: Draynor willows waits for combat 41,
+because the dark wizards next to them attack anyone below that.
+
 ## Watching or unattended
 
 The panel's **I'm watching** box (or `--supervised`): new activities run too, and the bot

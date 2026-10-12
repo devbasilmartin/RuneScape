@@ -195,6 +195,10 @@ def _run_entry(planner, entry: Entry, method, registry, spells, end, where) -> b
     if planner.done(step):
         log.info("%s: %s already at %s %d", where, method.name, step.skill, step.until_level)
         return False
+    why = method.blocked(g.cfg.account, planner.levels.levels)
+    if why:
+        planner.notify(f"{where}: skipping {method.name}: {why}")
+        return False
     if not planner.allowed(step):            # experimental and unattended: skipped (notified)
         return False
     log.info("%s: %s%s%s", where, method.name,

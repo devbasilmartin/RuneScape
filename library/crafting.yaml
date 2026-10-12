@@ -3,6 +3,7 @@
 
 cut_sapphires:
   name: "cut sapphires"
+  members: false
   skills: [crafting]
   levels: [20, 27]
   xp_per_hour: 135000
@@ -15,6 +16,7 @@ cut_sapphires:
 
 cut_emeralds:
   name: "cut emeralds"
+  members: false
   skills: [crafting]
   levels: [27, 34]
   xp_per_hour: 182250
@@ -27,6 +29,7 @@ cut_emeralds:
 
 cut_rubys:
   name: "cut rubys"
+  members: false
   skills: [crafting]
   levels: [34, 43]
   xp_per_hour: 229500
@@ -39,6 +42,7 @@ cut_rubys:
 
 cut_diamonds:
   name: "cut diamonds"
+  members: false
   skills: [crafting]
   levels: [43, 55]
   xp_per_hour: 290250
@@ -51,6 +55,7 @@ cut_diamonds:
 
 cut_dragonstones:
   name: "cut dragonstones"
+  members: false
   skills: [crafting]
   levels: [55, 99]
   xp_per_hour: 371250
@@ -111,6 +116,7 @@ glass_light_orbs:
 
 green_dhide_bodies:
   name: "green d'hide bodies"
+  members: false
   skills: [crafting]
   levels: [63, 71]
   xp_per_hour: 186000

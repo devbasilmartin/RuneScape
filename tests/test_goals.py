@@ -13,7 +13,9 @@ def cfg():
 
 
 def lib(**extra):
-    methods = load_library()
+    """The library without combat gates (these tests are about goals, not gates)."""
+    from dataclasses import replace
+    methods = {k: replace(m, requires_combat=0) for k, m in load_library().items()}
     methods.update(extra)
     return methods
 

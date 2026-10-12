@@ -78,11 +78,11 @@ for respawns, don't start a second fight), the control panel, schedules (one act
 a named schedule, then log out). Discord `/run` starts an activity through the panel
 (Discord not set up on the VM yet). The HP guard (`skillbot/hp_guard.py`, hooked into
 `Game.grab`) eats or flees during every activity; F2P travel (`docs/travel.md`, places
-in `library/places/f2p.yaml`) walks between banks and activities. Neither is tried on the
+in `library/places/f2p.yaml`) walks between banks and activities. `account: f2p` keeps to F2P methods. None of these is tried on the
 real client yet.
 
 Next, in order (`docs/modes-plan.md`):
-F2P mode, cows + fire cooking, more F2P methods. **F2P only for
+cows + fire cooking, more F2P methods. **F2P only for
 now**: no new members work until the owner says so.
 
 Open:

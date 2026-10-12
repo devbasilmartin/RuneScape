@@ -3,6 +3,7 @@
 
 hill_giants_edgeville:
   name: "hill giants (Edgeville dungeon)"
+  members: false
   skills: [attack, strength, defence]
   levels: [30, 45]
   xp_per_hour: 20000

@@ -113,6 +113,9 @@ class Chooser:
         for quest in method.requires_quests:
             if not self.quests.has(quest):
                 return None, f"needs quest {quest!r} (`quest-done` once finished)"
+        why = method.blocked(getattr(self.cfg, "account", "members"), levels)
+        if why:
+            return None, why
         if self.cooldown.get(method.id, 0) > now:
             return None, "out of supplies recently"
         try:

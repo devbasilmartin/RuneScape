@@ -275,7 +275,7 @@ function buildMethodOptions() {
     (bySkill[m.skills[0]] = bySkill[m.skills[0]] || []).push(m); });
   methodOptions = Object.keys(bySkill).sort().map((skill) =>
     `<optgroup label="${esc(skill)}">` + bySkill[skill].map((m) =>
-      `<option value="${esc(m.id)}">${esc(m.name)} · ${m.levels[0]}–${m.levels[1]}</option>`).join("") +
+      `<option value="${esc(m.id)}">${esc(m.name)} · ${m.levels[0]}–${m.levels[1]}${m.members ? " · members" : ""}</option>`).join("") +
     "</optgroup>").join("");
 }
 

@@ -31,6 +31,10 @@ run_retry_seconds: 60
 # Inventory Tags: the items the bot needs to see, each tagged with its registry color.
 # Untagged items (axe, pickaxe, net, tinderbox, hammer...) are never dropped or banked.
 # `all` uses every item in the registry; or list just the ones you tag.
+
+# f2p: only F2P methods are chosen or run (a members method in a schedule is skipped with a
+# message). members: everything.
+account: members
 items: all
 
 # Ground Markers: tiles clicked in order when a target isn't on screen. Each color is

@@ -4,6 +4,7 @@
 
 varrock_teleports:
   name: "Varrock teleports"
+  members: false
   skills: [magic]
   levels: [25, 45]
   xp_per_hour: 35000
@@ -27,6 +28,7 @@ camelot_teleports:
 
 high_alchemy:
   name: "High Alchemy"
+  members: false
   skills: [magic]
   levels: [55, 99]
   xp_per_hour: 78000
