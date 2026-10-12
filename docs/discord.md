@@ -16,6 +16,8 @@ It runs as its own service in the VM, separate from the supervisor, so `/status`
 | `/status` | supervisor state, whether the bot is alive, current step and its progress |
 | `/levels` | current levels |
 | `/screenshot` | the VM's screen right now |
+| `/run ACTIVITY` | start one activity in the control panel, like its One activity tab (see below) |
+| `/stoprun` | stop what the control panel is running, like its Stop button |
 | `/pause`, `/resume` | hand over to yourself and back |
 | `/start`, `/stop` | start or stop the supervisor (RuneLite and the bot) |
 | `/questions` | questions still waiting for you |
@@ -60,15 +62,19 @@ SKILLBOT_DISCORD_OWNER="your user id"
 
 You can remove `SKILLBOT_DISCORD_WEBHOOK`; with a token set, notifications go through the bot.
 
-Then re-run the service installer (it adds the Discord service) and start it:
+Then run the service installer and start the Discord service:
 
 ```sh
 cd ~/skillbot
 git pull
 .venv/bin/pip install -r requirements.txt
-bash scripts/vm/install-service.sh
+bash scripts/vm/install-service.sh --discord-only
 systemctl --user start skillbot-discord
 ```
+
+`--discord-only` starts just Discord at every login: you run the bot from the panel (or
+`/run`). Without it, the supervisor also starts at every login and runs **My plan**
+(`config.yaml`) by itself ([unattended.md](unattended.md)).
 
 ## 5. Test it
 
@@ -78,6 +84,20 @@ systemctl --user start skillbot-discord
 - `/screenshot` should show the VM's desktop.
 
 Logs: `data/discord.log`. Service state: `systemctl --user status skillbot-discord`.
+
+## Running an activity from your phone
+
+`/run` starts an activity in the control panel, so **leave the panel open on the VM**
+(and RuneLite logged in, standing where the activity happens). Type `/run`, start typing
+the activity (e.g. `cows`) and pick it from the list, then optionally:
+
+- **minutes**: stop and log out after this long. Without it, it runs until `/stoprun`.
+- **when_full**: bank or drop. Pick **drop** until travel is built: banking needs to walk.
+- **watching**: you're keeping an eye on it with `/screenshot`. Without it the run is
+  unattended, which skips activities that are still experimental (the panel's badges).
+
+It answers "Started cows_lumbridge for 120 min", or why not (e.g. something else is still
+running: `/stoprun` first). The run shows in the panel's Output as if you'd clicked Start.
 
 ## Settings
 

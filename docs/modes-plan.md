@@ -16,34 +16,34 @@ well. Built in this order.
 - **Send to PC** ([file-sharing.md](file-sharing.md)) and **Record**
   ([recording.md](recording.md)): screenshots, logs and videos to the PC, `frames.png`
   for Claude.
+- **Run from the phone**: Discord `/run <activity>` and `/stoprun`, through the control
+  panel ([discord.md](discord.md)); waits on the owner setting Discord up.
 
 ## Next
 
 1. **Owner, at the VM**: shared folder, try Record, log the VM into GitHub then make the
    repo private, teach the digit 9 (Teach levels with a 9 on the skills tab), set up
    Discord ([discord.md](discord.md)).
-2. **Run from the phone**: Discord `/run <activity> [minutes]`, owner-only, starting the
-   same thing as the panel's One activity (`/screenshot`, `/status` already exist).
-3. **HP guard** for every activity: below 50% HP **eat** if there's food (the cow loop's
+2. **HP guard** for every activity: below 50% HP **eat** if there's food (the cow loop's
    cooked meat, an activity's food list); with no food, get away (bank) or log out, and
    notify; an activity where it keeps happening is marked dangerous at that level.
-4. **F2P travel**: walk between the F2P places the activities use (Lumbridge, Draynor,
+3. **F2P travel**: walk between the F2P places the activities use (Lumbridge, Draynor,
    Varrock, Falador, Al Kharid, Port Sarim, Barbarian Village) and their banks, so
    activities can bank and schedules can move between activities. Today's navigation
    teleports to a hub and clicks a world-map offset from there; F2P has no teleports
    except the 30-minute home teleport, so F2P travel walks from where the player is (a
    bank or an activity spot it knows it's at) instead. Stairs (Lumbridge castle bank) need
    handling.
-5. **F2P mode**: library methods tagged F2P or members; an account's type and default
+4. **F2P mode**: library methods tagged F2P or members; an account's type and default
    mode (F2P progression, or a saved schedule); rotation turns run the account's mode and
    resume a schedule where it left off; combat gates for spots with aggressive monsters
    (Draynor willows: dark wizards, about combat 41).
-6. **Cows + fire cooking**: kill cows, loot raw beef (no hides), chop one log, light it,
+5. **Cows + fire cooking**: kill cows, loot raw beef (no hides), chop one log, light it,
    find the fire by its color next to the player (a one-time "Teach fire" button records
    the flames), cook on it, keep ~5 cooked as food, drop the rest and burnt; relight when
    the fire is lost; after 3 failed relights pause cooking 30 min (keep fighting) and
    notify. Axe and tinderbox stay in the inventory, untagged.
-7. **More F2P methods**, each tried on the real client: fishing (shrimp → fly fishing),
+6. **More F2P methods**, each tried on the real client: fishing (shrimp → fly fishing),
    power-mining copper/tin → iron, firemaking lines, cooking at a range.
 
 Small fixes, whenever the owner is at the VM: run energy's "1" (`energy-check.png`), the

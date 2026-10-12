@@ -75,9 +75,10 @@ Start with `README.md`, `ROADMAP.md` (the original design decisions) and
 Working on the real client: calibration, inventory tags, reading levels, woodcutting
 (chop and drop, oaks), cows (combat with eating below 50% HP, drop hides and beef, wait
 for respawns, don't start a second fight), the control panel, schedules (one activity or
-a named schedule, then log out).
+a named schedule, then log out). Discord `/run` starts an activity through the panel
+(Discord not set up on the VM yet).
 
-Next, in order (`docs/modes-plan.md`): Discord `/run`, the HP guard for every activity,
+Next, in order (`docs/modes-plan.md`): the HP guard for every activity,
 F2P travel (walking), F2P mode, cows + fire cooking, more F2P methods. **F2P only for
 now**: no new members work until the owner says so.
 

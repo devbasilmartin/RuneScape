@@ -121,6 +121,36 @@ def run(profiles, legacy_data_dir: Path | None, summary_hour: int = 9, pricewatc
             text = await asyncio.to_thread(core.switch, name)
             await interaction.response.send_message(text)
 
+    from .library import load_library
+    methods = sorted(load_library().values(), key=lambda m: m.id)
+
+    async def method_choices(interaction: discord.Interaction, current: str):
+        cur = current.lower()
+        return [app_commands.Choice(name=f"{m.id}: {m.name}"[:100], value=m.id)
+                for m in methods if cur in m.id.lower() or cur in m.name.lower()][:25]
+
+    @tree.command(name="run", description="Start one activity in the control panel")
+    @app_commands.describe(activity="from the library, e.g. cows_lumbridge",
+                           minutes="stop and log out after this long (empty: until /stoprun)",
+                           when_full="bank or drop (gathering and combat)",
+                           watching="you're keeping an eye on it (allows experimental activities)")
+    @app_commands.autocomplete(activity=method_choices)
+    @app_commands.choices(when_full=[app_commands.Choice(name="bank", value="bank"),
+                                     app_commands.Choice(name="drop", value="drop")])
+    async def run_cmd(interaction: discord.Interaction, activity: str,
+                      minutes: app_commands.Range[int, 1, 1440] | None = None,
+                      when_full: app_commands.Choice[str] | None = None,
+                      watching: bool = False):
+        if await allowed(interaction):
+            text = await asyncio.to_thread(core.run_activity, activity, minutes,
+                                           when_full.value if when_full else None, watching)
+            await interaction.response.send_message(text[:1900])
+
+    @tree.command(name="stoprun", description="Stop what the control panel is running")
+    async def stoprun(interaction: discord.Interaction):
+        if await allowed(interaction):
+            await interaction.response.send_message(await asyncio.to_thread(core.stop_run))
+
     @tree.command(name="screenshot", description="What the VM's screen looks like right now")
     async def screenshot(interaction: discord.Interaction):
         if not await allowed(interaction):

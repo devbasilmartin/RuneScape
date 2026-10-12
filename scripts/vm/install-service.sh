@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # Installs the supervisor as a systemd user service that starts with the desktop.
-#   bash scripts/vm/install-service.sh            # install and start at every login
-#   bash scripts/vm/install-service.sh --remove   # uninstall
+#   bash scripts/vm/install-service.sh                 # install and start at every login
+#   bash scripts/vm/install-service.sh --discord-only  # only Discord starts at login; you
+#                                                      # run the bot from the panel or /run
+#   bash scripts/vm/install-service.sh --remove        # uninstall
 set -euo pipefail
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 UNIT_DIR="$HOME/.config/systemd/user"
@@ -17,6 +19,11 @@ if [[ "${1:-}" == "--remove" ]]; then
     echo "removed"
     exit 0
 fi
+
+DISCORD_ONLY=0
+[[ "${1:-}" == "--discord-only" ]] && DISCORD_ONLY=1
+START_SUPERVISOR="; systemctl --user start skillbot.service"
+[[ $DISCORD_ONLY == 1 ]] && START_SUPERVISOR=""
 
 [[ -x "$REPO_DIR/.venv/bin/python" ]] || { echo "run scripts/vm/setup.sh first" >&2; exit 1; }
 [[ -f "$ENV_FILE" ]] || { echo "create $ENV_FILE first (docs/vm-setup.md, step 7)" >&2; exit 1; }
@@ -62,12 +69,18 @@ cat > "$AUTOSTART" <<DESKTOP
 [Desktop Entry]
 Type=Application
 Name=skillbot
-Exec=sh -c 'sleep 20; systemctl --user import-environment DISPLAY XAUTHORITY; grep -q "^SKILLBOT_DISCORD_TOKEN=" $ENV_FILE && systemctl --user start skillbot-discord.service; systemctl --user start skillbot.service'
+Exec=sh -c 'sleep 20; systemctl --user import-environment DISPLAY XAUTHORITY; grep -q "^SKILLBOT_DISCORD_TOKEN=" $ENV_FILE && systemctl --user start skillbot-discord.service$START_SUPERVISOR'
 X-GNOME-Autostart-enabled=true
 NoDisplay=true
 DESKTOP
 
 systemctl --user daemon-reload
+if [[ $DISCORD_ONLY == 1 ]]; then
+    echo "installed. Discord starts 20s after every login; the supervisor doesn't."
+    echo "  discord now: systemctl --user start skillbot-discord   (once docs/discord.md is done)"
+    echo "  status/logs: systemctl --user status skillbot-discord; tail -f $REPO_DIR/data/discord.log"
+    exit 0
+fi
 echo "installed. It starts 20s after every login."
 echo "  start now:   systemctl --user start skillbot"
 echo "  discord:     systemctl --user start skillbot-discord   (once docs/discord.md is done)"

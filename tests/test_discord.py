@@ -140,3 +140,49 @@ def test_notify_goes_to_mailbox_when_discord_configured(tmp_path, monkeypatch):
     monkeypatch.setenv("SKILLBOT_DISCORD_TOKEN", "x")
     notify_mod.notify("bot stopped")
     assert [m["text"] for m in Mailbox(tmp_path).pending()] == ["bot stopped"]
+
+
+def test_run_goes_through_the_control_panel(tmp_path):
+    calls = []
+
+    def post(path, body):
+        calls.append((path, body))
+        return True, {"id": 1}
+    core = DiscordCore(tmp_path, post=post)
+    text = core.run_activity("cows_lumbridge", 120, "drop")
+    assert "Started **cows_lumbridge** for 120 min" in text and "unattended" in text
+    assert calls[-1] == ("/api/start", {"action": "run_activity", "params": {
+        "method": "cows_lumbridge", "watching": False, "minutes": 120, "when_full": "drop"}})
+    assert "watching" in core.run_activity("cows_lumbridge", watching=True)
+    assert "minutes" not in calls[-1][1]["params"]
+    assert "Stopping" in core.stop_run() and calls[-1] == ("/api/stop", {})
+
+
+def test_run_says_why_it_did_not_start(tmp_path):
+    core = DiscordCore(tmp_path, post=lambda p, b: (False, {"error": "run_activity is still running: stop it first"}))
+    assert core.run_activity("cows_lumbridge") == \
+        "Didn't start: run_activity is still running: stop it first."
+
+    def closed(path, body):
+        raise ConnectionRefusedError()
+    core = DiscordCore(tmp_path, post=closed)
+    assert "isn't open" in core.run_activity("cows_lumbridge")
+    assert "isn't open" in core.stop_run()
+
+
+def test_run_against_a_real_panel(tmp_path, monkeypatch):
+    import threading
+    from skillbot import discord_core, ui
+    from test_schedule import LIB
+    app = ui.App(tmp_path, [], cwd=tmp_path, library=LIB, schedules_dir=tmp_path / "s")
+    server = ui.ThreadingHTTPServer(("127.0.0.1", 0), ui.make_handler(app))
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    monkeypatch.setattr(discord_core, "PANEL", f"http://127.0.0.1:{server.server_address[1]}")
+    try:
+        core = DiscordCore(tmp_path)
+        assert core.run_activity("no_such_thing").startswith("Didn't start:")
+        assert "Stopping" in core.stop_run()
+    finally:
+        server.shutdown()
+    monkeypatch.setattr(discord_core, "PANEL", "http://127.0.0.1:9")
+    assert "isn't open" in DiscordCore(tmp_path).run_activity("cows_lumbridge")

@@ -1,6 +1,7 @@
 """The Discord service's logic, kept free of discord.py so it can be tested: commands,
 uptime tracking, the daily summary, and mapping replies to questions."""
 import datetime as dt
+import json
 import re
 import subprocess
 import time
@@ -10,7 +11,12 @@ from .messages import Mailbox, _read, _write
 from .status import build_summary, format_levels, format_status, snapshot
 
 SERVICE = "skillbot.service"
+PANEL = "http://127.0.0.1:8765"         # the control panel (skillbot ui) on the VM
 LOG_TIME = re.compile(r"^(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d)")
+
+
+NO_PANEL = ("The control panel isn't open on the VM. /run goes through it: open Skillbot "
+            "there and leave it open.")
 
 
 def count_log_lines(path: Path, needle: str, since: float) -> int:
@@ -30,15 +36,29 @@ def count_log_lines(path: Path, needle: str, since: float) -> int:
     return count
 
 
+def panel_post(path: str, body: dict) -> tuple[bool, dict]:
+    """POST to the control panel: (ok, its JSON). Raises OSError when it isn't open."""
+    import urllib.error
+    import urllib.request
+    req = urllib.request.Request(PANEL + path, data=json.dumps(body).encode(), method="POST",
+                                 headers={"Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=15) as r:
+            return True, json.loads(r.read() or b"{}")
+    except urllib.error.HTTPError as e:
+        return False, json.loads(e.read() or b"{}")
+
+
 class DiscordCore:
     def __init__(self, data_dir: Path, summary_hour: int = 9, run=subprocess.run,
-                 clock=time.time, profiles=None, pricewatch=None):
+                 clock=time.time, profiles=None, pricewatch=None, post=panel_post):
         self.data_dir = Path(data_dir)      # shared: the mailbox and this service's state
         self.profiles = profiles
         self.pricewatch = pricewatch
         self.mailbox = Mailbox(self.data_dir, clock=clock)
         self.summary_hour = summary_hour
         self.run = run
+        self.post = post
         self.clock = clock
         self.state_path = self.data_dir / "discord" / "state.json"
         self.state = _read(self.state_path) or {"online": [], "asks_by_message": {},
@@ -104,6 +124,34 @@ class DiscordCore:
                 return "No open questions."
             return "\n".join(f"• {a['question']}" for a in asks)
         return f"Unknown command {name!r}."
+
+    # ---- the control panel -------------------------------------------------------------
+    def run_activity(self, method: str, minutes: float | None = None,
+                     when_full: str | None = None, watching: bool = False) -> str:
+        """Start one activity in the control panel, as its One activity tab does, so it
+        shows in the panel's Output and its Stop works."""
+        params = {"method": method, "watching": watching}
+        if minutes:
+            params["minutes"] = minutes
+        if when_full:
+            params["when_full"] = when_full
+        try:
+            ok, data = self.post("/api/start", {"action": "run_activity", "params": params})
+        except OSError:
+            return NO_PANEL
+        if not ok:
+            return f"Didn't start: {data.get('error', 'the panel said no')}."
+        how = ("you're watching" if watching else
+               "unattended: activities still experimental are skipped")
+        return (f"Started **{method}**" + (f" for {minutes:g} min" if minutes else "")
+                + f" ({how}). `/screenshot` to look, `/stoprun` to stop.")
+
+    def stop_run(self) -> str:
+        try:
+            self.post("/api/stop", {})
+        except OSError:
+            return NO_PANEL
+        return "Stopping what the panel is running (like its Stop button)."
 
     def switch(self, name: str) -> str:
         """Switch account: a clean handover when the supervisor runs, else just make
