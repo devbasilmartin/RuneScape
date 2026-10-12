@@ -29,6 +29,10 @@ well. Built in this order.
   methods tagged members or F2P (library/f2p.yaml and the real-game F2P ones elsewhere);
   combat gates (`requires: {combat: N}`; Draynor willows 41). Still to do: rotation
   resuming a schedule where it left off, per-account default mode.
+- **F2P methods** ([f2p-methods.md](f2p-methods.md)): mining (copper & tin, iron at Varrock
+  east), fishing (net at Draynor, fly fishing at Barbarian Village to 99), cooking on the
+  Lumbridge range, firemaking lines (logs, oaks, willows...). Mining and fishing drop or
+  bank. Cows + fire cooking dropped: at 15 defence cows don't need food.
 - **Run from the phone**: Discord `/run <activity>` and `/stoprun`, through the control
   panel ([discord.md](discord.md)); waits on the owner setting Discord up.
 
@@ -37,13 +41,8 @@ well. Built in this order.
 1. **Owner, at the VM** ([tonight.md](tonight.md)): shared folder, try Record, log the VM into GitHub then make the
    repo private, teach the digit 9 (Teach levels with a 9 on the skills tab), set up
    Discord ([discord.md](discord.md)).
-2. **Cows + fire cooking**: kill cows, loot raw beef (no hides), chop one log, light it,
-   find the fire by its color next to the player (a one-time "Teach fire" button records
-   the flames), cook on it, keep ~5 cooked as food, drop the rest and burnt; relight when
-   the fire is lost; after 3 failed relights pause cooking 30 min (keep fighting) and
-   notify. Axe and tinderbox stay in the inventory, untagged.
-3. **More F2P methods**, each tried on the real client: fishing (shrimp → fly fishing),
-   power-mining copper/tin → iron, firemaking lines, cooking at a range.
+2. **Try the F2P methods on the real client** ([f2p-methods.md](f2p-methods.md)), one at a
+   time, supervised, until they're trusted.
 
 Small fixes, whenever the owner is at the VM: run energy's "1" (`energy-check.png`), the
 software cursor.

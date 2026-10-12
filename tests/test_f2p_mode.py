@@ -43,3 +43,18 @@ def test_account_must_be_f2p_or_members(tmp_path):
     (tmp_path / "c.yaml").write_text("account: free\n")
     with pytest.raises(ValueError, match="f2p or members"):
         Config.load(tmp_path / "c.yaml")
+
+
+def test_f2p_mining_and_fishing_can_drop_or_bank():
+    """Drop for speed, bank to keep the ore or fish: both must work for every one."""
+    from skillbot.colors import Registry
+    from skillbot.places import load_places
+    places = load_places(Registry.load().resolve)
+    gather = [m for m in load_library().values() if not m.members
+              and m.skills[0] in ("mining", "fishing")]
+    assert {m.id for m in gather} >= {"copper_tin_varrock", "iron_varrock",
+                                      "net_fishing_draynor", "fly_fishing_barbarian"}
+    for m in gather:
+        assert m.can_drop, m.id
+        assert m.step.get("bank_location") in places, m.id
+        assert m.location in places, m.id

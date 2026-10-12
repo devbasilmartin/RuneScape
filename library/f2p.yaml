@@ -157,3 +157,111 @@ ourania_altar:
     items: [pure_essence]
     bank_tab: runecraft
     withdraw: [{slot: 1, item: pure_essence, quantity: all}]
+
+# --- Mining (Varrock east mine: copper, tin and iron next to each other). Mark only the
+# rocks you want with Object Markers in `rock`. Drop = fastest XP; bank = keep the ore. ---
+copper_tin_varrock:
+  name: "copper & tin (Varrock east)"
+  skills: [mining]
+  levels: [1, 15]
+  xp_per_hour: 12000
+  reliability: 4
+  location: "varrock east mine"
+  step:
+    task: gather
+    target: rock
+    items: [copper_ore, tin_ore, uncut_sapphire, uncut_emerald, uncut_ruby, uncut_diamond]
+    when_full: drop
+    bank_location: "varrock east bank"
+
+iron_varrock:
+  name: "iron (Varrock east)"
+  skills: [mining]
+  levels: [15, 99]
+  xp_per_hour: 35000
+  reliability: 4
+  location: "varrock east mine"
+  trade: {outputs: {iron_ore: 900}}
+  step:
+    task: gather
+    target: rock
+    items: [iron_ore, uncut_sapphire, uncut_emerald, uncut_ruby, uncut_diamond]
+    when_full: drop
+    bank_location: "varrock east bank"
+
+# --- Cooking on the Lumbridge castle range (fewer burns once Cook's Assistant is done).
+# Bank tab `cooking`: raw beef, shrimps, trout, salmon in slots 4-7 (0-3 are for members
+# methods). Mark the range with Object Markers in `range`. ---
+cook_beef_lumbridge:
+  name: "cook beef (Lumbridge range)"
+  skills: [cooking]
+  levels: [1, 15]
+  xp_per_hour: 30000
+  reliability: 4
+  location: "lumbridge kitchen"
+  trade: {inputs: {raw_beef: 1000}}
+  step: {task: process, target: range, items: [raw_beef], use_item: raw_beef,
+         confirm: [{key: "1"}], bank_tab: cooking, bank_location: "lumbridge bank",
+         withdraw: [{slot: 4, item: raw_beef, quantity: all}]}
+
+cook_shrimps_lumbridge:
+  name: "cook shrimps (Lumbridge range)"
+  skills: [cooking]
+  levels: [1, 15]
+  xp_per_hour: 30000
+  reliability: 4
+  location: "lumbridge kitchen"
+  trade: {inputs: {raw_shrimps: 1000}}
+  step: {task: process, target: range, items: [raw_shrimps], use_item: raw_shrimps,
+         confirm: [{key: "1"}], bank_tab: cooking, bank_location: "lumbridge bank",
+         withdraw: [{slot: 5, item: raw_shrimps, quantity: all}]}
+
+cook_trout_lumbridge:
+  name: "cook trout (Lumbridge range)"
+  skills: [cooking]
+  levels: [15, 25]
+  xp_per_hour: 70000
+  reliability: 4
+  location: "lumbridge kitchen"
+  trade: {inputs: {raw_trout: 1000}}
+  step: {task: process, target: range, items: [raw_trout], use_item: raw_trout,
+         confirm: [{key: "1"}], bank_tab: cooking, bank_location: "lumbridge bank",
+         withdraw: [{slot: 6, item: raw_trout, quantity: all}]}
+
+cook_salmon_lumbridge:
+  name: "cook salmon (Lumbridge range)"
+  skills: [cooking]
+  levels: [25, 99]
+  xp_per_hour: 90000
+  reliability: 4
+  location: "lumbridge kitchen"
+  trade: {inputs: {raw_salmon: 1000}}
+  step: {task: process, target: range, items: [raw_salmon], use_item: raw_salmon,
+         confirm: [{key: "1"}], bank_tab: cooking, bank_location: "lumbridge bank",
+         withdraw: [{slot: 7, item: raw_salmon, quantity: all}]}
+
+# --- Firemaking lines from the Grand Exchange (bank tab `firemaking`: willow 0, logs 3,
+# oak 4). ---
+burn_logs:
+  name: "burn logs"
+  skills: [firemaking]
+  levels: [1, 15]
+  xp_per_hour: 30000
+  reliability: 4
+  location: "grand exchange lane"
+  trade: {inputs: {logs: 900}}
+  step: {task: firemaking, target: fm_start, items: [logs], bank_tab: firemaking,
+         bank_location: "grand exchange",
+         withdraw: [{slot: 3, item: logs, quantity: all}]}
+
+burn_oaks:
+  name: "burn oaks"
+  skills: [firemaking]
+  levels: [15, 30]
+  xp_per_hour: 45000
+  reliability: 4
+  location: "grand exchange lane"
+  trade: {inputs: {oak_logs: 800}}
+  step: {task: firemaking, target: fm_start, items: [oak_logs], bank_tab: firemaking,
+         bank_location: "grand exchange",
+         withdraw: [{slot: 4, item: oak_logs, quantity: all}]}

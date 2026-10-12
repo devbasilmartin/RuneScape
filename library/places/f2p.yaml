@@ -16,6 +16,7 @@ lumbridge bank:
   leave:
     - {click: stairs, wait: 3}                   # top floor: Climb-down
     - {click: stairs, key: "2", wait: 3}         # first floor: Climb → "Climb down"
+lumbridge kitchen:    {tile: [3209, 3214]}       # the castle range, ground floor
 lumbridge cows:       {tile: [3258, 3275]}       # the field east of the river
 lumbridge trees:      {tile: [3195, 3235]}       # west of the castle
 lumbridge swamp mine: {tile: [3228, 3148]}

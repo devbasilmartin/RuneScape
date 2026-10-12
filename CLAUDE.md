@@ -81,8 +81,8 @@ a named schedule, then log out). Discord `/run` starts an activity through the p
 in `library/places/f2p.yaml`) walks between banks and activities. `account: f2p` keeps to F2P methods. None of these is tried on the
 real client yet.
 
-Next, in order (`docs/modes-plan.md`):
-cows + fire cooking, more F2P methods. **F2P only for
+Next (`docs/modes-plan.md`): try the F2P methods (`docs/f2p-methods.md`) on the real
+client. **F2P only for
 now**: no new members work until the owner says so.
 
 Open:

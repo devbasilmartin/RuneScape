@@ -24,7 +24,7 @@ fly_fishing_barbarian:
   name: "fly fishing (Barbarian Village)"
   members: false
   skills: [fishing]
-  levels: [20, 40]
+  levels: [20, 99]                 # F2P's best fishing (feathers in the inventory, untagged)
   xp_per_hour: 25000
   reliability: 4
   location: "barbarian village fishing"

@@ -227,12 +227,12 @@ Used by: Saradomin brews; attack potions; black d'hide bodies; blue d'hide bodie
 
 ## grand exchange lane
 
-Used by: burn maples; burn willows; burn yews
+Used by: burn logs; burn maples; burn oaks; burn willows; burn yews
 
 - [ ] Object Marker on Bank booth / Bank chest / Bank / Grand Exchange booth → `bank` (#FF00FF)
 - [ ] Ground Marker labelled `fm_start` (#80C000)
 - [ ] `bank` (Object Marker on the booth) at grand exchange
-- automatic: `maple_logs`, `willow_logs`, `yew_logs`
+- automatic: `logs`, `maple_logs`, `oak_logs`, `willow_logs`, `yew_logs`
 
 ## hosidius kitchen
 
@@ -265,6 +265,14 @@ Used by: cows (Lumbridge)
 
 - [ ] `bank` (Object Marker on the booth) at lumbridge bank
 - automatic: `anchovies`, `bones`, `cooked_meat`, `cow`, `cowhide`, `loot`, `raw_beef`, `shrimps`, `trout`
+
+## lumbridge kitchen
+
+Used by: cook beef (Lumbridge range); cook salmon (Lumbridge range); cook shrimps (Lumbridge range); cook trout (Lumbridge range)
+
+- [ ] Object Marker on Range / Cooking range / Clay oven → `range` (#FF4080)
+- [ ] `bank` (Object Marker on the booth) at lumbridge bank
+- automatic: `raw_beef`, `raw_salmon`, `raw_shrimps`, `raw_trout`
 
 ## lumbridge trees
 
@@ -371,6 +379,14 @@ Used by: earth runes (Varrock)
 - [ ] Object Marker on Mysterious ruins → `ruins` (#40FF00)
 - [ ] `bank` (Object Marker on the booth) at varrock east bank
 - automatic: `earth_talisman`, `rune_essence`
+
+## varrock east mine
+
+Used by: copper & tin (Varrock east); iron (Varrock east)
+
+- [ ] Object Marker on Copper rocks / Tin rocks / Iron rocks / Coal rocks / Clay rocks / Rocks → `rock` (#FF4000)
+- [ ] `bank` (Object Marker on the booth) at varrock east bank
+- automatic: `copper_ore`, `iron_ore`, `tin_ore`, `uncut_diamond`, `uncut_emerald`, `uncut_ruby`, `uncut_sapphire`
 
 ## varrock rooftop start
 
