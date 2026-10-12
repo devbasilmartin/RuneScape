@@ -118,6 +118,14 @@ Used by: ensouled heads (Arceuus reanimation)
 - [ ] Object Marker on Dark Altar → `dark_altar` (#0000C0)
 - automatic: `enemy`, `shark`
 
+## draynor bank
+
+Used by: cook beef (Draynor fire); cook salmon (Draynor fire); cook shrimps (Draynor fire); cook trout (Draynor fire)
+
+- [ ] Object Marker on Range / Cooking range / Clay oven → `range` (#FF4080)
+- [ ] `bank` (Object Marker on the booth) at draynor bank
+- automatic: `raw_beef`, `raw_salmon`, `raw_shrimps`, `raw_trout`
+
 ## draynor fishing
 
 Used by: net fishing (Draynor)

@@ -12,7 +12,8 @@ Banking walks to the bank and back ([travel.md](travel.md)).
 | Fishing | net fishing (shrimps, anchovies), Draynor | 1–20 | Draynor |
 | Fishing | fly fishing (trout, salmon), Barbarian Village | 20+ | Edgeville |
 | Woodcutting | trees Lumbridge, oaks Draynor, willows Draynor | 1 / 15 / 30+ | Draynor |
-| Cooking | beef, shrimps, trout, salmon on the Lumbridge castle range | 1 / 1 / 15 / 25+ | Lumbridge (top floor) |
+| Cooking | beef, shrimps, trout, salmon on the fire outside Draynor bank | 1 / 1 / 15 / 25+ | Draynor |
+| Cooking | the same on the Lumbridge castle range (backup) | 1 / 1 / 15 / 25+ | Lumbridge (top floor) |
 | Firemaking | logs, oaks, willows (then maples, yews) from the Grand Exchange | 1 / 15 / 30+ | Grand Exchange |
 | Combat | cows, Lumbridge | 1–40 | Lumbridge |
 
@@ -25,7 +26,8 @@ Willows wait until you're combat 41 (dark wizards next to them).
   Gems found while mining are dropped or banked with the ore.
 - **Fishing**: NPC Indicators on "Fishing spot" in `fishing_spot`. Net for shrimps; rod and
   feathers for fly fishing (both untagged: they're never dropped or banked).
-- **Cooking**: Object Markers on the castle range in `range`. Bank tab `cooking` with raw
+- **Cooking**: Object Markers on the fire outside Draynor bank (and/or the Lumbridge castle
+  range) in `range`. Bank tab `cooking` with raw
   beef, raw shrimps, raw trout, raw salmon in bank slots 5–8 (counting from 1).
 - **Firemaking**: a tinderbox in the first inventory slot; bank tab `firemaking` with
   willow logs first and logs, oak logs in slots 4 and 5; the `fm_start` Ground Marker

@@ -189,9 +189,58 @@ iron_varrock:
     when_full: drop
     bank_location: "varrock east bank"
 
-# --- Cooking on the Lumbridge castle range (fewer burns once Cook's Assistant is done).
-# Bank tab `cooking`: raw beef, shrimps, trout, salmon in slots 4-7 (0-3 are for members
-# methods). Mark the range with Object Markers in `range`. ---
+# --- Cooking. Best: the fire outside Draynor bank (next to the bank and the fishing).
+# Backup: the Lumbridge castle range (bank upstairs). Mark the fire or the range with
+# Object Markers in `range`. Bank tab `cooking`: raw beef, shrimps, trout, salmon in
+# slots 4-7 (0-3 are for members methods). ---
+cook_beef_draynor:
+  name: "cook beef (Draynor fire)"
+  skills: [cooking]
+  levels: [1, 15]
+  xp_per_hour: 30000
+  reliability: 5
+  location: "draynor bank"
+  trade: {inputs: {raw_beef: 1000}}
+  step: {task: process, target: range, items: [raw_beef], use_item: raw_beef,
+         confirm: [{key: "1"}], bank_tab: cooking, bank_location: "draynor bank",
+         withdraw: [{slot: 4, item: raw_beef, quantity: all}]}
+
+cook_shrimps_draynor:
+  name: "cook shrimps (Draynor fire)"
+  skills: [cooking]
+  levels: [1, 15]
+  xp_per_hour: 30000
+  reliability: 5
+  location: "draynor bank"
+  trade: {inputs: {raw_shrimps: 1000}}
+  step: {task: process, target: range, items: [raw_shrimps], use_item: raw_shrimps,
+         confirm: [{key: "1"}], bank_tab: cooking, bank_location: "draynor bank",
+         withdraw: [{slot: 5, item: raw_shrimps, quantity: all}]}
+
+cook_trout_draynor:
+  name: "cook trout (Draynor fire)"
+  skills: [cooking]
+  levels: [15, 25]
+  xp_per_hour: 70000
+  reliability: 5
+  location: "draynor bank"
+  trade: {inputs: {raw_trout: 1000}}
+  step: {task: process, target: range, items: [raw_trout], use_item: raw_trout,
+         confirm: [{key: "1"}], bank_tab: cooking, bank_location: "draynor bank",
+         withdraw: [{slot: 6, item: raw_trout, quantity: all}]}
+
+cook_salmon_draynor:
+  name: "cook salmon (Draynor fire)"
+  skills: [cooking]
+  levels: [25, 99]
+  xp_per_hour: 90000
+  reliability: 5
+  location: "draynor bank"
+  trade: {inputs: {raw_salmon: 1000}}
+  step: {task: process, target: range, items: [raw_salmon], use_item: raw_salmon,
+         confirm: [{key: "1"}], bank_tab: cooking, bank_location: "draynor bank",
+         withdraw: [{slot: 7, item: raw_salmon, quantity: all}]}
+
 cook_beef_lumbridge:
   name: "cook beef (Lumbridge range)"
   skills: [cooking]
