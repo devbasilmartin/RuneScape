@@ -347,3 +347,112 @@ fly_fish_cook_barbarian:
     process: {target: range, items: [raw_trout, raw_salmon], use_item: any}
     when_full: bank
     bank_location: "edgeville bank"
+
+# --- Smithing. Smelt at the Al Kharid furnace (bank next door; from Lumbridge the toll gate
+# costs 10 coins), smith platebodies at the Varrock west anvils. Mark the furnace in
+# `furnace`, the anvils in `anvil`. The menus' buttons are taught once: panel → Learn →
+# Teach a click. Bank tab `smithing`: copper ore, tin ore, iron ore in slots 0-2, then
+# bronze, iron, steel, mithril, adamantite bars in 3-7. ---
+smelt_bronze_alkharid:
+  name: "smelt bronze bars (Al Kharid)"
+  skills: [smithing]
+  levels: [1, 15]
+  xp_per_hour: 20000
+  reliability: 4
+  location: "al kharid furnace"
+  trade: {inputs: {copper_ore: 1000, tin_ore: 1000}}
+  step: {task: process, target: furnace, items: [copper_ore, tin_ore], use_item: copper_ore,
+         confirm: [{click: smelt_bronze}], bank_tab: smithing,
+         bank_location: "al kharid bank",
+         withdraw: [{slot: 0, item: copper_ore, quantity: x}, {slot: 1, item: tin_ore, quantity: x}]}
+
+smelt_iron_alkharid:
+  name: "smelt iron bars (Al Kharid)"
+  skills: [smithing]
+  levels: [15, 99]
+  xp_per_hour: 30000
+  reliability: 4
+  location: "al kharid furnace"
+  trade: {inputs: {iron_ore: 2000}}
+  step: {task: process, target: furnace, items: [iron_ore], use_item: iron_ore,
+         confirm: [{click: smelt_iron}], bank_tab: smithing,
+         bank_location: "al kharid bank",
+         withdraw: [{slot: 2, item: iron_ore, quantity: all}]}
+
+smith_bronze_daggers:
+  name: "bronze daggers (Varrock west anvils)"
+  skills: [smithing]
+  levels: [1, 18]
+  xp_per_hour: 15000
+  reliability: 4
+  location: "varrock west anvils"
+  trade: {inputs: {bronze_bar: 300}}
+  step: {task: process, target: anvil, items: [bronze_bar], use_item: bronze_bar, keep: [hammer],
+         confirm: [{click: smith_dagger}], bank_tab: smithing,
+         bank_location: "varrock west bank",
+         withdraw: [{slot: 3, item: bronze_bar, quantity: all}]}
+
+smith_bronze_platebodies:
+  name: "bronze platebodies (Varrock west anvils)"
+  skills: [smithing]
+  levels: [18, 33]
+  xp_per_hour: 40000
+  reliability: 4
+  location: "varrock west anvils"
+  trade: {inputs: {bronze_bar: 800}}
+  step: {task: process, target: anvil, items: [bronze_bar], use_item: bronze_bar, keep: [hammer],
+         confirm: [{click: smith_platebody}], bank_tab: smithing,
+         bank_location: "varrock west bank",
+         withdraw: [{slot: 3, item: bronze_bar, quantity: all}]}
+
+smith_iron_platebodies:
+  name: "iron platebodies (Varrock west anvils)"
+  skills: [smithing]
+  levels: [33, 48]
+  xp_per_hour: 60000
+  reliability: 4
+  location: "varrock west anvils"
+  trade: {inputs: {iron_bar: 1200}}
+  step: {task: process, target: anvil, items: [iron_bar], use_item: iron_bar, keep: [hammer],
+         confirm: [{click: smith_platebody}], bank_tab: smithing,
+         bank_location: "varrock west bank",
+         withdraw: [{slot: 4, item: iron_bar, quantity: all}]}
+
+smith_steel_platebodies:
+  name: "steel platebodies (Varrock west anvils)"
+  skills: [smithing]
+  levels: [48, 68]
+  xp_per_hour: 90000
+  reliability: 4
+  location: "varrock west anvils"
+  trade: {inputs: {steel_bar: 1800}}
+  step: {task: process, target: anvil, items: [steel_bar], use_item: steel_bar, keep: [hammer],
+         confirm: [{click: smith_platebody}], bank_tab: smithing,
+         bank_location: "varrock west bank",
+         withdraw: [{slot: 5, item: steel_bar, quantity: all}]}
+
+smith_mithril_platebodies:
+  name: "mithril platebodies (Varrock west anvils)"
+  skills: [smithing]
+  levels: [68, 88]
+  xp_per_hour: 110000
+  reliability: 4
+  location: "varrock west anvils"
+  trade: {inputs: {mithril_bar: 2200}}
+  step: {task: process, target: anvil, items: [mithril_bar], use_item: mithril_bar, keep: [hammer],
+         confirm: [{click: smith_platebody}], bank_tab: smithing,
+         bank_location: "varrock west bank",
+         withdraw: [{slot: 6, item: mithril_bar, quantity: all}]}
+
+smith_adamant_platebodies:
+  name: "adamant platebodies (Varrock west anvils)"
+  skills: [smithing]
+  levels: [88, 99]
+  xp_per_hour: 130000
+  reliability: 4
+  location: "varrock west anvils"
+  trade: {inputs: {adamantite_bar: 2600}}
+  step: {task: process, target: anvil, items: [adamantite_bar], use_item: adamantite_bar, keep: [hammer],
+         confirm: [{click: smith_platebody}], bank_tab: smithing,
+         bank_location: "varrock west bank",
+         withdraw: [{slot: 7, item: adamantite_bar, quantity: all}]}

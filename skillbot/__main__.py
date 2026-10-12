@@ -346,6 +346,30 @@ def make_navigator(cfg: Config, game):
                      scale=load_scale(cfg.data_dir))
 
 
+TAUGHT_CLICKS = {
+    "smelt_bronze": "the Bronze bar button in the furnace menu",
+    "smelt_iron": "the Iron bar button in the furnace menu",
+    "smith_dagger": "the dagger in the anvil menu (any metal)",
+    "smith_platebody": "the platebody in the anvil menu (any metal)",
+}
+
+
+def cmd_teach_click(cfg: Config, args) -> None:
+    """Remember a button's position: open the menu in game, hover it, press Enter."""
+    import json
+    game = live_game(cfg)
+    input(f"Open the menu in game, hover {TAUGHT_CLICKS[args.name]} and press Enter: ")
+    x, y = game.controls.position()
+    path = cfg.data_dir / "clicks.json"
+    try:
+        clicks = json.loads(path.read_text())
+    except (OSError, ValueError):
+        clicks = {}
+    clicks[args.name] = [x, y]
+    path.write_text(json.dumps(clicks, indent=1))
+    print(f"saved {args.name} at {x},{y} (data/clicks.json)")
+
+
 def cmd_calibrate_map(cfg: Config, args) -> None:
     """Measure the world map's pixels per tile from hovering two places on it."""
     from .places import measure_scale, save_scale
@@ -836,6 +860,8 @@ def main(argv=None) -> None:
     c.add_argument("--category", default="item")
     c.add_argument("--area", default="default",
                    help="where the color is used: everywhere, default, or a place name")
+    c = sub.add_parser("teach-click", help="remember where a menu button is (furnace, anvil)")
+    c.add_argument("name", choices=sorted(TAUGHT_CLICKS))
     c = sub.add_parser("calibrate-map", help="measure the world map's scale (F2P travel)")
     c.add_argument("--first", default="lumbridge spawn", help="the first place to hover")
     c.add_argument("--second", default="lumbridge cows", help="the second place to hover")
@@ -925,7 +951,7 @@ def main(argv=None) -> None:
     args.mailbox_dir = profiles.shared_data if sel.name else cfg.data_dir
     notify_setup(args.mailbox_dir, tag=sel.name)
     {"calibrate": cmd_calibrate, "calibrate-run": cmd_calibrate_run,
-     "calibrate-map": cmd_calibrate_map,
+     "calibrate-map": cmd_calibrate_map, "teach-click": cmd_teach_click,
      "learn-energy": cmd_learn_energy, "learn-digits": cmd_learn_digits, "levels": cmd_levels,
      "debug": cmd_debug, "doctor": cmd_doctor, "supervise": cmd_supervise, "discord": cmd_discord, "ask": cmd_ask,
      "add-destination": cmd_add_destination, "travel": cmd_travel,

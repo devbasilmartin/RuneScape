@@ -233,3 +233,19 @@ def test_walks_route_tiles_until_target_visible():
     fake.on_click.append(arrive)
     game.walk("to_trees", TREE)
     assert game.blobs(game.grab(), TREE)
+
+
+def test_process_clicks_a_taught_menu_button(tmp_path):
+    """Furnace and anvil menus: the button position is taught once (data/clicks.json)."""
+    import json
+    from skillbot.game import BotError
+    game, fake = make_game(config(data_dir=tmp_path))
+    for i in range(1, 6):
+        put_item(fake.img, i, "raw_shrimps")
+    rng = Range(fake)
+    fake.on_click.append(lambda f, pt: rng.key(f, "space") if tuple(pt) == (250, 420) else None)
+    step = Step.from_dict(cook_step(confirm=[{"click": "smith_platebody"}]))
+    with pytest.raises(BotError, match="Teach a click"):
+        make_task(game, step).run_batch()
+    (tmp_path / "clicks.json").write_text(json.dumps({"smith_platebody": [250, 420]}))
+    assert make_task(game, step).run_batch() == "ok" and rng.done == 5

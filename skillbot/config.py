@@ -286,13 +286,15 @@ class Config:
             raise ValueError("run_min_energy must be 1-100")
         if self.on_logout not in ("stop", "relogin"):
             raise ValueError("on_logout must be stop or relogin")
+        # tags are matched with tag_tolerance, so item colors need 2x that apart (+ a margin)
+        need = 2 * max(self.tag_tolerance + 4, 12)
         names = list(self.items)
         for i, a in enumerate(names):
             for b in names[i + 1:]:
                 gap = max(abs(x - y) for x, y in zip(self.items[a], self.items[b]))
-                if gap <= 2 * self.color_tolerance:
+                if gap <= need:
                     raise ValueError(f"item colors for {a} and {b} are too similar; make them "
-                                     f"differ by more than {2 * self.color_tolerance} on a channel")
+                                     f"differ by more than {need} on a channel")
         for step in self.plan:
             names = list(step.items) + list(step.food) + list(step.bury) + list(step.keep)
             names += [step.enter_with] if step.enter_with else []

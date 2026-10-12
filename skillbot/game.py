@@ -178,6 +178,20 @@ class Game:
             self.wait(0.6, 0.9)
         raise BotError(f"route {route!r}: timed out")
 
+    # ---- taught clicks ---------------------------------------------------------------------
+    def taught(self, name: str) -> tuple[int, int]:
+        """A button position you showed the bot once (`teach-click NAME`, data/clicks.json):
+        menus like the furnace's and the anvil's, whose layout isn't measured."""
+        import json
+        try:
+            clicks = json.loads((self.cfg.data_dir / "clicks.json").read_text())
+        except (OSError, ValueError):
+            clicks = {}
+        if name not in clicks:
+            raise BotError(f"the bot doesn't know where {name!r} is: open that menu in game "
+                           f"and use Learn → Teach a click ({name}) in the panel")
+        return tuple(clicks[name])
+
     # ---- interface -----------------------------------------------------------------------
     def open_tab(self, name: str) -> None:
         self.controls.click(self.layout.tabs[name])

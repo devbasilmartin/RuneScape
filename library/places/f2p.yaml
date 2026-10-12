@@ -34,6 +34,7 @@ edgeville bank:       {tile: [3094, 3493]}
 
 varrock west bank:    {tile: [3185, 3436]}
 varrock east bank:    {tile: [3253, 3420]}
+varrock west anvils:  {tile: [3188, 3425]}
 varrock west mine:    {tile: [3182, 3373]}
 varrock east mine:    {tile: [3287, 3366]}
 varrock earth ruins:  {tile: [3305, 3472]}
@@ -41,6 +42,7 @@ grand exchange:       {tile: [3165, 3487]}
 grand exchange lane:  {tile: [3170, 3480]}       # where firemaking lines start
 
 al kharid bank:       {tile: [3269, 3167]}
+al kharid furnace:    {tile: [3275, 3186]}
 al kharid mine:       {tile: [3300, 3300]}
 al kharid fire ruins: {tile: [3312, 3253]}
 

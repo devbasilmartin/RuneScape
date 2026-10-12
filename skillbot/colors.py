@@ -28,6 +28,9 @@ TEXT_COLORS = ((255, 255, 255), (255, 255, 0), (0, 255, 255), (255, 0, 0), (0, 2
 # old names still accepted in config files written before a rename
 RENAMED = {"tile_white": "tile_plum", "tile_rose": "tile_mint"}
 NO_TEXT_THERE = ("status_hp",)        # only read beside the inventory, where there's no text
+# Inventory Tags are matched much tighter than world highlights (config tag_tolerance: 8),
+# so item colors only need to be this far apart (with a margin), not the highlights' 25.
+ITEM_TOLERANCE = 12
 TEXT_MARGIN = 10                      # the font is drawn pixel-exact: tolerance + 10 is safe
 
 
@@ -135,7 +138,9 @@ class Registry:
         in_inventory = category == "item"
         if in_inventory:
             levels = (0, 64, 128, 192, 255)
-            options = [c for c in product(levels, repeat=3) if max(c) >= 128]
+            coarse = [c for c in product(levels, repeat=3) if max(c) >= 128]
+            fine = [c for c in product(range(0, 256, 32), repeat=3) if max(c) >= 128]
+            options, tolerance = coarse + [c for c in fine if c not in coarse], ITEM_TOLERANCE
         else:
             options = palette(tolerance)
         for c in options:
@@ -166,7 +171,8 @@ class Registry:
         entries = list(self.entries.values())
         for i, a in enumerate(entries):
             for b in entries[i + 1:]:
-                if self.can_meet(a, b) and not distinct(a.rgb, b.rgb, tolerance):
+                tol = ITEM_TOLERANCE if a.category == b.category == "item" else tolerance
+                if self.can_meet(a, b) and not distinct(a.rgb, b.rgb, tol):
                     problems.append(f"{a.name} and {b.name} are too similar")
         for e in entries:
             if e.category == "item" or e.name in NO_TEXT_THERE:

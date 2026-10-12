@@ -54,6 +54,12 @@ def actions(steps: list[str], exports: list[str], library: dict | None = None,
             raise ValueError("pick a saved schedule")
         return sb + watching(p) + ["--schedule", p["name"]]
 
+    def teach_click(p):
+        from .__main__ import TAUGHT_CLICKS
+        if p.get("name") not in TAUGHT_CLICKS:
+            raise ValueError("pick a button from the list")
+        return sb + ["teach-click", p["name"]]
+
     def step(p):
         if p.get("step") not in steps:
             raise ValueError("pick a step from the list")
@@ -77,6 +83,7 @@ def actions(steps: list[str], exports: list[str], library: dict | None = None,
         "resume": sb + ["resume"],
         "calibrate": sb + ["calibrate"],
         "calibrate_map": sb + ["calibrate-map"],
+        "teach_click": teach_click,
         "debug": sb + ["debug"],
         "debug_skills": sb + ["debug", "--skills", "--out", "debug-skills.png"],
         "doctor": sb + ["doctor"],

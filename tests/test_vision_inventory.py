@@ -38,6 +38,8 @@ def test_inventory_reads_tags_and_ignores_untagged():
 
 
 def test_config_rejects_similar_item_colors():
-    cfg = Config(items={"a": (0, 255, 0), "b": (0, 225, 20)})
+    cfg = Config(items={"a": (0, 255, 0), "b": (0, 240, 10)})
     with pytest.raises(ValueError, match="too similar"):
         cfg.validate()
+    # tags are matched with tag_tolerance (8), so 40 apart is plenty
+    Config(items={"a": (0, 255, 0), "b": (0, 215, 0)}).validate()

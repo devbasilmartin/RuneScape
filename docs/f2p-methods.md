@@ -17,6 +17,9 @@ Banking walks to the bank and back ([travel.md](travel.md)).
 | Cooking | beef, shrimps, trout, salmon on the fire outside Draynor bank | 1 / 1 / 15 / 25+ | Draynor |
 | Cooking | the same on the Lumbridge castle range (backup) | 1 / 1 / 15 / 25+ | Lumbridge (top floor) |
 | Firemaking | logs, oaks, willows (then maples, yews) from the Grand Exchange | 1 / 15 / 30+ | Grand Exchange |
+| Smithing | smelt bronze bars (copper + tin), Al Kharid furnace | 1–15 | Al Kharid |
+| Smithing | smelt iron bars (half of them fail, as in the game), Al Kharid furnace | 15+ | Al Kharid |
+| Smithing | bronze daggers, then platebodies: bronze, iron, steel, mithril, adamant, Varrock west anvils | 1 / 18 / 33 / 48 / 68 / 88 | Varrock west |
 | Combat | cows, Lumbridge | 1–40 | Lumbridge |
 
 Willows wait until you're combat 41 (dark wizards next to them).
@@ -34,7 +37,18 @@ Willows wait until you're combat 41 (dark wizards next to them).
 - **Firemaking**: a tinderbox in the first inventory slot; bank tab `firemaking` with
   willow logs first and logs, oak logs in slots 4 and 5; the `fm_start` Ground Marker
   where the line starts.
+- **Smithing**: Object Markers on the Al Kharid furnace in `furnace` and the Varrock west
+  anvils in `anvil`. A hammer in the inventory (it's kept, never banked). Bank tab
+  `smithing`: copper ore, tin ore, iron ore in slots 1–3, then bronze, iron, steel,
+  mithril, adamantite bars in 4–8. Set the bank's **X** quantity to **14** (bronze bars
+  take 14 copper + 14 tin). Steel and better bars: buy them, the bot only smelts bronze and
+  iron.
+  The furnace and anvil menus are taught once: in game, open the menu (use an ore on the
+  furnace / a bar on an anvil), then panel → Learn → pick the button in **Teach a click** →
+  hover that button in the menu → **Just Enter**. Do *Bronze bar* and *Iron bar* on the
+  furnace, *dagger* and *platebody* on the anvil. In the anvil menu, also pick
+  quantity **All** once; the game remembers it.
 - Items are tagged automatically by the bot's RuneLite profile (new this time: iron ore,
-  salmon, burnt meat: rebuild and re-import the profile).
+  salmon, burnt meat, bars, daggers and platebodies: rebuild and re-import the profile).
 
 The marker checklist for everything is in [markers.md](markers.md).

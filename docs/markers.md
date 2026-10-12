@@ -31,6 +31,14 @@ Used by: fire runes (Al Kharid)
 - [ ] `bank` (Object Marker on the booth) at al kharid bank
 - automatic: `fire_talisman`, `rune_essence`
 
+## al kharid furnace
+
+Used by: smelt bronze bars (Al Kharid); smelt iron bars (Al Kharid)
+
+- [ ] Object Marker on Furnace → `furnace` (#C0FF40)
+- [ ] `bank` (Object Marker on the booth) at al kharid bank
+- automatic: `copper_ore`, `iron_ore`, `tin_ore`
+
 ## al kharid rooftop start
 
 Used by: Al Kharid rooftop
@@ -411,6 +419,14 @@ Used by: Varrock rooftop
 - [ ] Object Marker on obstacle 6 of the course, color set by hand: `obstacle_6` #4080FF
 - [ ] Object Marker on obstacle 7 of the course, color set by hand: `obstacle_7` #80FF40
 - automatic: `mark_of_grace`
+
+## varrock west anvils
+
+Used by: adamant platebodies (Varrock west anvils); bronze daggers (Varrock west anvils); bronze platebodies (Varrock west anvils); iron platebodies (Varrock west anvils); mithril platebodies (Varrock west anvils); steel platebodies (Varrock west anvils)
+
+- [ ] Object Marker on Anvil → `anvil` (#4000FF)
+- [ ] `bank` (Object Marker on the booth) at varrock west bank
+- automatic: `adamantite_bar`, `bronze_bar`, `hammer`, `iron_bar`, `mithril_bar`, `steel_bar`
 
 ## wintertodt
 

@@ -190,6 +190,8 @@ class ProcessTask(Task):
         for action in self.step.confirm:
             if "key" in action:
                 g.controls.press(action["key"])
+            elif isinstance(action["click"], str):
+                g.controls.click(g.taught(action["click"]))
             else:
                 g.controls.click(tuple(action["click"]))
             g.wait(0.3, 0.6)
