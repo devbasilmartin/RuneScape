@@ -55,6 +55,15 @@ class Controls:
             else:
                 self._pg.mouseUp(button=button)
 
+    def drag(self, start, end) -> None:
+        """Hold the left button from ``start`` to ``end`` (panning the world map)."""
+        self._pg.moveTo(*self.screen.to_screen(start), duration=self.rng.uniform(0.12, 0.3))
+        self._pg.mouseDown()
+        time.sleep(self.rng.uniform(0.05, 0.1))
+        self._pg.moveTo(*self.screen.to_screen(end), duration=self.rng.uniform(0.3, 0.5))
+        time.sleep(self.rng.uniform(0.05, 0.1))
+        self._pg.mouseUp()
+
     def click_rect(self, rect: Rect, button: str = "left") -> None:
         self.click(self.point_in(rect), button)
 

@@ -64,6 +64,7 @@ fm_start:        {rgb: [128, 192, 0],   category: route}   # not yellow: overhea
 
 # --- navigation ---
 path:            {rgb: [255, 0, 128],   category: route, area: everywhere}   # Shortest Path: path color (scene + minimap)
+stairs:          {rgb: [192, 0, 192],   category: portal, area: everywhere}   # Object Markers: stairs on travel routes (Lumbridge castle)
 hub_marker:      {rgb: [192, 192, 0],   category: route, area: everywhere}   # Ground Marker on each hub's arrival tile
 
 # --- Inventory Tags ---

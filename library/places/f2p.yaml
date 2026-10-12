@@ -1,0 +1,48 @@
+# F2P places the bot can walk between (docs/travel.md). `tile` is the game's world
+# coordinate [x, y] (x grows east, y grows north), as on the OSRS Wiki's map. The bot only
+# needs to get close: it stops walking once the activity's highlight is on screen, so a
+# few tiles off is fine. Names match the library's `location` and `bank_location`.
+#
+# `arrive` / `leave`: what to do after walking there / before walking away, for places
+# upstairs. Each line clicks a highlight (a colors.yaml name), optionally presses a key
+# for a dialog choice, and waits.
+
+lumbridge spawn:      {tile: [3222, 3218]}       # the courtyard; home teleport lands here
+lumbridge bank:
+  tile: [3206, 3209]                             # the castle's south staircase, ground floor
+  arrive:
+    - {click: stairs, wait: 3}                   # ground floor: Climb-up
+    - {click: stairs, key: "1", wait: 3}         # first floor: Climb → "Climb up"
+  leave:
+    - {click: stairs, wait: 3}                   # top floor: Climb-down
+    - {click: stairs, key: "2", wait: 3}         # first floor: Climb → "Climb down"
+lumbridge cows:       {tile: [3258, 3275]}       # the field east of the river
+lumbridge trees:      {tile: [3195, 3235]}       # west of the castle
+lumbridge swamp mine: {tile: [3228, 3148]}
+
+draynor bank:         {tile: [3092, 3245]}
+draynor willows:      {tile: [3087, 3235]}
+draynor fishing:      {tile: [3086, 3228]}
+draynor oaks:         {tile: [3101, 3242]}
+
+port sarim:           {tile: [3027, 3218]}
+falador east bank:    {tile: [3013, 3356]}
+falador west bank:    {tile: [2946, 3368]}
+barbarian village:    {tile: [3082, 3420]}
+edgeville bank:       {tile: [3094, 3493]}
+
+varrock west bank:    {tile: [3185, 3436]}
+varrock east bank:    {tile: [3253, 3420]}
+varrock west mine:    {tile: [3182, 3373]}
+varrock east mine:    {tile: [3287, 3366]}
+varrock earth ruins:  {tile: [3305, 3472]}
+grand exchange:       {tile: [3165, 3487]}
+grand exchange lane:  {tile: [3170, 3480]}       # where firemaking lines start
+
+al kharid bank:       {tile: [3269, 3167]}
+al kharid mine:       {tile: [3300, 3300]}
+al kharid fire ruins: {tile: [3312, 3253]}
+
+barbarian village fishing: {tile: [3104, 3424]}
+grand exchange bank:  {tile: [3164, 3489]}
+falador bank:         {tile: [3013, 3356]}       # the east bank

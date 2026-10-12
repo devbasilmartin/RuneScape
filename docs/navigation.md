@@ -1,5 +1,8 @@
 # Navigation
 
+**F2P: see [travel.md](travel.md)** (walking between known places, no teleports).
+This page is the teleport-based travel for members.
+
 The bot travels like you would: **teleport to a hub, set a Shortest Path target on the
 world map, follow the drawn path**. A step with `location: NAME` travels there whenever its
 target isn't in sight (at start, after a death, after you played).

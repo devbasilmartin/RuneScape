@@ -337,9 +337,41 @@ def cmd_colors(cfg: Config, args) -> None:
 
 
 def make_navigator(cfg: Config, game):
+    from .colors import Registry
     from .navigation import Destinations, Navigator
+    from .places import load_places, load_scale
+    places = load_places(Registry.load(cfg.colors_file).resolve)
     return Navigator(game, cfg.hubs, Destinations.load(cfg.data_dir / "destinations.json"),
-                     cfg.path_color, cfg.map_menu_option)
+                     cfg.path_color, cfg.map_menu_option, places=places,
+                     scale=load_scale(cfg.data_dir))
+
+
+def cmd_calibrate_map(cfg: Config, args) -> None:
+    """Measure the world map's pixels per tile from hovering two places on it."""
+    from .places import measure_scale, save_scale
+    game = live_game(cfg)
+    places = game.nav.places
+    for name in (args.first, args.second):
+        if name not in places:
+            raise SystemExit(f"unknown place {name!r}; places: {', '.join(places)}")
+    game.controls.click(cfg.layout.world_map_button)
+    game.wait(2.0)
+    print("World map open. Don't zoom it now or later: the scale is for this zoom.")
+    points = []
+    for name in (args.first, args.second):
+        input(f"  hover the mouse over {name!r} on the map and press Enter: ")
+        points.append(game.controls.position())
+    game.close_interfaces()
+    offset = (points[1][0] - points[0][0], points[1][1] - points[0][1])
+    try:
+        scale, off = measure_scale(places[args.first], places[args.second], offset)
+    except ValueError as e:
+        raise SystemExit(str(e))
+    if off > 15:
+        raise SystemExit(f"that's {off:.0f} degrees off the direction from {args.first} to "
+                         f"{args.second}: did you hover the right places? Nothing saved.")
+    save_scale(cfg.data_dir, scale)
+    print(f"saved: {scale:.2f} pixels per tile (data/map.json)")
 
 
 def live_game(cfg: Config):
@@ -372,6 +404,7 @@ def cmd_add_destination(cfg: Config, args) -> None:
 def cmd_travel(cfg: Config, args) -> None:
     from .registry_lookup import resolve_color
     game = live_game(cfg)
+    game.nav.here = args.start
     game.nav.travel(args.name, resolve_color(cfg, args.until) if args.until else None)
     print("arrived")
 
@@ -802,6 +835,9 @@ def main(argv=None) -> None:
     c.add_argument("--category", default="item")
     c.add_argument("--area", default="default",
                    help="where the color is used: everywhere, default, or a place name")
+    c = sub.add_parser("calibrate-map", help="measure the world map's scale (F2P travel)")
+    c.add_argument("--first", default="lumbridge spawn", help="the first place to hover")
+    c.add_argument("--second", default="lumbridge cows", help="the second place to hover")
     c = sub.add_parser("add-destination", help="record a world-map destination from a hub")
     c.add_argument("name")
     c.add_argument("--hub", required=True)
@@ -809,6 +845,7 @@ def main(argv=None) -> None:
     c = sub.add_parser("travel", help="travel to a destination now (test it)")
     c.add_argument("name")
     c.add_argument("--until", help="stop once this registry color is in sight")
+    c.add_argument("--from", dest="start", help="the place you're at (library/places/f2p.yaml)")
     c = sub.add_parser("profile", help="list, create or switch account profiles")
     c.add_argument("action", choices=["list", "create", "use"])
     c.add_argument("name", nargs="?")
@@ -887,6 +924,7 @@ def main(argv=None) -> None:
     args.mailbox_dir = profiles.shared_data if sel.name else cfg.data_dir
     notify_setup(args.mailbox_dir, tag=sel.name)
     {"calibrate": cmd_calibrate, "calibrate-run": cmd_calibrate_run,
+     "calibrate-map": cmd_calibrate_map,
      "learn-energy": cmd_learn_energy, "learn-digits": cmd_learn_digits, "levels": cmd_levels,
      "debug": cmd_debug, "doctor": cmd_doctor, "supervise": cmd_supervise, "discord": cmd_discord, "ask": cmd_ask,
      "add-destination": cmd_add_destination, "travel": cmd_travel,

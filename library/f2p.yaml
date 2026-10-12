@@ -32,6 +32,7 @@ willows_draynor:
   location: "draynor willows"
   trade: {outputs: {willow_logs: 500}}
   step:
+    bank_location: "draynor bank"
     task: gather
     target: willow_tree
     items: [willow_logs]
@@ -46,6 +47,7 @@ net_fishing_draynor:
   reliability: 5
   location: "draynor fishing"
   step:
+    bank_location: "draynor bank"
     task: gather
     target: fishing_spot
     items: [raw_shrimps, raw_anchovies, shrimps, anchovies, burnt_fish]
@@ -61,6 +63,7 @@ burn_willows:
   location: "grand exchange lane"
   trade: {inputs: {willow_logs: 500}}
   step:
+    bank_location: "grand exchange"
     task: firemaking
     target: fm_start
     items: [willow_logs]
@@ -77,6 +80,7 @@ cows_lumbridge:
   location: "lumbridge cows"
   trade: {inputs: {trout: 20}, outputs: {cowhide: 150}}
   step:
+    bank_location: "lumbridge bank"
     task: combat
     target: cow
     loot: loot
@@ -99,6 +103,7 @@ earth_runes_varrock:
   location: "varrock earth ruins"
   trade: {inputs: {rune_essence: 1400}, outputs: {earth_rune: 1400}}
   step:
+    bank_location: "varrock east bank"
     task: runecraft
     target: altar
     ruins: ruins
@@ -120,6 +125,7 @@ fire_runes_alkharid:
   location: "al kharid fire ruins"
   trade: {inputs: {rune_essence: 1700}, outputs: {fire_rune: 1700}}
   step:
+    bank_location: "al kharid bank"
     task: runecraft
     target: altar
     ruins: ruins

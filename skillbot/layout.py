@@ -37,6 +37,8 @@ class Layout:
     minimap_radius: int = 70
     world_map_button: tuple[int, int] = (720, 140)   # the world map orb by the minimap
     world_map_center: tuple[int, int] = (260, 170)   # where the map centres on the player
+    # the part of the open world map that's safe to click and drag in (not measured yet)
+    world_map_view: Rect = field(default_factory=lambda: Rect(40, 40, 440, 260))
     # right-click menus: header height, then one row per option
     menu_header: int = 19
     menu_row: int = 15

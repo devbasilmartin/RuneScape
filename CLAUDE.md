@@ -77,15 +77,18 @@ Working on the real client: calibration, inventory tags, reading levels, woodcut
 for respawns, don't start a second fight), the control panel, schedules (one activity or
 a named schedule, then log out). Discord `/run` starts an activity through the panel
 (Discord not set up on the VM yet). The HP guard (`skillbot/hp_guard.py`, hooked into
-`Game.grab`) eats or flees during every activity; not yet tried on the real client.
+`Game.grab`) eats or flees during every activity; F2P travel (`docs/travel.md`, places
+in `library/places/f2p.yaml`) walks between banks and activities. Neither is tried on the
+real client yet.
 
 Next, in order (`docs/modes-plan.md`):
-F2P travel (walking), F2P mode, cows + fire cooking, more F2P methods. **F2P only for
+F2P mode, cows + fire cooking, more F2P methods. **F2P only for
 now**: no new members work until the owner says so.
 
 Open:
-- No travel destinations are recorded, so an activity has to be started where it
-  happens; a schedule that moves between places stops when it tries to travel.
+- F2P travel needs Shortest Path (Plugin Hub), the Lumbridge stairs marked and
+  Calibrate map done on the VM; the world map's clickable area (`world_map_view`) isn't
+  measured yet.
 - The level font doesn't know the digit 9 yet (`learn-digits` with a 9 on screen).
 - Run energy: a "1" doesn't split in `learn-energy` (needs `energy-check.png`).
 - The VM doesn't draw the mouse cursor; a software cursor

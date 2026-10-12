@@ -1,6 +1,12 @@
-"""Travel between places: teleport to a hub, set the Shortest Path target on the world
-map, follow the drawn path.
+"""Travel between places: set the Shortest Path target on the world map, follow the
+drawn path.
 
+F2P (docs/travel.md): places have world coordinates (library/places/f2p.yaml) and the bot
+remembers which one it's at (the activity it's doing, the bank it just used). The map
+opens centred on you, so the target is the centre plus the tile difference times the
+map's scale; if that's off the map, the map is dragged first.
+
+With teleports (docs/navigation.md):
 Hubs (config.yaml) are teleport arrival points. After a teleport you stand on a known
 tile, so the world map opens centred on a known spot and every destination is a fixed
 pixel offset from the map's centre. Offsets are recorded once per destination with
@@ -20,6 +26,7 @@ import numpy as np
 
 from .game import BotError
 from .layout import Rect
+from .places import map_offset
 from .vision import color_mask
 
 log = logging.getLogger("skillbot")
@@ -61,8 +68,12 @@ class Destinations:
 
 class Navigator:
     def __init__(self, game, hubs: dict[str, Hub], destinations: Destinations,
-                 path_color, menu_option: int = 1, stride_wait=(2.5, 3.5)):
+                 path_color, menu_option: int = 1, stride_wait=(2.5, 3.5), places=None,
+                 scale: float | None = None):
         self.game = game
+        self.places = places or {}      # F2P places by world coordinate
+        self.scale = scale              # world map pixels per tile (calibrate-map)
+        self.here = None                # the place we're at, when known
         self.hubs = hubs
         self.destinations = destinations
         self.path_color = tuple(path_color)
@@ -101,12 +112,32 @@ class Navigator:
         return point[0], point[1] + lay.menu_header + lay.menu_row * (option - 1) + lay.menu_row // 2
 
     def set_target(self, dest: str) -> None:
+        self.set_target_at(self.destinations.data[dest]["offset"])
+
+    def set_target_at(self, offset) -> None:
+        """Open the world map and "Set target" ``offset`` pixels from its centre (you),
+        dragging the map first when that's outside the part we can click."""
         g, lay = self.game, self.game.layout
-        spot = self.destinations.data[dest]
         g.controls.click(lay.world_map_button)
         g.wait(1.5, 2.0)
         cx, cy = lay.world_map_center
-        point = (cx + spot["offset"][0], cy + spot["offset"][1])
+        view = lay.world_map_view
+        x, y = cx + offset[0], cy + offset[1]
+        for _ in range(12):
+            inside = view.x <= x < view.x + view.w and view.y <= y < view.y + view.h
+            if inside:
+                break
+            # drag the map so the target moves towards the centre (the map follows the mouse)
+            step_x = max(-view.w // 2 + 10, min(view.w // 2 - 10, cx - x))
+            step_y = max(-view.h // 2 + 10, min(view.h // 2 - 10, cy - y))
+            start = (cx - step_x // 2, cy - step_y // 2)
+            g.controls.drag(start, (start[0] + step_x, start[1] + step_y))
+            g.wait(0.3, 0.5)
+            x, y = x + step_x, y + step_y
+        else:
+            g.close_interfaces()
+            raise BotError("the destination is too far across the world map")
+        point = (x, y)
         g.controls.click(point, button="right")
         g.wait(0.4, 0.6)
         g.controls.click(self.menu_point(point, self.menu_option))   # "Set target"
@@ -168,7 +199,10 @@ class Navigator:
         """Get to ``dest`` unless ``until_color`` is already in sight."""
         g = self.game
         if until_color is not None and g.blobs(g.grab(), until_color):
+            self.here = dest
             return
+        if dest in self.places:
+            return self.walk_to(dest, until_color)
         if dest.startswith("hub:"):                 # e.g. your house: the teleport is the trip
             self.teleport(dest[4:])
             if until_color is not None and not g.wait_until(
@@ -183,3 +217,43 @@ class Navigator:
         self.teleport(spot["hub"])
         self.set_target(dest)
         self.follow(until_color)
+
+    # ---- F2P: walking between known places ---------------------------------------------
+    def walk_to(self, dest: str, until_color) -> None:
+        g = self.game
+        if self.here is None or self.here == dest:
+            # Unknown: the run was started here, or it's where we already are and the
+            # highlight is just gone for a moment (everything chopped, cows dead).
+            self.here = dest
+            return
+        if self.here not in self.places:
+            raise BotError(f"don't know where {self.here!r} is (not in library/places/f2p.yaml)")
+        if self.scale is None:
+            raise BotError("the world map's scale isn't measured: run Calibrate map "
+                           "(`python -m skillbot calibrate-map`, docs/travel.md)")
+        here, there = self.places[self.here], self.places[dest]
+        log.info("walking from %s to %s", here.name, dest)
+        self.moves(here.leave)
+        self.here = None                    # on the way: if it fails, we don't know
+        self.set_target_at(map_offset(here, there, self.scale))
+        g.wait(1.0, 1.5)                    # Shortest Path needs a moment to draw
+        self.follow(None if there.arrive else until_color)
+        self.moves(there.arrive)
+        if until_color is not None and not g.wait_until(
+                lambda img: bool(g.blobs(img, until_color)), timeout=10):
+            raise BotError(f"walked to {dest} but {until_color} isn't in sight (is "
+                           "everything marked there, and its tile in library/places/f2p.yaml right?)")
+        self.here = dest
+
+    def moves(self, moves) -> None:
+        """Click the stairs (and pick a dialog option) for places upstairs."""
+        g = self.game
+        for m in moves:
+            if not g.wait_until(lambda img: bool(g.blobs(img, m.click)), timeout=10):
+                raise BotError(f"can't see {m.click} (the stairs: mark them with Object "
+                               "Markers on every floor)")
+            g.click_nearest(g.grab(), m.click)
+            if m.key:
+                g.wait(1.5, 2.0)
+                g.controls.press(m.key)
+            g.wait(m.wait, m.wait + 1)

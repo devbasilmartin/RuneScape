@@ -27,8 +27,8 @@ Used by: fire runes (Al Kharid)
 
 - [ ] Object Marker, color set by hand: `altar` #00C080 (shares the name Altar with another color)
 - [ ] Object Marker, color set by hand: `altar_portal` #8000C0 (shares the name Portal with another color)
-- [ ] Object Marker on Bank booth / Bank chest / Bank / Grand Exchange booth → `bank` (#FF00FF)
 - [ ] Object Marker on Mysterious ruins → `ruins` (#40FF00)
+- [ ] `bank` (Object Marker on the booth) at al kharid bank
 - automatic: `fire_talisman`, `rune_essence`
 
 ## al kharid rooftop start
@@ -123,7 +123,7 @@ Used by: ensouled heads (Arceuus reanimation)
 Used by: net fishing (Draynor)
 
 - [ ] Inventory Tag by hand on the item you use: `burnt_fish` #FF0000
-- [ ] Object Marker on Bank booth / Bank chest / Bank / Grand Exchange booth → `bank` (#FF00FF)
+- [ ] `bank` (Object Marker on the booth) at draynor bank
 - automatic: `anchovies`, `fishing_spot`, `raw_anchovies`, `raw_shrimps`, `shrimps`
 
 ## draynor oaks
@@ -150,8 +150,8 @@ Used by: Draynor rooftop
 
 Used by: willows (Draynor)
 
-- [ ] Object Marker on Bank booth / Bank chest / Bank / Grand Exchange booth → `bank` (#FF00FF)
 - [ ] Object Marker on Willow tree / Willow → `willow_tree` (#0080C0)
+- [ ] `bank` (Object Marker on the booth) at draynor bank
 - automatic: `willow_logs`
 
 ## edgeville hill giants
@@ -231,6 +231,7 @@ Used by: burn maples; burn willows; burn yews
 
 - [ ] Object Marker on Bank booth / Bank chest / Bank / Grand Exchange booth → `bank` (#FF00FF)
 - [ ] Ground Marker labelled `fm_start` (#80C000)
+- [ ] `bank` (Object Marker on the booth) at grand exchange
 - automatic: `maple_logs`, `willow_logs`, `yew_logs`
 
 ## hosidius kitchen
@@ -262,7 +263,7 @@ Used by: bagged plants (garden); mahogany tables (dining room); oak dungeon door
 
 Used by: cows (Lumbridge)
 
-- [ ] Object Marker on Bank booth / Bank chest / Bank / Grand Exchange booth → `bank` (#FF00FF)
+- [ ] `bank` (Object Marker on the booth) at lumbridge bank
 - automatic: `anchovies`, `bones`, `cooked_meat`, `cow`, `cowhide`, `loot`, `raw_beef`, `shrimps`, `trout`
 
 ## lumbridge trees
@@ -367,8 +368,8 @@ Used by: earth runes (Varrock)
 
 - [ ] Object Marker, color set by hand: `altar` #00C080 (shares the name Altar with another color)
 - [ ] Object Marker, color set by hand: `altar_portal` #8000C0 (shares the name Portal with another color)
-- [ ] Object Marker on Bank booth / Bank chest / Bank / Grand Exchange booth → `bank` (#FF00FF)
 - [ ] Object Marker on Mysterious ruins → `ruins` (#40FF00)
+- [ ] `bank` (Object Marker on the booth) at varrock east bank
 - automatic: `earth_talisman`, `rune_essence`
 
 ## varrock rooftop start

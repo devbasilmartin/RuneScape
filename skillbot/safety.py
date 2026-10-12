@@ -110,6 +110,7 @@ class Safety:
                           f"{self.cfg.death_window_minutes:.0f} min; this step is too dangerous")
         if not step.location or g.nav is None:
             raise StopBot(f"died during {step.name!r} and it has no location to walk back to")
+        g.nav.here = "lumbridge spawn"     # where you respawn (F2P)
         g.nav.travel(step.location, self.grave_color)
         self.take_grave()
         self.wear(step.gear)

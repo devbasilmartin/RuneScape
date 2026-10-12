@@ -124,6 +124,11 @@ class FakeClient:
         for fn in list(self.on_click):
             fn(self, pt)
 
+    def drag(self, start, end):
+        self.drags = getattr(self, "drags", []) + [(tuple(start), tuple(end))]
+        for fn in list(getattr(self, "on_drag", [])):
+            fn(self, start, end)
+
     def key_down(self, k):
         if k == "shift":
             self.shift = True
