@@ -7,6 +7,10 @@ stopped. If a part goes wrong, skip it, carry on, and tell me which step.
 
 - [ ] Panel → Setup → **Update bot**. Close the panel and open it again.
 - [ ] You should see a **Record** card, and **Calibrate map** under Setup.
+- [ ] Setup → **Build RuneLite profile** (pick your export), then import
+      `bot-profile.properties` in RuneLite: it tags the new items (iron ore, salmon,
+      burnt meat).
+- [ ] If the account is F2P: add `account: f2p` to `config.yaml`.
 
 ## 2. Shared folder (10 min) — [file-sharing.md](file-sharing.md)
 
