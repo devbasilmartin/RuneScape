@@ -6,6 +6,8 @@ items (your net, tinderbox...) are invisible to the bot, so it never drops or
 banks them.
 """
 
+import numpy as np
+
 from .layout import Layout, Rect
 from .vision import color_mask
 
@@ -47,8 +49,20 @@ class Inventory:
     def slots_with(self, img, name: str) -> list[int]:
         return [i for i, n in self.tags(img).items() if n == name]
 
+    def is_empty(self, img, i) -> bool:
+        """An empty slot is plain panel: flat, with none of the black outline every item
+        sprite has (measured on a real client: empty std ~2 and no dark pixels, items 50+)."""
+        a = self.layout.slot(i).crop(img)[..., :3]
+        return int((a.max(axis=-1) < 30).sum()) < 4 and float(a.std(axis=(0, 1)).mean()) < 8
+
+    def empty_slots(self, img) -> int:
+        return sum(self.is_empty(img, i) for i in range(SLOTS))
+
     def is_full(self, img, tools: int | None = None) -> bool:
-        return len(self.tags(img)) >= SLOTS - (self.tools if tools is None else tools)
+        """Every slot holds something: all non-tool slots tagged, or no empty slot left
+        (untagged items, like loot the profile doesn't tag, fill it too)."""
+        tools = self.tools if tools is None else tools
+        return len(self.tags(img)) >= SLOTS - tools or self.empty_slots(img) == 0
 
     def any_tag_visible(self, img) -> bool:
         inv = self.layout.inventory

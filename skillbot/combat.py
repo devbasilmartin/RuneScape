@@ -21,6 +21,8 @@ log = logging.getLogger("skillbot")
 
 FOLLOW_PX = 40        # how far a target may move between looks and still be "the same one"
 LOOT_RADIUS_PX = 160  # only pick up loot this close to the player
+UNDER_ATTACK_WAIT = 30  # then attack anyway (the bar may be someone else's fight nearby)
+RESPAWN_WAIT = 90     # seconds to wait for an enemy to (re)appear before giving up
 
 
 class CombatTask(Task):
@@ -57,11 +59,20 @@ class CombatTask(Task):
         cfg = self.game.cfg
         return self.hp_fraction(img, cfg.layout.hp_bar, cfg.hp_bar_color, cfg.color_tolerance)
 
-    def has_health_bar(self, img, blob) -> bool:
+    def bar_in(self, img, rect: Rect) -> bool:
         """The game draws a green/red bar over anything that is in combat."""
-        area = Rect(blob.x, max(blob.y - 25, 0), blob.w, 30).crop(img)
+        area = rect.crop(img)
         tol = self.game.cfg.color_tolerance
         return sum(int(color_mask(area, c, tol).sum()) for c in self.game.cfg.health_bar_colors) >= 6
+
+    def has_health_bar(self, img, blob) -> bool:
+        return self.bar_in(img, Rect(blob.x, max(blob.y - 25, 0), blob.w, 30))
+
+    def under_attack(self, img) -> bool:
+        """A health bar right around the player: yours (you were hit) or that of an enemy
+        next to you. Attacking another one then only gives "already under attack"."""
+        px, py = self.game.player
+        return self.bar_in(img, Rect(px - 60, py - 70, 120, 110))
 
     def follow(self, img, pos):
         """The blob that is most likely our target now, or None if it's gone (dead)."""
@@ -115,11 +126,13 @@ class CombatTask(Task):
                 if (b.center[0] - px) ** 2 + (b.center[1] - py) ** 2 <= LOOT_RADIUS_PX ** 2]
         if not near:
             return False
-        before = len(g.inv.tags(img))
+        before, room = len(g.inv.tags(img)), g.inv.empty_slots(img)
         if not g.click_blob(img, min(near, key=lambda b: (b.center[0] - px) ** 2
                                      + (b.center[1] - py) ** 2)):
             return False
-        if g.wait_until(lambda im: len(g.inv.tags(im)) > before, timeout=6):
+        # picked up: a new tagged item, or any item (untagged) in a slot that was empty
+        if g.wait_until(lambda im: len(g.inv.tags(im)) > before
+                        or g.inv.empty_slots(im) < room, timeout=6):
             g.click_outcome(True)
             self.loot_misses = 0
         else:
@@ -150,6 +163,14 @@ class CombatTask(Task):
             g.open_tab("inventory")
         return blob.center
 
+    def wait_for_respawn(self) -> None:
+        """Every enemy is dead or out of view: they respawn, so wait rather than stop."""
+        g, step = self.game, self.step
+        log.info("%s: no enemies in view; waiting for them to respawn", step.name)
+        if not g.wait_until(lambda im: g.blobs(im, step.target), timeout=RESPAWN_WAIT):
+            raise BotError(f"{step.name}: no enemies in view for {RESPAWN_WAIT} s (did the "
+                           "player walk away from them, or the camera turn?)")
+
     def restock(self) -> bool:
         return self.bank_and_restock() and bool(self.tagged(self.game.grab(), self.step.food))
 
@@ -157,7 +178,7 @@ class CombatTask(Task):
     def run_batch(self) -> str:
         g, step = self.game, self.step
         self.select_style()
-        kills, target, engaged_at, misses = 0, None, 0.0, 0
+        kills, target, engaged_at, misses, fight_since = 0, None, 0.0, 0, None
         while kills < step.kills_per_batch:
             img = g.grab()
             self.check_hp_bar(img)
@@ -197,6 +218,16 @@ class CombatTask(Task):
                 target = None
                 continue
             if not full and self.pick_up(img):
+                continue
+            if self.under_attack(img):
+                fight_since = fight_since if fight_since is not None else g.now()
+                if g.now() - fight_since < UNDER_ATTACK_WAIT:
+                    g.wait(0.6, 1.0)        # let this fight finish first
+                    continue
+            else:
+                fight_since = None
+            if not step.walk.get("target") and not g.blobs(img, step.target):
+                self.wait_for_respawn()
                 continue
             g.walk(step.walk.get("target"), step.target)
             target = self.attack(g.grab())

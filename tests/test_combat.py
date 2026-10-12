@@ -206,3 +206,53 @@ def test_inventory_full_of_food_still_fights():
     assert task.run_batch() == "ok"
     assert task.stats["kills"] == 2
     assert "cowhide" not in fake.items().values()        # no room: it doesn't loot
+
+
+def test_waits_for_cows_to_respawn():
+    game, fake, field = setup(cows=COWS[:1])
+    x, y, w, h = COWS[0]
+    fake.img[y - 12:y + h + 2, x - 2:x + w + 2] = BG        # it's dead; back in 30 s
+    field.cows.clear()
+    back = fake.t + 30
+
+    def respawn(f):
+        if f.t >= back and not field.cows:
+            field.cows[COWS[0]] = "idle"
+            outline(f.img, *COWS[0], COW)
+    fake.on_wait.insert(0, respawn)
+    task = make_task(game, combat_step(kills_per_batch=1))
+    assert task.run_batch() == "ok" and task.stats["kills"] == 1
+
+
+def test_no_cows_for_long_stops_with_a_reason():
+    game, fake, field = setup(cows=())
+    task = make_task(game, combat_step(kills_per_batch=1))
+    with pytest.raises(BotError, match="no enemies in view"):
+        task.run_batch()
+
+
+def test_full_of_untagged_items_counts_as_full():
+    game, fake, _ = setup(food=0)
+    for i in range(28):
+        put_item(fake.img, i, None)
+        r = LAYOUT.slot(i)
+        fake.img[r.y + 6:r.y + 26, r.x + 6:r.x + 26] = (0, 0, 0)       # an untagged item
+    assert game.inv.is_full(fake.img, 1)
+    put_item(fake.img, 27, None)
+    assert not game.inv.is_full(fake.img, 1)
+
+
+def test_doesnt_attack_another_cow_while_one_is_fighting_you():
+    game, fake, field = setup(cows=[COWS[3]])
+    px, py = LAYOUT.viewport.center
+    fake.img[py - 30:py - 27, px - 15:px + 15] = (0, 255, 0)     # a cow hitting you
+    first = []
+    fake.on_click.insert(0, lambda f, pt: first.append(f.t) if not first else None)
+
+    def fight_over(f):
+        if f.t >= 12:
+            f.img[py - 30:py - 27, px - 15:px + 15] = BG
+    fake.on_wait.insert(0, fight_over)
+    task = make_task(game, combat_step(kills_per_batch=1))
+    assert task.run_batch() == "ok"
+    assert first and first[0] >= 12

@@ -208,7 +208,8 @@ def cmd_debug(cfg: Config, args) -> None:
     cv2.imwrite(args.out, out)
     from .combat import CombatTask
     hp = CombatTask.hp_fraction(img, lay.hp_bar, cfg.hp_bar_color, cfg.color_tolerance)
-    print(f"wrote {args.out}\ntagged slots: {tags}\nhp bar: {hp:.0%}")
+    print(f"wrote {args.out}\ntagged slots: {tags}\nempty slots: {inv.empty_slots(img)}"
+          f"\nhp bar: {hp:.0%}")
 
 
 def cmd_doctor(cfg: Config, args) -> None:
