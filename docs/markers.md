@@ -180,6 +180,16 @@ Used by: hill giants (Edgeville dungeon)
 - [ ] Object Marker on Bank booth / Bank chest / Bank / Grand Exchange booth → `bank` (#FF00FF)
 - automatic: `big_bones`, `enemy`, `loot`, `trout`
 
+## falador air ruins
+
+Used by: air runes (Falador)
+
+- [ ] Object Marker, color set by hand: `altar` #00C080 (shares the name Altar with another color)
+- [ ] Object Marker, color set by hand: `altar_portal` #8000C0 (shares the name Portal with another color)
+- [ ] Object Marker on Mysterious ruins → `ruins` (#40FF00)
+- [ ] `bank` (Object Marker on the booth) at falador east bank
+- automatic: `air_talisman`, `rune_essence`
+
 ## falador rooftop start
 
 Used by: Falador rooftop
@@ -239,10 +249,11 @@ Used by: Gnome Stronghold course
 
 ## grand exchange bank
 
-Used by: Saradomin brews; attack potions; black d'hide bodies; blue d'hide bodies; cut diamonds; cut dragonstones; cut emeralds; cut rubys; cut sapphires; glassblowing beer glasses / oil lamps; glassblowing light orbs; glassblowing unpowered orbs; glassblowing vials; green d'hide bodies; magic longbows (u); magic potions; maple longbows (u); prayer potions; ranging potions; red d'hide bodies; strength potions; super attacks; super defences; super restores; super strengths; yew longbows (u)
+Used by: Saradomin brews; attack potions; black d'hide bodies; blue d'hide bodies; cut diamonds; cut dragonstones; cut emeralds; cut rubys; cut sapphires; glassblowing beer glasses / oil lamps; glassblowing light orbs; glassblowing unpowered orbs; glassblowing vials; green d'hide bodies; leather bodies; leather gloves; magic longbows (u); magic potions; maple longbows (u); prayer potions; ranging potions; red d'hide bodies; strength potions; super attacks; super defences; super restores; super strengths; yew longbows (u)
 
 - [ ] Object Marker on Bank booth / Bank chest / Bank / Grand Exchange booth → `bank` (#FF00FF)
-- automatic: `black_leather`, `blue_leather`, `cadantine_unf`, `chisel`, `crushed_nest`, `dwarf_weed_unf`, `eye_of_newt`, `glassblowing_pipe`, `green_leather`, `guam_unf`, `irit_unf`, `knife`, `kwuarm_unf`, `lantadyme_unf`, `limpwurt_root`, `magic_logs`, `maple_logs`, `molten_glass`, `needle`, `potato_cactus`, `ranarr_unf`, `red_leather`, `red_spiders_eggs`, `snapdragon_unf`, `snape_grass`, `tarromin_unf`, `thread`, `toadflax_unf`, `uncut_diamond`, `uncut_dragonstone`, `uncut_emerald`, `uncut_ruby`, `uncut_sapphire`, `white_berries`, `wine_of_zamorak`, `yew_logs`
+- [ ] `bank` (Object Marker on the booth) at grand exchange bank
+- automatic: `black_leather`, `blue_leather`, `cadantine_unf`, `chisel`, `crushed_nest`, `dwarf_weed_unf`, `eye_of_newt`, `glassblowing_pipe`, `green_leather`, `guam_unf`, `irit_unf`, `knife`, `kwuarm_unf`, `lantadyme_unf`, `leather`, `limpwurt_root`, `magic_logs`, `maple_logs`, `molten_glass`, `needle`, `potato_cactus`, `ranarr_unf`, `red_leather`, `red_spiders_eggs`, `snapdragon_unf`, `snape_grass`, `tarromin_unf`, `thread`, `toadflax_unf`, `uncut_diamond`, `uncut_dragonstone`, `uncut_emerald`, `uncut_ruby`, `uncut_sapphire`, `white_berries`, `wine_of_zamorak`, `yew_logs`
 
 ## grand exchange lane
 
@@ -280,10 +291,10 @@ Used by: bagged plants (garden); mahogany tables (dining room); oak dungeon door
 
 ## lumbridge cows
 
-Used by: cows (Lumbridge): bury bones; cows (Lumbridge): kill only
+Used by: Fire Strike on cows (Lumbridge); Ranged on cows (Lumbridge); Wind Strike on cows (Lumbridge); cows (Lumbridge): bury bones; cows (Lumbridge): kill only
 
 - [ ] `bank` (Object Marker on the booth) at lumbridge bank
-- automatic: `anchovies`, `bones`, `cooked_meat`, `cow`, `cowhide`, `loot`, `raw_beef`, `shrimps`, `trout`
+- automatic: `air_rune`, `anchovies`, `bones`, `bronze_arrow`, `cooked_meat`, `cow`, `cowhide`, `fire_rune`, `iron_arrow`, `loot`, `mind_rune`, `raw_beef`, `shrimps`, `trout`
 
 ## lumbridge kitchen
 

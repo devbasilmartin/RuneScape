@@ -295,3 +295,21 @@ def test_doesnt_attack_another_cow_while_one_is_fighting_you():
     task = make_task(game, combat_step(kills_per_batch=1))
     assert task.run_batch() == "ok"
     assert first and first[0] >= 12
+
+
+def test_casting_stops_when_out_of_runes_instead_of_attacking_by_hand():
+    game, fake, field = setup(food=0)
+    task = make_task(game, combat_step(cast=(700, 400), runes=["fire_rune"], kills_per_batch=1))
+    assert task.run_batch() == "exhausted"
+    assert not field.log                               # never attacked
+    put_item(fake.img, 5, "fire_rune")
+    assert task.run_batch() == "ok"
+    assert field.log[0][2] is True                     # the attack was a cast
+
+
+def test_wields_picked_up_arrows():
+    game, fake, field = setup(cows=[], food=0)
+    put_item(fake.img, 7, "tiara")                     # stands in for a stack of arrows
+    task = make_task(game, combat_step(wield=["tiara"]))
+    assert task.wield(fake.grab())
+    assert slot_at(fake.clicks[-1][0]) == 7

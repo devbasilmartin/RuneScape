@@ -88,12 +88,12 @@ class Method:
             raw["style"] = self.styles[skill]
         elif self.step.get("task") == "combat" and skill in STYLE_FOR:
             raw.setdefault("style", STYLE_FOR[skill])
-        for key in ("spell", "leave_spell"):
+        for key in ("spell", "leave_spell", "cast"):
             if isinstance(raw.get(key), str):
                 name = raw[key]
                 if not spells or name not in spells:
-                    raise ValueError(f"spell {name!r} has no position (add it under spells: "
-                                     "in config.yaml)")
+                    raise ValueError(f"spell {name!r} has no position: open the magic tab and "
+                                     "use Learn → Teach a click in the panel")
                 raw[key] = spells[name]
         raw = resolve_config({"plan": [raw]}, registry)["plan"][0]
         return Step.from_dict(raw)

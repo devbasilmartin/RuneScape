@@ -467,3 +467,92 @@ smith_adamant_platebodies:
          confirm: [{click: smith_platebody}], bank_tab: smithing,
          bank_location: "varrock west bank",
          withdraw: [{slot: 7, item: adamantite_bar, quantity: all}]}
+
+# --- Magic: strike spells on cows. Teach the spell once (panel → Learn → Teach a click,
+# magic tab open). Runes are tagged; out of runes ends the activity instead of attacking
+# by hand. ---
+wind_strike_cows:
+  name: "Wind Strike on cows (Lumbridge)"
+  skills: [magic]
+  levels: [1, 13]
+  xp_per_hour: 9000
+  reliability: 4
+  location: "lumbridge cows"
+  trade: {inputs: {air_rune: 600, mind_rune: 600}}
+  step: {task: combat, target: cow, cast: wind_strike, runes: [air_rune, mind_rune],
+         food: [cooked_meat, shrimps, anchovies, trout], when_out_of_food: stop}
+
+fire_strike_cows:
+  name: "Fire Strike on cows (Lumbridge)"
+  skills: [magic]
+  levels: [13, 25]
+  xp_per_hour: 14000
+  reliability: 4
+  location: "lumbridge cows"
+  trade: {inputs: {air_rune: 500, mind_rune: 500, fire_rune: 1500}}
+  step: {task: combat, target: cow, cast: fire_strike, runes: [air_rune, mind_rune, fire_rune],
+         food: [cooked_meat, shrimps, anchovies, trout], when_out_of_food: stop}
+
+# --- Ranged: a bow wielded, arrows in the quiver. Arrows on the ground are picked up (Ground
+# Items: highlight bronze/iron arrows in `loot`) and wielded again. ---
+ranged_cows:
+  name: "Ranged on cows (Lumbridge)"
+  skills: [ranged]
+  levels: [1, 40]
+  xp_per_hour: 12000
+  reliability: 3
+  location: "lumbridge cows"
+  step: {task: combat, target: cow, loot: loot, wield: [bronze_arrow, iron_arrow],
+         items: [cowhide, raw_beef, bones], when_full: drop,
+         food: [cooked_meat, shrimps, anchovies, trout], when_out_of_food: stop}
+
+# --- Crafting: leather (buy it, or tan cowhides) with a needle and thread, then gem cutting
+# from 20. Teach the menu buttons once. Bank tab `crafting`: leather in slot 0. ---
+craft_leather_gloves:
+  name: "leather gloves"
+  skills: [crafting]
+  levels: [1, 14]
+  xp_per_hour: 25000
+  reliability: 4
+  location: "grand exchange bank"
+  trade: {inputs: {leather: 1800}}
+  step: {task: process, items: [leather], use_item: needle, with_item: leather,
+         keep: [needle, thread], confirm: [{click: craft_leather_gloves}], bank_tab: crafting,
+         bank_location: "grand exchange bank",
+         withdraw: [{slot: 0, item: leather, quantity: all}]}
+
+craft_leather_bodies:
+  name: "leather bodies"
+  skills: [crafting]
+  levels: [14, 20]
+  xp_per_hour: 30000
+  reliability: 4
+  location: "grand exchange bank"
+  trade: {inputs: {leather: 1200}}
+  step: {task: process, items: [leather], use_item: needle, with_item: leather,
+         keep: [needle, thread], confirm: [{click: craft_leather_body}], bank_tab: crafting,
+         bank_location: "grand exchange bank",
+         withdraw: [{slot: 0, item: leather, quantity: all}]}
+
+# --- Runecraft from 1: air runes south of Falador (Rune Mysteries for the talisman). ---
+air_runes_falador:
+  name: "air runes (Falador)"
+  skills: [runecraft]
+  levels: [1, 9]
+  requires: {quests: ["Rune Mysteries"]}
+  xp_per_hour: 7000
+  profit_per_hour: 15000
+  reliability: 4
+  location: "falador air ruins"
+  trade: {inputs: {rune_essence: 1400}, outputs: {air_rune: 1400}}
+  step:
+    bank_location: "falador east bank"
+    task: runecraft
+    target: altar
+    ruins: ruins
+    portal: altar_portal
+    items: [rune_essence]
+    enter_with: air_talisman
+    keep: [air_talisman]
+    bank_tab: runecraft
+    withdraw: [{slot: 0, item: rune_essence, quantity: all}]

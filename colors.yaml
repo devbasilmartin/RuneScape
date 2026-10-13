@@ -224,3 +224,10 @@ iron_platebody:  {rgb: [255, 255, 0], category: item}
 steel_platebody: {rgb: [255, 255, 64], category: item}
 mithril_platebody: {rgb: [255, 255, 192], category: item}
 adamant_platebody: {rgb: [0, 128, 0], category: item}
+mind_rune:       {rgb: [0, 192, 0], category: item}
+bronze_arrow:    {rgb: [0, 255, 128], category: item}
+iron_arrow:      {rgb: [0, 255, 192], category: item}
+leather:         {rgb: [192, 64, 0], category: item}
+leather_gloves:  {rgb: [192, 128, 0], category: item}
+leather_body:    {rgb: [255, 64, 128], category: item}
+air_talisman:    {rgb: [255, 64, 192], category: item}

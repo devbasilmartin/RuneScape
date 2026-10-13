@@ -103,6 +103,7 @@ class Step:
     bury: tuple = ()                   # tagged bones to bury (Prayer)
     style: int | None = None           # attack style button 0-3 to select at the start
     cast: tuple | None = None          # spell position in the magic tab, cast on every attack
+    wield: tuple = ()                  # tagged items to wield when they show up (picked-up arrows)
     kills_per_batch: int = 10          # check levels after this many kills
 
     # runecraft

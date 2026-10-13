@@ -362,7 +362,18 @@ def point_at(controls, what: str, seconds: int = 5, sleep=None) -> tuple[int, in
     return pos
 
 
+def taught_clicks(data_dir: Path) -> dict:
+    try:
+        return {k: tuple(v) for k, v in json.loads((data_dir / "clicks.json").read_text()).items()}
+    except (OSError, ValueError):
+        return {}
+
+
 TAUGHT_CLICKS = {
+    "wind_strike": "Wind Strike in the magic tab",
+    "fire_strike": "Fire Strike in the magic tab",
+    "craft_leather_gloves": "leather gloves in the leather crafting menu",
+    "craft_leather_body": "the leather body in the leather crafting menu",
     "smelt_bronze": "the Bronze bar button in the furnace menu",
     "smelt_iron": "the Iron bar button in the furnace menu",
     "smith_dagger": "the dagger in the anvil menu (any metal)",
@@ -963,6 +974,7 @@ def main(argv=None) -> None:
         cfg.data_dir = sel.data_dir
         profiles.load_env(sel.name)
     cfg.data_dir.mkdir(parents=True, exist_ok=True)
+    cfg.spells = {**taught_clicks(cfg.data_dir), **cfg.spells}   # spells taught in the panel
     args.mailbox_dir = profiles.shared_data if sel.name else cfg.data_dir
     notify_setup(args.mailbox_dir, tag=sel.name)
     {"calibrate": cmd_calibrate, "calibrate-run": cmd_calibrate_run,

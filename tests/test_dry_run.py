@@ -14,7 +14,8 @@ from skillbot.planner import make_task
 from fakes import ITEMS, FakeClient, make_game, put_item
 
 SPELLS = {k: (600, 300) for k in ("varrock_teleport", "camelot_teleport", "high_alchemy",
-                                  "ourania_teleport", "reanimate_adept")}
+                                  "ourania_teleport", "reanimate_adept", "wind_strike",
+                                  "fire_strike")}
 FAKE_HOURS = 0.5
 METHODS = load_library()
 

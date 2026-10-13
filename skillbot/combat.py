@@ -120,6 +120,15 @@ class CombatTask(Task):
         self.game.wait(1.8, 2.2)     # eating delay
         return True
 
+    def wield(self, img) -> bool:
+        """Picked-up arrows land in the inventory: wield them back into the quiver."""
+        slots = sorted(self.tagged(img, self.step.wield))
+        if not slots:
+            return False
+        self.game.controls.click_rect(self.game.layout.slot(slots[0]))
+        self.game.wait(0.6, 0.9)
+        return True
+
     def bury_bones(self, img) -> bool:
         bones = sorted(self.tagged(img, self.step.bury))
         for i in bones:
@@ -195,6 +204,11 @@ class CombatTask(Task):
         while kills < step.kills_per_batch:
             img = g.grab()
             self.check_hp_bar(img)
+            if step.cast and step.runes and not all(self.tagged(img, [r]) for r in step.runes):
+                log.info("%s: out of runes", step.name)     # else it would attack by hand
+                return "exhausted"
+            if target is None and self.wield(img):
+                continue
             if self.hp(img) < step.eat_below and not self.eat(img):
                 log.info("%s: out of food at %.0f%% HP", step.name, 100 * self.hp(img))
                 if step.when_out_of_food == "stop" or not self.restock():

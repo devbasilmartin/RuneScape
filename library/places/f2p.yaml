@@ -28,6 +28,7 @@ draynor oaks:         {tile: [3101, 3242]}
 
 port sarim:           {tile: [3027, 3218]}
 falador east bank:    {tile: [3013, 3356]}
+falador air ruins:   {tile: [2984, 3290]}       # south of Falador
 falador west bank:    {tile: [2946, 3368]}
 barbarian village:    {tile: [3082, 3420]}
 edgeville bank:       {tile: [3094, 3493]}

@@ -20,7 +20,11 @@ Banking walks to the bank and back ([travel.md](travel.md)).
 | Smithing | smelt bronze bars (copper + tin), Al Kharid furnace | 1–15 | Al Kharid |
 | Smithing | smelt iron bars (half of them fail, as in the game), Al Kharid furnace | 15+ | Al Kharid |
 | Smithing | bronze daggers, then platebodies: bronze, iron, steel, mithril, adamant, Varrock west anvils | 1 / 18 / 33 / 48 / 68 / 88 | Varrock west |
-| Combat | cows, Lumbridge | 1–40 | Lumbridge |
+| Combat | cows, Lumbridge: kill only, or bury bones | 1–40 | — |
+| Magic | Wind Strike, then Fire Strike on cows | 1 / 13–25 | — |
+| Ranged | bow and arrows on cows, picking the arrows back up | 1–40 | — |
+| Crafting | leather gloves, then leather bodies (then gem cutting from 20) | 1 / 14 | Grand Exchange |
+| Runecraft | air runes south of Falador (Rune Mysteries) | 1–9 | Falador east |
 
 Willows wait until you're combat 41 (dark wizards next to them).
 
@@ -48,7 +52,15 @@ Willows wait until you're combat 41 (dark wizards next to them).
   hover that button in the menu → **Just Enter**. Do *Bronze bar* and *Iron bar* on the
   furnace, *dagger* and *platebody* on the anvil. In the anvil menu, also pick
   quantity **All** once; the game remembers it.
+- **Magic**: runes in the inventory (they're tagged). Teach each spell once: open the magic
+  tab, panel → Learn → Teach a click → *Wind Strike* / *Fire Strike*. Out of runes ends the
+  activity (it never starts attacking by hand).
+- **Ranged**: bow wielded, arrows in the quiver. In Ground Items, the arrows should show in
+  the `loot` color; picked-up arrows are wielded again.
+- **Crafting**: needle and thread in the inventory (kept), bank tab `crafting` with leather
+  in slot 1. Teach *gloves* and *body* in the leather menu (use the needle on leather to
+  open it).
 - Items are tagged automatically by the bot's RuneLite profile (new this time: iron ore,
-  salmon, burnt meat, bars, daggers and platebodies: rebuild and re-import the profile).
+  salmon, burnt meat, bars, daggers, platebodies, mind runes, arrows, leather: rebuild and re-import the profile).
 
 The marker checklist for everything is in [markers.md](markers.md).
