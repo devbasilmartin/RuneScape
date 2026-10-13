@@ -346,6 +346,22 @@ def make_navigator(cfg: Config, game):
                      scale=load_scale(cfg.data_dir))
 
 
+def point_at(controls, what: str, seconds: int = 5, sleep=None) -> tuple[int, int]:
+    """Where you point: press Enter (in the panel or the terminal), then move the mouse onto
+    ``what`` in the game and hold it still; the position is read after a countdown, so the
+    mouse doesn't have to be on the spot while you press Enter."""
+    import time
+    sleep = sleep or time.sleep
+    input(f"  {what}: press Enter, then within {seconds} seconds put the mouse on it "
+          "and hold still...")
+    for left in range(seconds, 0, -1):
+        print(f"    {left}...", flush=True)
+        sleep(1)
+    pos = controls.position()
+    print(f"    got {pos[0]},{pos[1]}")
+    return pos
+
+
 TAUGHT_CLICKS = {
     "smelt_bronze": "the Bronze bar button in the furnace menu",
     "smelt_iron": "the Iron bar button in the furnace menu",
@@ -358,8 +374,8 @@ def cmd_teach_click(cfg: Config, args) -> None:
     """Remember a button's position: open the menu in game, hover it, press Enter."""
     import json
     game = live_game(cfg)
-    input(f"Open the menu in game, hover {TAUGHT_CLICKS[args.name]} and press Enter: ")
-    x, y = game.controls.position()
+    print("Open the menu in game first (it must stay open).")
+    x, y = point_at(game.controls, TAUGHT_CLICKS[args.name])
     path = cfg.data_dir / "clicks.json"
     try:
         clicks = json.loads(path.read_text())
@@ -383,8 +399,7 @@ def cmd_calibrate_map(cfg: Config, args) -> None:
     print("World map open. Don't zoom it now or later: the scale is for this zoom.")
     points = []
     for name in (args.first, args.second):
-        input(f"  hover the mouse over {name!r} on the map and press Enter: ")
-        points.append(game.controls.position())
+        points.append(point_at(game.controls, f"{name!r} on the map"))
     game.close_interfaces()
     offset = (points[1][0] - points[0][0], points[1][1] - points[0][1])
     try:

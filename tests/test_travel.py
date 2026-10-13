@@ -219,3 +219,15 @@ def test_a_recorded_teleport_destination_wins_over_a_place():
     game.nav.follow = lambda until: calls.append("follow")
     game.nav.travel("trees", TREE)
     assert calls == ["varrock", "trees", "follow"] and game.nav.here == "trees"
+
+
+def test_point_at_reads_the_mouse_after_the_countdown(monkeypatch):
+    """Pressing Enter in the panel puts the mouse on the panel: read it after a countdown."""
+    from skillbot.__main__ import point_at
+    moves = iter([(100, 100), (300, 200)])
+    controls = type("C", (), {"pos": (100, 100), "position": lambda self: self.pos})()
+    monkeypatch.setattr("builtins.input", lambda prompt: None)
+
+    def sleep(s):
+        controls.pos = next(moves, controls.pos)
+    assert point_at(controls, "the cows", seconds=2, sleep=sleep) == (300, 200)
