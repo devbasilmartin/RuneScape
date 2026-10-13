@@ -374,6 +374,7 @@ TAUGHT_CLICKS = {
     "fire_strike": "Fire Strike in the magic tab",
     "craft_leather_gloves": "leather gloves in the leather crafting menu",
     "craft_leather_body": "the leather body in the leather crafting menu",
+    "tan_soft_leather": "Soft leather in Ellis's tanning menu",
     "smelt_bronze": "the Bronze bar button in the furnace menu",
     "smelt_iron": "the Iron bar button in the furnace menu",
     "smith_dagger": "the dagger in the anvil menu (any metal)",
@@ -757,7 +758,9 @@ def schedule_runner(cfg: Config, args, planner):
         raise SystemExit(str(e))
     registry = Registry.load(cfg.colors_file)
     logging.info("%s: %s", label, schedule.to_dict())
-    return lambda: run_schedule(planner, schedule, library, registry, cfg.spells, label)
+    resume = cfg.data_dir / "schedule_resume.json" if args.schedule else None
+    return lambda: run_schedule(planner, schedule, library, registry, cfg.spells, label,
+                                resume=resume)
 
 
 def cmd_run(cfg: Config, args) -> None:

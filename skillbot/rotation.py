@@ -6,6 +6,8 @@ rotation.yaml, next to profiles/:
       - {profile: main, hours: 3}
       - {profile: alt, hours: 1.5, max_hours_per_day: 6}
       - {profile: pure, hours: 2, goals: goals-combat.yaml}  # a different goals file per turn
+      - {profile: f2p, hours: 2, schedule: f2p-skills}      # or a saved schedule; it picks
+                                                             # up where it left off
     order: in_order          # in_order | least_played_today | lowest_total_level
     gap_minutes: 1           # logged out between two accounts
     handover_minutes: 10     # how long the bot may take to finish its load and log out
@@ -35,6 +37,13 @@ class Turn:
     hours: float = 2.0
     max_hours_per_day: float = 0       # 0 = no cap
     goals: str | None = None           # goals file for this account's turns
+    schedule: str | None = None        # or a saved schedule (resumed where it left off)
+
+    @property
+    def mode(self) -> str | None:
+        """What the bot runs on this turn, for the supervisor: a goals file or
+        "schedule:NAME" (None: the account's config plan)."""
+        return f"schedule:{self.schedule}" if self.schedule else self.goals
 
 
 @dataclass
@@ -52,10 +61,12 @@ class RotationConfig:
             raise ValueError(f"rotation.yaml: unknown keys {sorted(unknown)}")
         turns = []
         for a in d.get("accounts") or []:
-            extra = set(a) - {"profile", "hours", "max_hours_per_day", "goals"}
+            extra = set(a) - {"profile", "hours", "max_hours_per_day", "goals", "schedule"}
             if extra:
                 raise ValueError(f"rotation.yaml: unknown account keys {sorted(extra)}")
             t = Turn(**a)
+            if t.goals and t.schedule:
+                raise ValueError(f"rotation.yaml: {t.profile}: goals or schedule, not both")
             if known_profiles is not None and t.profile not in known_profiles:
                 raise ValueError(f"rotation.yaml: no profile {t.profile!r}")
             if t.hours <= 0:

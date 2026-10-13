@@ -21,6 +21,9 @@ Banking walks to the bank and back ([travel.md](travel.md)).
 | Smithing | smelt iron bars (half of them fail, as in the game), Al Kharid furnace | 15+ | Al Kharid |
 | Smithing | bronze daggers, then platebodies: bronze, iron, steel, mithril, adamant, Varrock west anvils | 1 / 18 / 33 / 48 / 68 / 88 | Varrock west |
 | Combat | cows, Lumbridge: kill only, or bury bones | 1–40 | — |
+| Combat | Al-Kharid warriors in the palace (bring food) | 20–40 | Al Kharid |
+| Mining (supplies) | rune essence through Aubury in Varrock (Rune Mysteries) | any | Varrock east |
+| Crafting (supplies) | tan cowhides into leather at Ellis, Al Kharid (1 coin each, no XP) | any | Al Kharid |
 | Magic | Wind Strike, then Fire Strike on cows | 1 / 13–25 | — |
 | Ranged | bow and arrows on cows, picking the arrows back up | 1–40 | — |
 | Crafting | leather gloves, then leather bodies (then gem cutting from 20) | 1 / 14 | Grand Exchange |
@@ -60,6 +63,16 @@ Willows wait until you're combat 41 (dark wizards next to them).
 - **Crafting**: needle and thread in the inventory (kept), bank tab `crafting` with leather
   in slot 1. Teach *gloves* and *body* in the leather menu (use the needle on leather to
   open it).
+- **Al-Kharid warriors**: NPC Indicators on "Al-Kharid warrior" in `enemy`; food in bank tab
+  `food` slot 1 (it fetches more when it runs out).
+- **Rune essence**: NPC Indicators on Aubury in `aubury` and on the mine's Portal in
+  `essence_portal`; Object Markers on the essence rock (inside the mine) in `essence_rock`.
+  It right-clicks Aubury and picks **Teleport** (the 3rd row of his menu: if that's wrong
+  on your client, tell me what his menu says).
+- **Tanning**: NPC Indicators on Ellis in `tanner`; coins in the inventory; cowhides in bank
+  tab `crafting` slot 2. It right-clicks Ellis → **Trade** (2nd row), then right-clicks the
+  soft leather → **Tan All** (5th row). Teach the soft leather button once: open his menu,
+  panel → Learn → Teach a click → *tanning: soft leather*.
 - Items are tagged automatically by the bot's RuneLite profile (new this time: iron ore,
   salmon, burnt meat, bars, daggers, platebodies, mind runes, arrows, leather: rebuild and re-import the profile).
 

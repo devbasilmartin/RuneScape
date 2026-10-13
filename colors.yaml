@@ -231,3 +231,7 @@ leather:         {rgb: [192, 64, 0], category: item}
 leather_gloves:  {rgb: [192, 128, 0], category: item}
 leather_body:    {rgb: [255, 64, 128], category: item}
 air_talisman:    {rgb: [255, 64, 192], category: item}
+aubury:          {rgb: [64, 255, 128], category: other}
+essence_rock:    {rgb: [128, 0, 255], category: resource}
+essence_portal:  {rgb: [128, 64, 255], category: portal}
+tanner:          {rgb: [128, 192, 64], category: other}

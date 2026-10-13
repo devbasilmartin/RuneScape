@@ -34,6 +34,20 @@ turns. You can also set a daily cap per account, a different goals file per turn
 `in_order`, `least_played_today` or `lowest_total_level`. Then run the supervisor as usual
 (`systemctl --user restart skillbot`).
 
+An account's turn can also run a **saved schedule** (one you built in the panel's
+Schedules tab) instead of its plan or goals:
+
+```yaml
+accounts:
+  - {profile: main, hours: 3, schedule: f2p-skills}
+  - {profile: alt, hours: 2}
+```
+
+The schedule **picks up where it left off**: if the turn ended during its third activity,
+that account's next turn starts with the third activity again (from the start of that
+activity's minutes), not the first. Once the schedule finishes, the next run starts from the
+top. The same goes for a schedule you started yourself that stopped part way.
+
 When a turn is over:
 1. The supervisor asks the bot to hand over. The bot finishes its current batch (one
    inventory load or so), **logs out in game**, and exits.

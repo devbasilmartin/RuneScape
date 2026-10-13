@@ -556,3 +556,81 @@ air_runes_falador:
     keep: [air_talisman]
     bank_tab: runecraft
     withdraw: [{slot: 0, item: rune_essence, quantity: all}]
+
+# --- Combat 20-40: Al-Kharid warriors in the palace (NPC Indicators: "Al-Kharid warrior"
+# in `enemy`). They hit a little harder than cows: bring some food. ---
+al_kharid_warriors:
+  name: "Al-Kharid warriors"
+  skills: [attack, strength, defence]
+  levels: [20, 40]
+  xp_per_hour: 16000
+  reliability: 4
+  location: "al kharid palace"
+  step:
+    task: combat
+    target: enemy
+    food: [cooked_meat, shrimps, anchovies, trout, salmon]
+    eat_below: 0.5
+    when_out_of_food: bank
+    bank_location: "al kharid bank"
+    bank_tab: food
+    withdraw: [{slot: 0, item: trout, quantity: x}]
+
+# --- Rune essence: Aubury (Varrock east rune shop) teleports you to the mine; mine until
+# full, take the portal out, bank, go back. Needs Rune Mysteries. NPC Indicators: Aubury in
+# `aubury`, the mine's Portal in `essence_portal`; Object Markers on the essence rock in
+# `essence_rock`. Pickaxe untagged. ---
+essence_varrock:
+  name: "rune essence (Aubury, Varrock)"
+  skills: [mining]
+  levels: [1, 99]
+  requires: {quests: ["Rune Mysteries"]}
+  xp_per_hour: 9000                # low on purpose: it's for runecraft supplies
+  reliability: 3
+  location: "varrock aubury"
+  trade: {outputs: {rune_essence: 1800}}
+  step:
+    task: routine
+    items: [rune_essence]
+    bank_location: "varrock east bank"
+    routine:
+      - name: leave the mine
+        when: {full: true, visible: essence_portal}
+        do: [{click: essence_portal}, {wait_for: {not_visible: essence_rock}, timeout: 20}]
+      - name: bank the essence
+        when: {full: true}
+        do: [{bank: true}, {travel: "varrock aubury", until: aubury}]
+      - name: teleport to the mine     # Aubury's menu: Talk-to, Trade, Teleport
+        when: {visible: aubury, not_visible: essence_rock}
+        do: [{click: aubury, right_option: 3}, {wait_for: {visible: essence_rock}, timeout: 15}]
+      - name: mine
+        when: {visible: essence_rock}
+        do: [{click: essence_rock}, {wait_for: {full: true}, timeout: 150}, {progress: 1}]
+
+# --- Tanning cowhides into leather at Ellis in Al Kharid (1 coin each: keep coins in the
+# inventory, untagged). NPC Indicators: Ellis in `tanner`. Teach the leather button in his
+# tanning menu (panel → Learn → Teach a click → tanning: soft leather). Bank tab `crafting`:
+# cowhides in slot 2. No XP: it makes leather for crafting. ---
+tan_cowhides:
+  name: "tan cowhides (Al Kharid)"
+  skills: [crafting]
+  levels: [1, 99]
+  xp_per_hour: 0
+  reliability: 3
+  location: "al kharid tanner"
+  step:
+    task: routine
+    items: [cowhide]
+    bank_location: "al kharid bank"
+    bank_tab: crafting
+    withdraw: [{slot: 1, item: cowhide, quantity: all}]
+    routine:
+      - name: get hides
+        when: {lacks: cowhide}
+        exhausted_if: {lacks: cowhide}
+        do: [{bank: true}, {travel: "al kharid tanner", until: tanner}]
+      - name: tan them                 # Ellis: Talk-to, Trade; leather button: Tan 1/5/10/X/All
+        when: {has: cowhide}
+        do: [{click: tanner, right_option: 2}, {wait: [1.5, 2]},
+             {click: {taught: tan_soft_leather}, right_option: 5},
+             {wait_for: {lacks: cowhide}, timeout: 6}, {key: esc}, {progress: 1}]

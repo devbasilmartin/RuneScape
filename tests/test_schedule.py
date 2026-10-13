@@ -171,3 +171,41 @@ def test_combat_can_drop_and_then_stops_when_out_of_food():
     banked = entry_step(Schedule.from_dict({"entries": [{"method": "cows"}]},
                                            {"cows": cows}).entries[0], cows, Registry.load(), {})
     assert banked.when_out_of_food == "bank"
+
+
+def test_a_stopped_schedule_carries_on_at_the_entry_it_was_on(world, tmp_path):
+    """An account handover (or a restart) stops the run part way; the next run of the same
+    schedule starts at that entry, and a finished one starts from the top again."""
+    planner, fake, notes = world
+    resume = tmp_path / "resume.json"
+    d = {"entries": [{"method": "trees", "minutes": 2}, {"method": "fish", "minutes": 2}]}
+    sched = Schedule.from_dict(d, LIB)
+    stop_in_fish = lambda: Worker.log.count("fish") == 1           # noqa: E731
+    orig = Worker.run_batch
+
+    def handover(self):
+        if stop_in_fish():
+            raise StopBot("handover")
+        return orig(self)
+    Worker.run_batch = handover
+    try:
+        with pytest.raises(StopBot, match="handover"):
+            run_schedule(planner, sched, LIB, Registry.load(), {}, resume=resume)
+    finally:
+        Worker.run_batch = orig
+    Worker.log.clear()
+    with pytest.raises(StopBot):
+        run_schedule(planner, sched, LIB, Registry.load(), {}, resume=resume)
+    assert Worker.log == ["fish", "fish"]                  # carried on with fishing
+    assert not resume.exists()                             # finished: next run from the top
+
+
+def test_rotation_turns_can_run_a_saved_schedule():
+    from skillbot.rotation import RotationConfig
+    cfg = RotationConfig.from_dict({"accounts": [
+        {"profile": "a", "schedule": "f2p-skills"}, {"profile": "b", "goals": "g.yaml"},
+        {"profile": "c"}]})
+    assert [t.mode for t in cfg.accounts] == ["schedule:f2p-skills", "g.yaml", None]
+    with pytest.raises(ValueError, match="not both"):
+        RotationConfig.from_dict({"accounts": [{"profile": "a", "schedule": "s",
+                                                "goals": "g"}]})

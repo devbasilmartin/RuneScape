@@ -201,3 +201,16 @@ def test_config_rejects_unknown_keys():
     with pytest.raises(ValueError):
         SupervisorConfig.from_dict({"freez_minutes": 5})
     assert SupervisorConfig.from_dict({"window_position": [10, 20]}).window_position == (10, 20)
+
+
+def test_a_schedule_turn_starts_the_bot_with_that_schedule(monkeypatch, tmp_path):
+    from skillbot import supervisor
+    calls = []
+    monkeypatch.setattr(supervisor.subprocess, "Popen", lambda argv, **kw: calls.append(argv))
+    host = supervisor.Host("config.yaml", tmp_path, profile="f2p")
+    host.goals = "schedule:f2p-skills"
+    host.start_bot()
+    host.goals = "goals.yaml"
+    host.start_bot()
+    assert calls[0][-3:] == ["run", "--schedule", "f2p-skills"]
+    assert calls[1][-3:] == ["run", "--goals", "goals.yaml"]

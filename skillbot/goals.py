@@ -113,6 +113,8 @@ class Chooser:
         for quest in method.requires_quests:
             if not self.quests.has(quest):
                 return None, f"needs quest {quest!r} (`quest-done` once finished)"
+        if method.xp_per_hour <= 0:
+            return None, "makes supplies, no XP (run it yourself)"
         why = method.blocked(getattr(self.cfg, "account", "members"), levels)
         if why:
             return None, why

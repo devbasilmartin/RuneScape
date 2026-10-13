@@ -69,7 +69,7 @@ class Host:
         self.config_path = config_path
         self.data_dir = data_dir
         self.profile = profile
-        self.goals = None               # goals file for the current rotation turn
+        self.goals = None               # the turn's goals file, or "schedule:NAME"
 
     def now(self) -> float:
         return time.time()
@@ -83,7 +83,10 @@ class Host:
 
     def start_bot(self):
         target = ["--profile", self.profile] if self.profile else ["-c", str(self.config_path)]
-        goals = ["--goals", self.goals] if self.goals else []
+        if self.goals and self.goals.startswith("schedule:"):
+            goals = ["--schedule", self.goals.split(":", 1)[1]]
+        else:
+            goals = ["--goals", self.goals] if self.goals else []
         return subprocess.Popen([sys.executable, "-m", "skillbot", *target, "run", *goals],
                                 cwd=REPO_DIR, start_new_session=True)
 
@@ -318,7 +321,7 @@ class Supervisor:
         if nxt.profile != self.profile:
             self.host.use_profile(rot.profiles, nxt.profile)
             self.data_dir = self.host.data_dir
-        self.host.goals = nxt.goals
+        self.host.goals = nxt.mode
         rot.started(nxt.profile, now, nxt.hours)
 
     def rotation_check(self):
@@ -341,7 +344,7 @@ class Supervisor:
         if req:
             turn = rot.cfg.turn(req["profile"]) if rot.cfg else None
             hours = req.get("hours") or (turn.hours if turn else None)
-            goals = turn.goals if turn else None
+            goals = turn.mode if turn else None
             if req["profile"] == self.profile and not self.idle:
                 rot.started(self.profile, now, hours)          # just a new turn length
                 return None
@@ -354,7 +357,7 @@ class Supervisor:
             if nxt is None:
                 return True                      # still nobody's turn
             self.idle = False
-            self.switch_to(nxt.profile, nxt.hours, nxt.goals)
+            self.switch_to(nxt.profile, nxt.hours, nxt.mode)
             return True
         turn = rot.cfg.turn(self.profile)
         capped = (turn is not None and turn.max_hours_per_day
@@ -367,7 +370,7 @@ class Supervisor:
             if nxt is None:
                 self.begin_handover(None, None, None)
             else:
-                self.begin_handover(nxt.profile, nxt.hours, nxt.goals)
+                self.begin_handover(nxt.profile, nxt.hours, nxt.mode)
             return True
         return None
 
@@ -434,5 +437,5 @@ class Supervisor:
                 self.host.logout(self.profile)
             self.notify("rotation: no account left to play; supervisor exiting")
             return False
-        self.switch_to(nxt.profile, nxt.hours, nxt.goals)
+        self.switch_to(nxt.profile, nxt.hours, nxt.mode)
         return True

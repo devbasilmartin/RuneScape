@@ -17,6 +17,7 @@ is enforced. An entry that can't start or runs out early is skipped with a notif
 and the schedule moves on. Repeat `once` logs out after the last entry; `{hours: N}`
 cycles until the time is up (finishing the current inventory), then logs out.
 """
+import json
 import logging
 import re
 from dataclasses import dataclass, field
@@ -161,23 +162,35 @@ def entry_step(entry: Entry, method, registry, spells):
 
 
 def run_schedule(planner, schedule: Schedule, library: dict, registry, spells,
-                 label: str = "schedule") -> None:
-    """Run the entries in order (and again, per ``repeat``); log out at the end."""
+                 label: str = "schedule", resume: Path | None = None) -> None:
+    """Run the entries in order (and again, per ``repeat``); log out at the end.
+
+    With ``resume`` (a file), the entry being run is remembered, so a run stopped part way
+    (an account handover, a restart) starts again at that entry instead of the first."""
     g = planner.game
     skills = {e.skill or library[e.method].skills[0] for e in schedule.entries}
     planner._guard(lambda: planner.resync(sorted(skills, key=SKILLS.index)))
     end = g.now() + schedule.hours * 3600 if schedule.repeat == "hours" else None
+    key = json.dumps(schedule.to_dict(), sort_keys=True)
+    start = _resume_at(resume, key, len(schedule.entries))
+    if start:
+        log.info("%s: carrying on at entry %d", label, start + 1)
     passes = 0
     while True:
         passes += 1
         worked = False
         for i, entry in enumerate(schedule.entries, 1):
+            if i <= start:
+                continue
+            _remember(resume, key, i - 1)
             if end is not None and g.now() >= end:
-                return _finish(planner, TIME_UP)
+                return _finish(planner, TIME_UP, resume)
             worked |= _run_entry(planner, entry, library[entry.method], registry, spells,
                                  end, f"{label} {i}/{len(schedule.entries)}")
+        if start:
+            start, worked = 0, True        # the resumed pass was a partial one
         if schedule.repeat == "once":
-            return _finish(planner, DONE)
+            return _finish(planner, DONE, resume)
         if not worked:
             raise StopBot(f"nothing in the {label} could run (out of supplies everywhere?)")
 
@@ -218,7 +231,24 @@ def _run_entry(planner, entry: Entry, method, registry, spells, end, where) -> b
     return batches > 0
 
 
-def _finish(planner, reason: str) -> None:
+def _resume_at(path: Path | None, key: str, n: int) -> int:
+    """The entry (0-based) a stopped run of this same schedule was on, else 0."""
+    try:
+        saved = json.loads(Path(path).read_text()) if path else {}
+    except (OSError, ValueError):
+        return 0
+    return saved.get("entry", 0) if saved.get("schedule") == key and saved.get("entry", 0) < n \
+        else 0
+
+
+def _remember(path: Path | None, key: str, entry: int) -> None:
+    if path:
+        Path(path).write_text(json.dumps({"schedule": key, "entry": entry}))
+
+
+def _finish(planner, reason: str, resume: Path | None = None) -> None:
+    if resume:
+        Path(resume).unlink(missing_ok=True)       # done: next time starts from the top
     log.info("%s: logging out", reason)
     if planner.session is not None and not planner.session.logout():
         log.warning("couldn't log out")

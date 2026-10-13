@@ -83,30 +83,36 @@ class RoutineTask(CombatTask):
 
     # ---- actions -----------------------------------------------------------------------
     def click_target(self, target, action) -> bool:
+        """Click an inventory item ({item}), a screen point ({point}), a taught button
+        ({taught}: a menu button you showed the bot) or the nearest highlight; with
+        right_option, right-click it and pick that menu row."""
         g = self.game
         if isinstance(target, dict) and "item" in target:
             slots = self.tagged(g.grab(), [target["item"]])
             if not slots:
                 return False
-            g.controls.click_rect(g.layout.slot(min(slots)))
-            return True
-        if isinstance(target, dict) and "point" in target:
-            g.controls.click(tuple(target["point"]))
-            return True
-        img = g.grab()
-        color = self.color(target)
-        if action.get("right_option"):
-            blob = g.nearest(img, color)
+            point = g.layout.slot(min(slots)).center
+        elif isinstance(target, dict) and "point" in target:
+            point = tuple(target["point"])
+        elif isinstance(target, dict) and "taught" in target:
+            point = g.taught(target["taught"])
+        elif action.get("right_option"):
+            blob = g.nearest(g.grab(), self.color(target))
             if blob is None:
                 return False
             point = blob.center
-            g.controls.click(point, button="right")
-            g.wait(0.4, 0.6)
-            lay = g.layout
-            g.controls.click((point[0], point[1] + lay.menu_header
-                              + lay.menu_row * (action["right_option"] - 1) + lay.menu_row // 2))
+        else:
+            return g.click_nearest(g.grab(), self.color(target),
+                                   avoid_danger=action.get("avoid_danger", True))
+        if not action.get("right_option"):
+            g.controls.click(point)
             return True
-        return g.click_nearest(img, color, avoid_danger=action.get("avoid_danger", True))
+        g.controls.click(point, button="right")
+        g.wait(0.4, 0.6)
+        lay = g.layout
+        g.controls.click((point[0], point[1] + lay.menu_header
+                          + lay.menu_row * (action["right_option"] - 1) + lay.menu_row // 2))
+        return True
 
     def act(self, action: dict) -> bool:
         g, step = self.game, self.step

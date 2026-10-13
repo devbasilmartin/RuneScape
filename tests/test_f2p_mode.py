@@ -51,7 +51,7 @@ def test_f2p_mining_and_fishing_can_drop_or_bank():
     from skillbot.places import load_places
     places = load_places(Registry.load().resolve)
     gather = [m for m in load_library().values() if not m.members
-              and m.skills[0] in ("mining", "fishing")]
+              and m.skills[0] in ("mining", "fishing") and m.task == "gather"]
     assert {m.id for m in gather} >= {"copper_tin_varrock", "iron_varrock",
                                       "net_fishing_draynor", "fly_fishing_barbarian"}
     for m in gather:

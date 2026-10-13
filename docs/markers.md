@@ -39,6 +39,14 @@ Used by: smelt bronze bars (Al Kharid); smelt iron bars (Al Kharid)
 - [ ] `bank` (Object Marker on the booth) at al kharid bank
 - automatic: `copper_ore`, `iron_ore`, `tin_ore`
 
+## al kharid palace
+
+Used by: Al-Kharid warriors
+
+- [ ] Object Marker on Bank booth / Bank chest / Bank / Grand Exchange booth → `bank` (#FF00FF)
+- [ ] `bank` (Object Marker on the booth) at al kharid bank
+- automatic: `anchovies`, `cooked_meat`, `enemy`, `salmon`, `shrimps`, `trout`
+
 ## al kharid rooftop start
 
 Used by: Al Kharid rooftop
@@ -51,6 +59,14 @@ Used by: Al Kharid rooftop
 - [ ] Object Marker on obstacle 6 of the course, color set by hand: `obstacle_6` #4080FF
 - [ ] Object Marker on obstacle 7 of the course, color set by hand: `obstacle_7` #80FF40
 - automatic: `mark_of_grace`
+
+## al kharid tanner
+
+Used by: tan cowhides (Al Kharid)
+
+- [ ] Object Marker, color set by hand: `tanner` #80C040
+- [ ] `bank` (Object Marker on the booth) at al kharid bank
+- automatic: `cowhide`
 
 ## arceuus dense runestones
 
@@ -399,6 +415,16 @@ Used by: Tithe Farm
 - [ ] Inventory Tag by hand on the item you use: `tithe_seed` #C0FF40
 - [ ] Object Marker on Seed table → `seed_table` (#0000C0)
 - automatic: `gricollers_can`
+
+## varrock aubury
+
+Used by: rune essence (Aubury, Varrock)
+
+- [ ] Object Marker, color set by hand: `aubury` #40FF80
+- [ ] Object Marker, color set by hand: `essence_portal` #8040FF
+- [ ] Object Marker, color set by hand: `essence_rock` #8000FF
+- [ ] `bank` (Object Marker on the booth) at varrock east bank
+- automatic: `rune_essence`
 
 ## varrock earth ruins
 
