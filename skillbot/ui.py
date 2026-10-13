@@ -184,7 +184,7 @@ class App:
         for folder in (self.cwd, Path.home(), Path.home() / "Downloads",
                        Path.home() / ".runelite" / "profiles2"):
             for p in sorted(folder.glob("*.properties")) if folder.is_dir() else []:
-                if p.name != "bot-profile.properties":
+                if p.name != "bot-profile.properties" and not p.name.startswith("$rsprofile"):
                     found.append(str(p))
         return found
 

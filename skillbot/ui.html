@@ -447,13 +447,27 @@ $("#senddigits").onclick = async () => {
   if (await start("learn_digits", {answers})) $("#digits").style.display = "none";
 };
 
-function fillSelect(sel, values, keepFirst) {
+function fillSelect(sel, values, keepFirst, label) {
   const cur = sel.value, first = keepFirst ? sel.options[0].outerHTML : "";
-  const html = first + values.map((v) => `<option>${v.replace(/</g, "&lt;")}</option>`).join("");
+  const html = first + values.map((v) => `<option value="${esc(v)}">${esc(label ? label(v) : v)}</option>`).join("");
   if (sel.dataset.html !== html) {
     sel.innerHTML = html; sel.dataset.html = html;
     if ([...sel.options].some((o) => o.value === cur)) sel.value = cur;   // keep a choice
+    else if (label) {                                    // nothing picked yet: the live bot profile
+      const live = values.find((v) => exportLabel(v).startsWith("★"));
+      if (live) sel.value = live;
+    }
   }
+}
+
+// RuneLite keeps profiles as profiles2/<name>-<long number>.properties: show just the name
+function exportLabel(path) {
+  const file = path.split("/").pop().replace(/\.properties$/, "");
+  if (path.includes("/profiles2/")) {
+    const name = file.replace(/-\d+$/, "");
+    return name === "bot" ? "★ bot (RuneLite, live): pick this one" : `RuneLite profile: ${name}`;
+  }
+  return `older copy in skillbot: ${file}`;
 }
 
 function showImage(name) {
@@ -491,7 +505,7 @@ function render() {
     $("#recstate").classList.toggle("err", !!rec.error);
   }
   fillSelect($("#stepsel"), state.steps, false);
-  fillSelect($("#export"), state.exports, true);
+  fillSelect($("#export"), state.exports, true, exportLabel);
   renderRun();
 
   if (job) {
