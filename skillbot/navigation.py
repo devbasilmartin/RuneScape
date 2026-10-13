@@ -141,9 +141,7 @@ class Navigator:
             g.close_interfaces()
             raise BotError("the destination is too far across the world map")
         point = (x, y)
-        g.controls.click(point, button="right")
-        g.wait(0.4, 0.6)
-        g.controls.click(self.menu_point(point, self.menu_option))   # "Set target"
+        g.choose(point, "Set target", self.menu_option)
         g.wait(0.4, 0.7)
         g.close_interfaces()
 

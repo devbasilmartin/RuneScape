@@ -26,8 +26,11 @@ it just used. Start a run where the activity happens, as you do now.
       castle courtyard on the map, click **Just Enter**.
    3. Then **lumbridge cows**: the middle of the cow field across the river, north-east of
       the castle. **Just Enter**.
-   4. It says `saved: N pixels per tile`. **Don't zoom the world map from now on**: the
-      measurement is for this zoom.
+   4. The bot drags the map a little and back by itself: that's it measuring which part
+      of the window is map (where it can click and drag). Hands off for 2 seconds.
+   5. It says `the map's area: ...` and `saved: N pixels per tile`. **Don't zoom the world
+      map from now on**: the measurement is for this zoom. (Already calibrated? Run it again
+      once to get the map's area too.)
 
 ## Try it
 

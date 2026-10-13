@@ -1,17 +1,20 @@
 # Melee ladder after cows: giants (bank the big bones for Prayer later), then crabs.
 # Styles follow the skill being trained. Rates are rough.
 
+# Hill giants: through the brass key door in the house west of the Cooks' Guild and down
+# the ladder (carry a brass key; Object Markers: the door in `door`, the ladder in `stairs`,
+# both sides). Big bones are banked at Edgeville for Prayer (bury_big_bones).
 hill_giants_edgeville:
   name: "hill giants (Edgeville dungeon)"
   members: false
   skills: [attack, strength, defence]
-  levels: [30, 45]
+  levels: [40, 99]                 # the F2P step after Al-Kharid warriors
   xp_per_hour: 20000
   reliability: 3
   location: "edgeville hill giants"
   trade: {inputs: {trout: 40}, outputs: {big_bones: 60}}
   step: {task: combat, target: enemy, loot: loot, items: [big_bones], food: [trout],
-         eat_below: 0.5, when_full: bank, bank_tab: food,
+         eat_below: 0.5, when_full: bank, bank_tab: food, bank_location: "edgeville bank",
          withdraw: [{slot: 0, item: trout, quantity: x}]}
 
 sand_crabs:

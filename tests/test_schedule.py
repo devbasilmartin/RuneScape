@@ -209,3 +209,55 @@ def test_rotation_turns_can_run_a_saved_schedule():
     with pytest.raises(ValueError, match="not both"):
         RotationConfig.from_dict({"accounts": [{"profile": "a", "schedule": "s",
                                                 "goals": "g"}]})
+
+
+AUTO_LIB = {
+    "trees": Method.from_dict("trees", {"skills": ["woodcutting"], "levels": [1, 15],
+                                        "xp_per_hour": 5000, "step": {
+                                            "task": "gather", "target": "tree",
+                                            "items": ["logs"], "when_full": "drop"}}),
+    "oaks": Method.from_dict("oaks", {"skills": ["woodcutting"], "levels": [15, 30],
+                                      "xp_per_hour": 15000, "step": {
+                                          "task": "gather", "target": "tree",
+                                          "items": ["logs"], "when_full": "drop"}}),
+    "fancy": Method.from_dict("fancy", {"skills": ["woodcutting"], "levels": [12, 99],
+                                        "xp_per_hour": 50000, "step": {
+                                            "task": "gather", "target": "rock",
+                                            "items": ["logs"]}}),
+}
+
+
+def test_auto_entries_climb_the_ladder_and_try_the_next_best(world):
+    planner, fake, notes = world
+    Worker.gains = {"woodcutting"}
+    planner.levels.levels["woodcutting"] = 13
+    Worker.supply = {}
+    tried = []
+    real = Worker.run_batch
+
+    def batch(self):
+        tried.append(self.step.name)
+        if self.step.name == "fancy":
+            return "exhausted"                    # the best one can't run: next best
+        return real(self)
+    Worker.run_batch = batch
+    try:
+        with pytest.raises(StopBot):
+            run_schedule(planner, Schedule.from_dict(
+                {"entries": [{"method": "auto", "skill": "woodcutting", "until_level": 17}]},
+                AUTO_LIB), AUTO_LIB, Registry.load(), {})
+    finally:
+        Worker.run_batch = real
+    assert tried[0] == "fancy" and tried[1] == "trees"
+    assert planner.levels.get("woodcutting") == 15      # trees stop at their upper level
+
+
+def test_auto_needs_a_skill_and_builtin_schedules_are_listed(tmp_path):
+    from skillbot.library import load_library
+    from skillbot.schedule import BUILTIN
+    with pytest.raises(ValueError, match="needs a skill"):
+        Schedule.from_dict({"entries": [{"method": "auto"}]}, LIB)
+    store = Store(tmp_path, BUILTIN)
+    assert "f2p all skills" in store.names()
+    sched = store.load("f2p all skills", load_library())
+    assert {e.skill for e in sched.entries} >= {"woodcutting", "prayer", "runecraft"}

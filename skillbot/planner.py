@@ -225,6 +225,8 @@ class Planner:
         if getattr(g, "mouse", None) is not None:
             g.mouse.activity = step.name         # mouse-style results are split by step
         self.current, self.tainted = step, False
+        if getattr(g, "blackbox", None) is not None:
+            g.blackbox.doing = step.name
         guard = getattr(g, "hp_guard", None)
         if guard is not None:
             guard.step = step
@@ -315,6 +317,8 @@ class Planner:
             result = action()
         except BotError as e:
             step = self.current
+            if getattr(self.game, "blackbox", None) is not None:
+                self.game.blackbox.save(f"{step.name if step else 'the bot'}: {e}")
             if self.trust is not None and step is not None:
                 self.trust.add_error(step.name, self.supervised)
             if self.supervised:

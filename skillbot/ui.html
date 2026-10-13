@@ -77,7 +77,7 @@
       <button class="danger" id="stop">Stop</button>
       <button data-act="pause">Pause</button><button data-act="resume">Resume</button>
       <div class="hint">Moving the mouse into a screen corner also stops the bot.</div>
-      <button data-act="plan">What's next?</button><button data-act="accounts">Accounts</button>
+      <button data-act="plan">What's next?</button><button data-act="accounts">Accounts</button><button data-act="summary" title="The last 24 hours: levels, what it did, eating and fleeing, errors, why it stopped">Last 24h</button>
     </section>
     <section>
       <h2>Check</h2>
@@ -139,8 +139,14 @@
           <option value="craft_leather_gloves">leather menu: gloves</option>
           <option value="craft_leather_body">leather menu: body</option>
           <option value="tan_soft_leather">tanning: soft leather</option>
+          <option value="craft_gold_ring">jewellery menu: gold ring</option>
+          <option value="craft_gold_amulet">jewellery menu: gold amulet</option>
         </select>
         <button data-act="teach_click" title="Open that menu in game first, then hover the button and click Just Enter">Teach a click</button>
+      </div>
+      <div class="row">
+        <input id="menuopts" placeholder="Talk-to,Trade,Teleport" title="The right-click menu's rows, top to bottom, as the game shows them (leave out Walk here, Examine, Cancel at the end if you like)">
+        <button data-act="teach_menu" title="Type the rows, click this, then hover the thing in game and click Just Enter: the bot right-clicks it and learns each row">Teach a menu</button>
       </div>
     </section>
   </div>
@@ -263,6 +269,7 @@ document.querySelectorAll("[data-act]").forEach((b) => b.onclick = () => {
   if (act === "check_setup") params.step = $("#stepsel").value;
   if (act === "runelite_profile") params.export = $("#export").value;
   if (act === "teach_click") params.name = $("#clicksel").value;
+  if (act === "teach_menu") params.options = $("#menuopts").value;
   start(act, params);
 });
 $("#stop").onclick = () => post("/api/stop");
@@ -326,6 +333,7 @@ $("#q-method").onchange = () => quickUpdate(true);
 $("#q-skill").onchange = $("#q-full").onchange = () => quickUpdate(false);
 $("#q-start").onclick = () => {
   const m = methodsById[$("#q-method").value];
+  if (m.auto) { $("#msg").textContent = "auto is for schedules: pick an activity"; return; }
   start("run_activity", {method: m.id, minutes: $("#q-minutes").value, until_level: $("#q-level").value,
     when_full: m.can_drop ? $("#q-full").value : "", skill: m.skills.length > 1 ? $("#q-skill").value : "",
     watching: watching()});
@@ -343,19 +351,21 @@ function rowHtml(i) {
 function readRows() {
   return [...document.querySelectorAll("#s-rows tr")].map((tr) => {
     const m = methodsById[tr.querySelector(".r-method").value];
-    const e = {method: m.id};
+    const e = {method: m.auto ? "auto" : m.id};
+    if (m.auto) e.skill = m.skills[0];
     const min = tr.querySelector(".r-minutes").value.trim(), lvl = tr.querySelector(".r-level").value.trim();
     if (min) e.minutes = Number(min);
     if (lvl) e.until_level = Number(lvl);
     if (m.can_drop) e.when_full = tr.querySelector(".r-full").value;
-    if (m.skills.length > 1) e.skill = tr.querySelector(".r-skill").value;
+    if (!m.auto && m.skills.length > 1) e.skill = tr.querySelector(".r-skill").value;
     return e;
   });
 }
 function renderRows(entries) {
   $("#s-rows").innerHTML = entries.map((_, i) => rowHtml(i)).join("");
   document.querySelectorAll("#s-rows tr").forEach((tr, i) => {
-    const e = entries[i], m = methodsById[e.method] || state.methods[0];
+    const e = entries[i];
+    const m = methodsById[e.method === "auto" ? `auto:${e.skill}` : e.method] || state.methods[0];
     const msel = tr.querySelector(".r-method"); msel.value = m.id;
     const refresh = (fromMethod) => {
       const mm = methodsById[msel.value];

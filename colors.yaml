@@ -235,3 +235,6 @@ aubury:          {rgb: [64, 255, 128], category: other}
 essence_rock:    {rgb: [128, 0, 255], category: resource}
 essence_portal:  {rgb: [128, 64, 255], category: portal}
 tanner:          {rgb: [128, 192, 64], category: other}
+door:            {rgb: [192, 0, 0], category: portal, area: everywhere}   # Object Markers: doors on travel routes (the brass key door)
+ring_mould:      {rgb: [255, 128, 128], category: item}   # gold jewellery (kept)
+amulet_mould:    {rgb: [255, 128, 192], category: item}

@@ -15,7 +15,7 @@ A routine is a list of blocks, run top to bottom once per batch:
         - wait_for: {gained: paydirt} # condition, with `timeout` (default 20 s)
           timeout: 30
 
-Actions: click (optionally right_option: N), use {item, target}, key, type, wait,
+Actions: click (optionally right_option: a menu word or row number, right_row: N), use {item, target}, key, type, wait,
 wait_for, bank, drop, travel / walk (with until: color), cast {spell, on_item},
 dialog [options], tab, notify, progress. (Never use a bare `on:` key: YAML reads it
 as true.)
@@ -26,7 +26,7 @@ any [conditions].
 
 ACTIONS = {"click", "use", "key", "type", "wait", "wait_for", "bank", "drop", "travel",
            "walk", "cast", "dialog", "tab", "notify", "progress"}
-ACTION_OPTIONS = {"timeout", "right_option", "avoid_danger", "until", "on_item"}
+ACTION_OPTIONS = {"timeout", "right_option", "right_row", "avoid_danger", "until", "on_item"}
 CONDITIONS = {"visible", "not_visible", "near", "has", "lacks", "count_at_least", "full",
               "hp_below", "counter_at_least", "gained", "lost", "any"}
 BLOCK_KEYS = {"name", "when", "repeat_until", "until_fail", "max", "count", "reset",

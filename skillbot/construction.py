@@ -56,11 +56,7 @@ class ConstructionTask(Task):
         point = self.spot(g.grab())
         if point is None:
             raise BotError(f"{step.name}: built furniture not visible")
-        g.controls.click(point, button="right")
-        g.wait(0.4, 0.6)
-        lay = g.layout
-        g.controls.click((point[0], point[1] + lay.menu_header
-                          + lay.menu_row * (step.remove_option - 1) + lay.menu_row // 2))
+        g.choose(point, "Remove", step.remove_option)
         g.wait(0.8, 1.2)
         g.controls.press("1")                    # "Yes, remove it"
         g.wait(1.0, 1.4)

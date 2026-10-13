@@ -78,8 +78,11 @@ for respawns, don't start a second fight), the control panel, schedules (one act
 a named schedule, then log out). Discord `/run` starts an activity through the panel
 (Discord not set up on the VM yet). The HP guard (`skillbot/hp_guard.py`, hooked into
 `Game.grab`) eats or flees during every activity; F2P travel (`docs/travel.md`, places
-in `library/places/f2p.yaml`) walks between banks and activities. `account: f2p` keeps to F2P methods. None of these is tried on the
-real client yet.
+in `library/places/f2p.yaml`) walks between banks and activities. `account: f2p` keeps to F2P methods. Errors save the last 80 seconds of screens
+(`skillbot/blackbox.py`, `data/incidents/`, included in Send to PC). Right-click menus are
+picked by their text once taught (`skillbot/menu.py`, `teach-menu`; `Game.choose`). The
+built-in schedule `library/schedules/f2p all skills.yaml` uses `method: auto` entries.
+None of these is tried on the real client yet.
 
 Next (`docs/modes-plan.md`): try the F2P methods (`docs/f2p-methods.md`) on the real
 client. **F2P only for

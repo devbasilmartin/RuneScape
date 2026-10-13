@@ -128,6 +128,8 @@ class HPGuard:
         name = step.name if step is not None else "the bot"
         self.stats["escapes"] += 1
         log.warning("HP %.0f%% and no food: getting away and logging out", 100 * hp)
+        if getattr(g, "blackbox", None) is not None:
+            g.blackbox.save(f"{name}: HP {hp:.0%} and no food")
         route = step.walk.get("bank") if step is not None else None
         if route and g.cfg.bank_color is not None:
             try:

@@ -36,6 +36,17 @@ well. Built in this order.
 - **Run from the phone**: Discord `/run <activity>` and `/stoprun`, through the control
   panel ([discord.md](discord.md)); waits on the owner setting Discord up.
 
+- **Easier testing on the real client** (Oct 2026): the black box (errors save the last 80
+  seconds as frames.png, [recording.md](recording.md)); right-click menus read by their
+  text, taught once ([f2p-methods.md](f2p-methods.md#right-click-menus)); Check step for
+  every library method (taught clicks, menus, places, map); Calibrate map also measures
+  the map's clickable area.
+- **F2P gaps**: Prayer (bury bones, big bones), gold rings and amulets, hill giants through
+  the brass key door (combat 40+), and the built-in **f2p all skills** schedule made of
+  **auto** entries (best method at your level, next best when it can't run).
+- **Away from the VM**: the daily Discord summary (and the panel's **Last 24h**) adds what it
+  did, eating, fleeing, errors and stops; Accounts shows where each account's schedule is.
+
 ## Next
 
 1. **Owner, at the VM** ([tonight.md](tonight.md)): shared folder, try Record, log the VM into GitHub then make the

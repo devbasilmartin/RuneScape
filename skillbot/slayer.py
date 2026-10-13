@@ -209,11 +209,7 @@ class SlayerTask(Task):
         if blob is None:
             raise BotError(f"can't see {master.name} (NPC Indicators: slayer_master)")
         from .dialog import Dialog
-        lay = g.layout
-        g.controls.click(blob.center, button="right")
-        g.wait(0.4, 0.6)
-        g.controls.click((blob.center[0], blob.center[1] + lay.menu_header
-                          + lay.menu_row * (master.option - 1) + lay.menu_row // 2))
+        g.choose(blob.center, "Assignment", master.option)
         if not g.wait_until(lambda im: Dialog(g).waiting(im) or self.present(im), 15):
             raise BotError(f"{master.name} didn't answer the Assignment option")
         Dialog(g).advance()

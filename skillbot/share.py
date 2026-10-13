@@ -6,6 +6,7 @@ Each send is a folder `skillbot/<time>/` in the share with:
 - the bot's images (debug.png, calibrate.png, frames.png from a recording, ...)
 - skillbot-log.txt: the end of the bot's log
 - panel-output.txt: what the control panel's Output shows
+- error-frames.png, error-last.png, error-log.txt: the newest black box (blackbox.py)
 Only the newest KEEP sends are kept.
 """
 import os
@@ -16,7 +17,7 @@ from pathlib import Path
 KEEP = 10
 LOG_LINES = 300
 IMAGES = ("debug.png", "debug-skills.png", "calibrate.png", "skills-check.png",
-          "energy-check.png", "frames.png")
+          "energy-check.png", "frames.png", "menu-check.png")
 
 
 def find_share() -> Path | None:
@@ -56,6 +57,13 @@ def send(repo_dir: Path, data_dir: Path, output_lines=(), dest: Path | None = No
         if (Path(repo_dir) / name).exists():
             shutil.copyfile(Path(repo_dir) / name, folder / name)
             files.append(name)
+    from .blackbox import newest
+    incident = newest(Path(data_dir) / "incidents")
+    if incident is not None:
+        for f in ("frames.png", "last.png", "log.txt"):
+            if (incident / f).exists():
+                shutil.copyfile(incident / f, folder / f"error-{f}")
+                files.append(f"error-{f}")
     log = tail(Path(data_dir) / "skillbot.log", LOG_LINES)
     if log:
         (folder / "skillbot-log.txt").write_text(log)

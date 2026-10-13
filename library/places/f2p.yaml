@@ -51,5 +51,13 @@ al kharid mine:       {tile: [3300, 3300]}
 al kharid fire ruins: {tile: [3312, 3253]}
 
 barbarian village fishing: {tile: [3104, 3424]}
+edgeville hill giants:                           # the brass key house west of the Cooks' Guild
+  tile: [3115, 3450]
+  arrive:
+    - {click: door, wait: 3}                     # the brass key opens it (carry the key)
+    - {click: stairs, wait: 4}                   # the ladder down (marked like the stairs)
+  leave:
+    - {click: stairs, wait: 4}                   # the ladder up
+    - {click: door, wait: 3}
 grand exchange bank:  {tile: [3164, 3489]}
 falador bank:         {tile: [3013, 3356]}       # the east bank

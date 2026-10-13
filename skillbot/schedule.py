@@ -11,6 +11,9 @@ schedules/<name>.yaml (shared by every account):
         when_full: bank           # optional, gathering/combat: bank | drop (default: the method's)
       - method: burn_willows
         minutes: 30
+      - method: auto              # the best method for the skill at your level right now
+        skill: mining             # (moves up the ladder as you level; tries the next best
+        minutes: 45               #  when one can't run: out of supplies, not trusted yet)
 
 Rules: the method's own upper level is ignored (manual: keep doing it), its lower level
 is enforced. An entry that can't start or runs out early is skipped with a notification
@@ -32,6 +35,7 @@ log = logging.getLogger("skillbot")
 NEVER = 100                     # until_level that no skill reaches: "keep doing it"
 NAME = re.compile(r"^[A-Za-z0-9 _-]{1,40}$")
 DONE = "schedule complete"
+AUTO = "auto"
 TIME_UP = "schedule time is up"
 
 
@@ -79,6 +83,16 @@ class Schedule:
             if extra:
                 raise ValueError(f"entry {i}: unknown keys {sorted(extra)}")
             e = Entry(**raw)
+            if e.method == AUTO:
+                if e.skill not in SKILLS:
+                    raise ValueError(f"entry {i}: method auto needs a skill")
+                e.minutes = float(e.minutes or 0)
+                if e.until_level is not None and not 2 <= int(e.until_level) <= 99:
+                    raise ValueError(f"entry {i}: until_level must be 2-99")
+                if e.when_full not in (None, "bank", "drop"):
+                    raise ValueError(f"entry {i}: when_full must be bank or drop")
+                entries.append(e)
+                continue
             m = library.get(e.method)
             if m is None:
                 raise ValueError(f"entry {i}: no method {e.method!r} in the library")
@@ -105,28 +119,45 @@ class Schedule:
         return {"repeat": repeat, "entries": [e.to_dict() for e in self.entries]}
 
 
-class Store:
-    """Saved schedules: one YAML file per name in schedules/, shared by all accounts."""
+BUILTIN = Path(__file__).resolve().parent.parent / "library" / "schedules"
 
-    def __init__(self, folder: Path):
+
+class Store:
+    """Saved schedules: one YAML file per name in schedules/, shared by all accounts.
+    ``builtin`` holds the ones that come with the bot (library/schedules); saving one
+    under the same name makes your own copy, which wins."""
+
+    def __init__(self, folder: Path, builtin: Path | None = None):
         self.folder = Path(folder)
+        self.builtin = Path(builtin) if builtin else None
 
     def path(self, name: str) -> Path:
         if not NAME.match(name or ""):
             raise ValueError("schedule names: letters, digits, spaces, - and _ (up to 40)")
         return self.folder / f"{name}.yaml"
 
+    def find(self, name: str) -> Path:
+        path = self.path(name)
+        if not path.exists() and self.builtin is not None \
+                and (self.builtin / path.name).exists():
+            return self.builtin / path.name
+        return path
+
     def names(self) -> list[str]:
-        return sorted(p.stem for p in self.folder.glob("*.yaml")) if self.folder.is_dir() else []
+        names = set()
+        for folder in (self.folder, self.builtin):
+            if folder is not None and folder.is_dir():
+                names |= {p.stem for p in folder.glob("*.yaml")}
+        return sorted(names)
 
     def load(self, name: str, library: dict) -> Schedule:
-        path = self.path(name)
+        path = self.find(name)
         if not path.exists():
             raise ValueError(f"no schedule {name!r} (have: {', '.join(self.names()) or 'none'})")
         return Schedule.from_dict(yaml.safe_load(path.read_text()), library)
 
     def raw(self, name: str) -> dict:
-        return yaml.safe_load(self.path(name).read_text()) or {}
+        return yaml.safe_load(self.find(name).read_text()) or {}
 
     def save(self, name: str, schedule: Schedule) -> Path:
         path = self.path(name)
@@ -182,11 +213,15 @@ def run_schedule(planner, schedule: Schedule, library: dict, registry, spells,
         for i, entry in enumerate(schedule.entries, 1):
             if i <= start:
                 continue
-            _remember(resume, key, i - 1)
+            _remember(resume, key, i - 1, label, len(schedule.entries))
             if end is not None and g.now() >= end:
                 return _finish(planner, TIME_UP, resume)
-            worked |= _run_entry(planner, entry, library[entry.method], registry, spells,
-                                 end, f"{label} {i}/{len(schedule.entries)}")
+            where = f"{label} {i}/{len(schedule.entries)}"
+            if entry.method == AUTO:
+                worked |= _run_auto(planner, entry, library, registry, spells, end, where)
+            else:
+                worked |= _run_entry(planner, entry, library[entry.method], registry, spells,
+                                     end, where)
         if start:
             start, worked = 0, True        # the resumed pass was a partial one
         if schedule.repeat == "once":
@@ -231,6 +266,40 @@ def _run_entry(planner, entry: Entry, method, registry, spells, end, where) -> b
     return batches > 0
 
 
+def auto_candidates(library: dict, skill: str, levels: dict, account: str) -> list:
+    """Methods for ``skill`` usable at these levels, best XP first: in their level range
+    (the upper level is where the next one takes over), allowed for the account, and
+    giving XP (tanning, essence mining are only supplies)."""
+    level = levels.get(skill, 1)
+    found = [m for m in library.values()
+             if skill in m.skills and m.xp_per_hour > 0
+             and m.levels[0] <= level < max(m.levels[1], m.levels[0] + 1)
+             and not m.blocked(account, levels)]
+    return sorted(found, key=lambda m: (-m.xp_per_hour, m.id))
+
+
+def _run_auto(planner, entry: Entry, library, registry, spells, end, where) -> bool:
+    """An auto entry: the best method that actually runs (out of supplies, not trusted
+    yet or can't start: the next best)."""
+    levels = planner.levels.levels
+    if levels.get(entry.skill, 1) >= (entry.until_level or NEVER):
+        return False
+    tried = auto_candidates(library, entry.skill, levels, planner.game.cfg.account)
+    if not tried:
+        log.info("%s: no method for %s %d", where, entry.skill, levels.get(entry.skill, 1))
+    for method in tried:
+        until = min(entry.until_level or NEVER,
+                    method.levels[1] if method.levels[1] < 99 else NEVER)
+        e = Entry(method.id, entry.minutes, until,
+                  entry.when_full if method.can_drop else None, entry.skill)
+        try:
+            if _run_entry(planner, e, method, registry, spells, end, where):
+                return True
+        except ValueError as err:          # e.g. a spell that hasn't been taught
+            log.info("%s: %s can't run: %s", where, method.name, err)
+    return False
+
+
 def _resume_at(path: Path | None, key: str, n: int) -> int:
     """The entry (0-based) a stopped run of this same schedule was on, else 0."""
     try:
@@ -241,9 +310,10 @@ def _resume_at(path: Path | None, key: str, n: int) -> int:
         else 0
 
 
-def _remember(path: Path | None, key: str, entry: int) -> None:
+def _remember(path: Path | None, key: str, entry: int, label: str = "", total: int = 0) -> None:
     if path:
-        Path(path).write_text(json.dumps({"schedule": key, "entry": entry}))
+        Path(path).write_text(json.dumps({"schedule": key, "entry": entry, "name": label,
+                                          "total": total}))
 
 
 def _finish(planner, reason: str, resume: Path | None = None) -> None:

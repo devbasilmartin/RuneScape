@@ -5,6 +5,21 @@ or gets stuck after an hour. A recording shows you what happened, and its frames
 Claude. (Claude can look at pictures but not videos, so the panel turns the part you care
 about into one picture of 9 frames: `frames.png`.)
 
+## You don't have to be recording: the black box
+
+While the bot runs it keeps the last 80 seconds of screens in memory (one every 2
+seconds). When something goes wrong (an error, or the HP guard running away), it saves them
+in `data/incidents/<time>/`:
+
+- `frames.png`: 9 frames up to the moment it went wrong, each with the time, the mouse
+  (a cross) and the activity;
+- `last.png`: the screen at that moment, full size;
+- `log.txt`: why, and the end of the log.
+
+**Send to PC** includes the newest one (`error-frames.png`, `error-last.png`,
+`error-log.txt`), and when a run stops on an error Discord gets the picture with the
+message. So after a problem: Send to PC, and tell me roughly when.
+
 ## Record
 
 In the panel, the **Record** card:

@@ -85,7 +85,8 @@ class RoutineTask(CombatTask):
     def click_target(self, target, action) -> bool:
         """Click an inventory item ({item}), a screen point ({point}), a taught button
         ({taught}: a menu button you showed the bot) or the nearest highlight; with
-        right_option, right-click it and pick that menu row."""
+        right_option, right-click it and pick that option (a word, or a row number;
+        right_row is the row to use while the word isn't taught)."""
         g = self.game
         if isinstance(target, dict) and "item" in target:
             slots = self.tagged(g.grab(), [target["item"]])
@@ -107,11 +108,7 @@ class RoutineTask(CombatTask):
         if not action.get("right_option"):
             g.controls.click(point)
             return True
-        g.controls.click(point, button="right")
-        g.wait(0.4, 0.6)
-        lay = g.layout
-        g.controls.click((point[0], point[1] + lay.menu_header
-                          + lay.menu_row * (action["right_option"] - 1) + lay.menu_row // 2))
+        g.choose(point, action["right_option"], action.get("right_row"))
         return True
 
     def act(self, action: dict) -> bool:

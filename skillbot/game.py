@@ -33,6 +33,7 @@ class Game:
         self.mouse = None      # mouse.MouseLab, when mouse-style testing is on
         self.hp_guard = None   # hp_guard.HPGuard: eat or escape whenever HP is low
         self.guard_hold = 0    # >0 while the guard mustn't click (shift held, bank open)
+        self.blackbox = None   # blackbox.BlackBox: the last minute of screens, for errors
 
     def keep_running(self) -> None:
         if self.run is not None:
@@ -40,6 +41,8 @@ class Game:
 
     def grab(self):
         img = self.screen.grab()
+        if self.blackbox is not None:
+            self.blackbox.offer(img)
         if self.hp_guard is not None and not self.guard_hold and self.hp_guard.check(img):
             img = self.screen.grab()     # it ate: the caller gets the screen after that
         return img
@@ -214,6 +217,43 @@ class Game:
             raise BotError(f"the bot doesn't know where {name!r} is: open that menu in game "
                            f"and use Learn → Teach a click ({name}) in the panel")
         return tuple(clicks[name])
+
+    @property
+    def menus(self):
+        if getattr(self, "_menus", None) is None:
+            from .menu import MenuBook
+            self._menus = MenuBook(self.cfg.data_dir / "menu_words.json")
+        return self._menus
+
+    def choose(self, point, option, row: int | None = None) -> None:
+        """Right-click ``point`` and pick ``option``: a word ("Teleport", found by its
+        taught shape, else ``row``) or a row number. Raises BotError (menu closed) when the
+        menu doesn't have it."""
+        from .menu import read_rows
+        lay = self.layout
+        self.controls.click(point, button="right")
+        self.wait(0.4, 0.6)
+        rows = read_rows(self.screen.grab(), point, lay.menu_header, lay.menu_row,
+                         self.menus.fill)
+        if isinstance(option, str):
+            found = self.menus.find(option, rows) if self.menus.knows(option) else None
+            if found is None and self.menus.knows(option) and rows:
+                self.controls.move((point[0], max(0, point[1] - 40)))   # closes the menu
+                raise BotError(f"the menu has no {option!r} (Learn → Teach a menu)")
+            if found is None and row is None:
+                self.controls.move((point[0], max(0, point[1] - 40)))
+                raise BotError(f"the bot doesn't know the word {option!r} yet: right-click "
+                               "something with it and use Learn → Teach a menu")
+            if found is None:
+                log.debug("menu word %r not taught: using row %d", option, row)
+            row = found or row
+        else:
+            row = option
+        if rows and row > len(rows):
+            self.controls.move((point[0], max(0, point[1] - 40)))
+            raise BotError(f"the menu has {len(rows)} rows, not {row}: wrong thing clicked?")
+        self.controls.click((point[0], point[1] + lay.menu_header + lay.menu_row * (row - 1)
+                             + lay.menu_row // 2))
 
     # ---- interface -----------------------------------------------------------------------
     def open_tab(self, name: str) -> None:

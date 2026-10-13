@@ -71,5 +71,41 @@ def load_scale(data_dir: Path) -> float | None:
         return None
 
 
-def save_scale(data_dir: Path, scale: float) -> None:
-    (Path(data_dir) / "map.json").write_text(json.dumps({"px_per_tile": round(scale, 4)}))
+def load_map(data_dir: Path) -> dict:
+    try:
+        return json.loads((Path(data_dir) / "map.json").read_text())
+    except (OSError, ValueError):
+        return {}
+
+
+def save_scale(data_dir: Path, scale: float, view=None) -> None:
+    data = {"px_per_tile": round(scale, 4)}
+    if view is not None:
+        data["view"] = [view.x, view.y, view.w, view.h]
+    (Path(data_dir) / "map.json").write_text(json.dumps(data))
+
+
+MARGIN = 12
+
+
+def measure_view(before, after, moved: float = 0.4):
+    """The world map's own area, from two screens either side of dragging it: the map
+    moves, the frame and buttons around it don't. Rows and columns where at least ``moved``
+    of the pixels changed, less a margin; None when hardly anything moved."""
+    from .layout import Rect
+    changed = (abs(before.astype(int) - after.astype(int)).max(axis=2) > 12)
+    rows = [i for i, f in enumerate(changed.mean(axis=1)) if f >= moved]
+    cols = [i for i, f in enumerate(changed.mean(axis=0)) if f >= moved]
+    if len(rows) < 60 or len(cols) < 60:
+        return None
+    # the longest unbroken run (a button inside the map breaks only a few lines)
+    def run(idx):
+        best, start = (idx[0], idx[0]), idx[0]
+        for a, b in zip(idx, idx[1:] + [None]):
+            if b is None or b - a > 8:
+                if a - start > best[1] - best[0]:
+                    best = (start, a)
+                start = b
+        return best
+    (y0, y1), (x0, x1) = run(rows), run(cols)
+    return Rect(x0 + MARGIN, y0 + MARGIN, x1 - x0 - 2 * MARGIN, y1 - y0 - 2 * MARGIN)

@@ -237,6 +237,10 @@ class DiscordCore:
                 restarts=count_log_lines(self.status_dir / "supervisor.log", "restarting:", since),
                 stops=count_log_lines(self.status_dir / "skillbot.log", "stopped", since),
                 step=snap["status"].get("step"))
+            from .history import night_lines
+            extra = night_lines(self.status_dir, since)
+            if extra:
+                summary += "\n" + "\n".join(extra)
             self.state["last_summary"] = today
             self.state["levels_then"] = snap["levels"]
         self.save()

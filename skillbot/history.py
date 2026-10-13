@@ -68,6 +68,7 @@ def account_summary(name: str | None, data_dir, now: float | None = None) -> dic
     levels = (_read(data_dir / "progress.json") or {}).get("levels", {})
     status = _read(data_dir / "status.json") or {}
     slayer = _read(data_dir / "slayer.json") or {}
+    resume = _read(data_dir / "schedule_resume.json") or {}
     ends = [e for e in events if e["event"] == "session_end"]
     starts = [e for e in events if e["event"] == "session_start"]
     running = bool(starts) and (not ends or starts[-1]["time"] > ends[-1]["time"])
@@ -84,6 +85,8 @@ def account_summary(name: str | None, data_dir, now: float | None = None) -> dic
         "running": running,
         "last_played": (now if running else ends[-1]["time"]) if ends or running else None,
         "last_stop": ends[-1].get("reason") if ends else None,
+        "schedule": {"name": resume.get("name"), "entry": resume.get("entry", 0) + 1,
+                     "total": resume.get("total")} if resume.get("name") else None,
         "hours_today": round(played_seconds(events, day_start(now), now) / 3600, 2),
         "hours_total": round(played_seconds(events, 0.0, now) / 3600, 2),
     }
@@ -96,6 +99,11 @@ def format_summary(s: dict, rotation_note: str = "") -> str:
              f"all time {s['hours_total']:.1f}h"]
     if s["step"]:
         lines.append(f"  step: {s['step']} ({s['skill']} {s['level']} → {s['target']})")
+    sch = s.get("schedule")
+    if sch:
+        lines.append(f"  schedule: {sch['name']}, activity {sch['entry']}"
+                     + (f" of {sch['total']}" if sch.get("total") else "")
+                     + (" (carries on there next turn)" if not s["running"] else ""))
     sl = s["slayer"]
     if sl and sl.get("state") == "assigned":
         left = f", {sl['left']} left" if sl.get("left") is not None else ""
@@ -121,3 +129,33 @@ def format_log(events) -> str:
         else:
             out.append(f"{when}  {e['event']}")
     return "\n".join(out) or "no history yet"
+
+
+def night_lines(data_dir, since: float) -> list[str]:
+    """What happened since ``since`` beyond levels: activities run, eating and fleeing,
+    errors saved (data/incidents) and the reasons runs stopped."""
+    data_dir = Path(data_dir)
+    events = [e for e in read_events(data_dir) if e["time"] >= since]
+    lines = []
+    minutes = {}
+    for e in events:
+        if e["event"] == "step":
+            minutes[e["step"]] = minutes.get(e["step"], 0) + e.get("minutes", 0)
+    if minutes:
+        top = sorted(minutes.items(), key=lambda kv: -kv[1])[:6]
+        lines.append("Did: " + ", ".join(f"{name} {m / 60:.1f}h" if m >= 60 else
+                                         f"{name} {m:.0f}m" for name, m in top))
+    ends = [e for e in events if e["event"] == "session_end"]
+    eaten = sum(e.get("eaten", 0) for e in ends)
+    fled = sum(e.get("escapes", 0) for e in ends)
+    if eaten or fled:
+        lines.append(f"HP: ate {eaten}" + (f", fled {fled} times" if fled else ""))
+    incidents = [p for p in (data_dir / "incidents").glob("*")
+                 if p.is_dir() and p.stat().st_mtime >= since] \
+        if (data_dir / "incidents").is_dir() else []
+    if incidents:
+        lines.append(f"Errors with pictures: {len(incidents)} (Send to PC has the newest)")
+    reasons = [e.get("reason") for e in ends if e.get("reason")]
+    if reasons:
+        lines.append("Stops: " + "; ".join(dict.fromkeys(reasons[-4:])))
+    return lines

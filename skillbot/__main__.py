@@ -319,7 +319,22 @@ def cmd_check_setup(cfg: Config, args) -> None:
     from .doctor import report
     from .setup_check import check_setup, find_step
     img = vision.load_png(args.image) if args.image else Screen.load(cfg.data_dir).grab()
-    checks = check_setup(cfg, find_step(cfg, args.step), img, Registry.load(cfg.colors_file))
+    from .library import load_library
+    registry = Registry.load(cfg.colors_file)
+    library = load_library()
+    method = library.get(args.step) or next(
+        (m for m in library.values() if m.name.lower() == args.step.lower()), None)
+    if method is None:
+        raise SystemExit(report(check_setup(cfg, find_step(cfg, args.step), img, registry)))
+    from .menu import MenuBook
+    from .places import load_places, load_scale
+    from .setup_check import method_checks
+    clicks = taught_clicks(cfg.data_dir)
+    spells = {**{k: (0, 0) for k in TAUGHT_CLICKS}, **cfg.spells}   # untaught: checked below
+    step = method.to_step(method.skills[0], 99, 0, registry, spells)
+    checks = check_setup(cfg, step, img, registry) + method_checks(
+        cfg, method, img, registry, clicks, MenuBook(cfg.data_dir / "menu_words.json"),
+        load_places(registry.resolve), load_scale(cfg.data_dir))
     raise SystemExit(report(checks))
 
 
@@ -339,8 +354,11 @@ def cmd_colors(cfg: Config, args) -> None:
 def make_navigator(cfg: Config, game):
     from .colors import Registry
     from .navigation import Destinations, Navigator
-    from .places import load_places, load_scale
+    from .layout import Rect
+    from .places import load_map, load_places, load_scale
     places = load_places(Registry.load(cfg.colors_file).resolve)
+    if load_map(cfg.data_dir).get("view"):         # measured by calibrate-map
+        cfg.layout.world_map_view = Rect(*load_map(cfg.data_dir)["view"])
     return Navigator(game, cfg.hubs, Destinations.load(cfg.data_dir / "destinations.json"),
                      cfg.path_color, cfg.map_menu_option, places=places,
                      scale=load_scale(cfg.data_dir))
@@ -375,11 +393,49 @@ TAUGHT_CLICKS = {
     "craft_leather_gloves": "leather gloves in the leather crafting menu",
     "craft_leather_body": "the leather body in the leather crafting menu",
     "tan_soft_leather": "Soft leather in Ellis's tanning menu",
+    "craft_gold_ring": "the gold ring in the furnace's jewellery menu",
+    "craft_gold_amulet": "the gold amulet in the furnace's jewellery menu",
     "smelt_bronze": "the Bronze bar button in the furnace menu",
     "smelt_iron": "the Iron bar button in the furnace menu",
     "smith_dagger": "the dagger in the anvil menu (any metal)",
     "smith_platebody": "the platebody in the anvil menu (any metal)",
 }
+
+
+def cmd_teach_menu(cfg: Config, args) -> None:
+    """Show the bot a right-click menu: it right-clicks what you hover and remembers each
+    row's option, in the order you typed them (data/menu_words.json)."""
+    from .menu import MenuBook, read_rows
+    options = [o.strip() for o in args.options.split(",") if o.strip()]
+    if not options:
+        raise SystemExit('give the options top to bottom, e.g. "Talk-to,Trade,Teleport"')
+    game = live_game(cfg)
+    lay = game.layout
+    x, y = point_at(game.controls, "the thing to right-click")
+    game.controls.click((x, y), button="right")
+    game.wait(0.7, 0.8)
+    img = game.screen.grab()
+    area = img[y + lay.menu_header + 2:y + lay.menu_header + lay.menu_row * len(options),
+               max(0, x - 25):x + 25].reshape(-1, 3)
+    colors, counts = np.unique(area, axis=0, return_counts=True)
+    book = MenuBook(cfg.data_dir / "menu_words.json")
+    book.fill = tuple(int(v) for v in colors[counts.argmax()])
+    rows = read_rows(img, (x, y), lay.menu_header, lay.menu_row, book.fill)
+    game.controls.move((x, max(0, y - 40)))              # closes the menu
+    top, bottom = y - 2, y + lay.menu_header + lay.menu_row * max(len(rows), len(options)) + 4
+    cv2.imwrite("menu-check.png", img[max(0, top):bottom, max(0, x - 200):x + 200][..., ::-1])
+    print(f"menu background {book.fill}, {len(rows)} rows found (picture: menu-check.png)")
+    if len(rows) < len(options):
+        raise SystemExit(f"you listed {len(options)} options but the bot sees {len(rows)} "
+                         "rows: check menu-check.png and the list")
+    for name, sig in zip(options, rows):
+        if sig is None:
+            print(f"  row {name!r}: no white text, skipped")
+            continue
+        book.learn(name, sig)
+        print(f"  learned {name!r}")
+    book.save()
+    print("saved (data/menu_words.json)")
 
 
 def cmd_teach_click(cfg: Config, args) -> None:
@@ -412,6 +468,19 @@ def cmd_calibrate_map(cfg: Config, args) -> None:
     points = []
     for name in (args.first, args.second):
         points.append(point_at(game.controls, f"{name!r} on the map"))
+    from .places import measure_view
+    print("  measuring the map's clickable area: the bot drags the map a little and back")
+    cx, cy = cfg.layout.world_map_center
+    before = game.screen.grab()
+    game.controls.drag((cx, cy), (cx + 40, cy + 30))
+    game.wait(0.8)
+    after = game.screen.grab()
+    game.controls.drag((cx + 40, cy + 30), (cx, cy))
+    view = measure_view(before, after)
+    if view is None:
+        print("  couldn't see the map move: keeping the default area")
+    else:
+        print(f"  the map's area: {view.x},{view.y} {view.w}x{view.h}")
     game.close_interfaces()
     offset = (points[1][0] - points[0][0], points[1][1] - points[0][1])
     try:
@@ -421,7 +490,7 @@ def cmd_calibrate_map(cfg: Config, args) -> None:
     if off > 15:
         raise SystemExit(f"that's {off:.0f} degrees off the direction from {args.first} to "
                          f"{args.second}: did you hover the right places? Nothing saved.")
-    save_scale(cfg.data_dir, scale)
+    save_scale(cfg.data_dir, scale, view)
     print(f"saved: {scale:.2f} pixels per tile (data/map.json)")
 
 
@@ -709,7 +778,32 @@ def cmd_ui(cfg: Config, args) -> None:
         print(f"installed {install_shortcut()}: look for Skillbot in the app grid "
               "(and on the desktop)")
         return
-    serve(App(cfg.data_dir, [s.name for s in cfg.plan]), args.port, not args.no_browser)
+    from .library import load_library
+    library = load_library()
+    methods = sorted(m for m, v in library.items()
+                     if cfg.account != "f2p" or not v.members)
+    serve(App(cfg.data_dir, [s.name for s in cfg.plan] + methods), args.port,
+          not args.no_browser)
+
+
+def cmd_summary(cfg: Config, args) -> None:
+    """The last N hours: levels gained, what it did, eating and fleeing, errors, stops."""
+    import time as _time
+    from .history import night_lines, read_events
+    since = _time.time() - args.hours * 3600
+    starts = [e for e in read_events(cfg.data_dir)
+              if e["event"] == "session_start" and e["time"] >= since]
+    try:
+        now = json.loads((cfg.data_dir / "progress.json").read_text()).get("levels", {})
+    except (OSError, ValueError):
+        now = {}
+    then = starts[0].get("levels", {}) if starts else now
+    gains = [f"{s.title()} {then[s]} → {lvl}" for s, lvl in now.items()
+             if s in then and lvl > then[s]]
+    print(f"Last {args.hours:g} hours")
+    print("Levels: " + (", ".join(gains) if gains else "no level-ups"))
+    for line in night_lines(cfg.data_dir, since) or ["Nothing ran."]:
+        print(line)
 
 
 def cmd_pause(cfg: Config, args) -> None:
@@ -739,11 +833,11 @@ def schedule_runner(cfg: Config, args, planner):
     """``run --schedule NAME`` or ``run --activity METHOD``: what to run instead of the plan."""
     from .colors import Registry
     from .library import load_library
-    from .schedule import Schedule, Store, run_schedule
+    from .schedule import BUILTIN, Schedule, Store, run_schedule
     library = load_library()
     try:
         if args.schedule:
-            schedule, label = Store(SCHEDULES_DIR).load(args.schedule, library), args.schedule
+            schedule, label = Store(SCHEDULES_DIR, BUILTIN).load(args.schedule, library), args.schedule
         else:
             entry = {"method": args.activity, "minutes": args.minutes or 0}
             if args.until_level:
@@ -802,6 +896,9 @@ def cmd_run(cfg: Config, args) -> None:
         planner.chooser = make_chooser(cfg, goals_path, planner.trust, args.supervised,
                                        prices_dir=args.mailbox_dir / "prices")
         logging.info("goals mode: %s", goals_path)
+    from .blackbox import BlackBox
+    game.blackbox = BlackBox(cfg.data_dir / "incidents", cfg.data_dir / "skillbot.log",
+                             mouse=lambda: _safe_position(game.controls))
     from .hp_guard import DangerLog, HPGuard
     game.hp_guard = HPGuard(game, planner.session, DangerLog(cfg.data_dir / "danger.json"),
                             level=levels.get)
@@ -829,7 +926,8 @@ def cmd_run(cfg: Config, args) -> None:
                 logging.warning("couldn't log out; the supervisor will try")
             (cfg.data_dir / "handover").unlink(missing_ok=True)
         else:
-            notify(f"stopped: {e}")
+            shown = game.blackbox.fresh()
+            notify(f"stopped: {e}", image=str(shown / "frames.png") if shown else None)
     except pyautogui.FailSafeException:
         kind, detail = "failsafe", "mouse in a screen corner"
         logging.info("stopped by failsafe")
@@ -838,11 +936,18 @@ def cmd_run(cfg: Config, args) -> None:
         logging.info("stopped")
     finally:
         log_event(cfg.data_dir, "session_end", reason=detail or kind,
-                  levels=dict(levels.levels))
+                  levels=dict(levels.levels), **game.hp_guard.stats)
         write_stopped(cfg.data_dir, kind, detail)
     logging.info("levels: %s", levels.levels)
     if game.run:
         logging.info("run: %s", game.run.stats)
+
+
+def _safe_position(controls):
+    try:
+        return controls.position()
+    except Exception:          # no display
+        return None
 
 
 def main(argv=None) -> None:
@@ -879,9 +984,9 @@ def main(argv=None) -> None:
     c.add_argument("question")
     c.add_argument("options", nargs="*")
     c = sub.add_parser("setup", help="what to mark in RuneLite for a plan step")
-    c.add_argument("step", help="step name or number")
+    c.add_argument("step", help="step name or number, or a library method (e.g. iron_varrock)")
     c = sub.add_parser("check-setup", help="verify a step's highlights from a screenshot")
-    c.add_argument("step", help="step name or number")
+    c.add_argument("step", help="step name or number, or a library method (e.g. iron_varrock)")
     c.add_argument("--image", help="check this PNG instead of the live screen")
     c = sub.add_parser("colors", help="the color registry and free colors; or add a name")
     c.add_argument("action", nargs="?", choices=["list", "add"], default="list")
@@ -891,6 +996,10 @@ def main(argv=None) -> None:
                    help="where the color is used: everywhere, default, or a place name")
     c = sub.add_parser("teach-click", help="remember where a menu button is (furnace, anvil)")
     c.add_argument("name", choices=sorted(TAUGHT_CLICKS))
+    c = sub.add_parser("summary", help="what happened in the last hours (levels, eating, errors)")
+    c.add_argument("--hours", type=float, default=24)
+    c = sub.add_parser("teach-menu", help="teach right-click menu options by their text")
+    c.add_argument("options", help='the menu rows top to bottom: "Talk-to,Trade,Teleport"')
     c = sub.add_parser("calibrate-map", help="measure the world map's scale (F2P travel)")
     c.add_argument("--first", default="lumbridge spawn", help="the first place to hover")
     c.add_argument("--second", default="lumbridge cows", help="the second place to hover")
@@ -982,6 +1091,7 @@ def main(argv=None) -> None:
     notify_setup(args.mailbox_dir, tag=sel.name)
     {"calibrate": cmd_calibrate, "calibrate-run": cmd_calibrate_run,
      "calibrate-map": cmd_calibrate_map, "teach-click": cmd_teach_click,
+     "teach-menu": cmd_teach_menu, "summary": cmd_summary,
      "learn-energy": cmd_learn_energy, "learn-digits": cmd_learn_digits, "levels": cmd_levels,
      "debug": cmd_debug, "doctor": cmd_doctor, "supervise": cmd_supervise, "discord": cmd_discord, "ask": cmd_ask,
      "add-destination": cmd_add_destination, "travel": cmd_travel,

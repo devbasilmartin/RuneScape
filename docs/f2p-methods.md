@@ -22,12 +22,26 @@ Banking walks to the bank and back ([travel.md](travel.md)).
 | Smithing | bronze daggers, then platebodies: bronze, iron, steel, mithril, adamant, Varrock west anvils | 1 / 18 / 33 / 48 / 68 / 88 | Varrock west |
 | Combat | cows, Lumbridge: kill only, or bury bones | 1–40 | — |
 | Combat | Al-Kharid warriors in the palace (bring food) | 20–40 | Al Kharid |
+| Combat | hill giants through the brass key door (bring food; big bones banked) | 40+ | Edgeville |
+| Prayer | bury bones or big bones from the bank | 1+ | Draynor |
 | Mining (supplies) | rune essence through Aubury in Varrock (Rune Mysteries) | any | Varrock east |
 | Crafting (supplies) | tan cowhides into leather at Ellis, Al Kharid (1 coin each, no XP) | any | Al Kharid |
 | Magic | Wind Strike, then Fire Strike on cows | 1 / 13–25 | — |
 | Ranged | bow and arrows on cows, picking the arrows back up | 1–40 | — |
-| Crafting | leather gloves, then leather bodies (then gem cutting from 20) | 1 / 14 | Grand Exchange |
-| Runecraft | air runes south of Falador (Rune Mysteries) | 1–9 | Falador east |
+| Crafting | leather gloves, then leather bodies | 1 / 14 | Grand Exchange |
+| Crafting | gold rings, then gold amulets (u), Al Kharid furnace | 5 / 8–20 | Al Kharid |
+| Crafting | gem cutting: sapphires, emeralds, rubies, diamonds | 20 / 27 / 34 / 43+ | Grand Exchange |
+| Runecraft | air runes south of Falador, earth runes by Varrock, fire runes by Al Kharid (Rune Mysteries) | 1 / 9 / 14+ | Falador east / Varrock east / Al Kharid |
+
+## Every skill in one schedule
+
+The panel's schedules come with **f2p all skills**: every F2P skill, 30–45 minutes each,
+round and round. Each line is **auto**: the best method for that skill at your level right
+now, so it moves from trees to oaks to willows, cows to warriors to hill giants, by itself.
+When the best one can't run (out of supplies, not proven yet when you're away), it tries
+the next best. Gathering banks, so the logs, fish and ore feed firemaking, cooking and
+smithing that come after it. Skills at 99 are skipped. You can add **auto** lines to your own
+schedules too (the first choice under each skill in the activity list).
 
 Willows wait until you're combat 41 (dark wizards next to them).
 
@@ -67,12 +81,47 @@ Willows wait until you're combat 41 (dark wizards next to them).
   `food` slot 1 (it fetches more when it runs out).
 - **Rune essence**: NPC Indicators on Aubury in `aubury` and on the mine's Portal in
   `essence_portal`; Object Markers on the essence rock (inside the mine) in `essence_rock`.
-  It right-clicks Aubury and picks **Teleport** (the 3rd row of his menu: if that's wrong
-  on your client, tell me what his menu says).
+  It right-clicks Aubury and picks **Teleport**. Teach his menu once (see *Right-click
+  menus* below), or it guesses the 3rd row.
 - **Tanning**: NPC Indicators on Ellis in `tanner`; coins in the inventory; cowhides in bank
-  tab `crafting` slot 2. It right-clicks Ellis → **Trade** (2nd row), then right-clicks the
-  soft leather → **Tan All** (5th row). Teach the soft leather button once: open his menu,
-  panel → Learn → Teach a click → *tanning: soft leather*.
+  tab `crafting` slot 2. It right-clicks Ellis → **Trade**, then right-clicks the soft
+  leather → **Tan All**. Teach the soft leather button once: open his menu, panel → Learn
+  → Teach a click → *tanning: soft leather*. Teach both menus too (below).
+- **Hill giants**: a brass key in the inventory (untagged); Object Markers on the door of the
+  little house west of the Cooks' Guild in `door` (`#C00000`), and on the ladder inside and
+  the one at the bottom in `stairs`; NPC Indicators on "Hill Giant" in `enemy`; food in bank
+  tab `food` slot 1. Big bones are banked for Prayer.
+- **Prayer**: bank tab `prayer` with bones in slot 1 and big bones in slot 2.
+- **Gold jewellery**: Object Markers on the Al Kharid furnace (`furnace`); a ring mould or
+  amulet mould in the inventory (tagged, kept); gold bars in bank tab `crafting` slot 3.
+  Teach *jewellery menu: gold ring* and *gold amulet* (use a gold bar on the furnace to open
+  it).
+
+## Right-click menus
+
+Wherever the bot picks from a right-click menu (Aubury's Teleport, Ellis's Trade, Tan All,
+the world map's Set target), it reads the option's text, so a menu that's different on
+your client doesn't make it click the wrong row. It learns each word once:
+
+1. In the panel, Learn: type the menu's rows top to bottom in the box next to **Teach a
+   menu**, as the game shows them, e.g. `Talk-to,Trade,Teleport`. You can stop before
+   Walk here / Examine / Cancel.
+2. Click **Teach a menu**, then **Just Enter**, and within 5 seconds hover the thing in game
+   (Aubury) and hold still. The bot right-clicks it and reads each row.
+3. You should see `learned 'Talk-to'`, `learned 'Trade'`, `learned 'Teleport'`.
+   `menu-check.png` shows the menu it saw.
+
+Do Aubury (`Talk-to,Trade,Teleport`), Ellis (`Talk-to,Trade`), the soft leather in his
+tanning window (`Tan 1,Tan 5,Tan 10,Tan X,Tan All`) and the world map (right-click any spot:
+`Set target` and what's under it). A word it hasn't learned yet falls back to the row
+number, as before. A menu without the word is closed instead of clicking something else.
+
+## Before trying one: Check step
+
+Panel → Check → pick the activity (every library method is in the list) → **Check step**,
+standing where it runs. Beyond the markers on screen it now says what's missing: clicks
+and menus not taught yet, a members method on an F2P account, places it can't travel to,
+the world map not calibrated.
 - Items are tagged automatically by the bot's RuneLite profile (new this time: iron ore,
   salmon, burnt meat, bars, daggers, platebodies, mind runes, arrows, leather: rebuild and re-import the profile).
 

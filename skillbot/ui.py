@@ -60,6 +60,12 @@ def actions(steps: list[str], exports: list[str], library: dict | None = None,
             raise ValueError("pick a button from the list")
         return sb + ["teach-click", p["name"]]
 
+    def teach_menu(p):
+        options = (p.get("options") or "").strip()
+        if not options or len(options) > 200:
+            raise ValueError('type the menu rows top to bottom, e.g. "Talk-to,Trade,Teleport"')
+        return sb + ["teach-menu", options]
+
     def step(p):
         if p.get("step") not in steps:
             raise ValueError("pick a step from the list")
@@ -84,6 +90,7 @@ def actions(steps: list[str], exports: list[str], library: dict | None = None,
         "calibrate": sb + ["calibrate"],
         "calibrate_map": sb + ["calibrate-map"],
         "teach_click": teach_click,
+        "teach_menu": teach_menu,
         "debug": sb + ["debug"],
         "debug_skills": sb + ["debug", "--skills", "--out", "debug-skills.png"],
         "doctor": sb + ["doctor"],
@@ -92,6 +99,7 @@ def actions(steps: list[str], exports: list[str], library: dict | None = None,
         "calibrate_run": sb + ["calibrate-run"],
         "learn_energy": sb + ["learn-energy"],
         "plan": sb + ["plan"],
+        "summary": sb + ["summary"],
         "accounts": sb + ["accounts"],
     }
     out = {name: (lambda p, argv=argv: argv) for name, argv in plain.items()}
@@ -166,13 +174,13 @@ class Job:
 class App:
     def __init__(self, data_dir: Path, steps: list[str], cwd: Path = REPO_DIR, library=None,
                  schedules_dir: Path | None = None):
-        from .schedule import Store
+        from .schedule import BUILTIN, Store
         self.data_dir, self.steps, self.cwd = Path(data_dir), steps, Path(cwd)
         if library is None:
             from .library import load_library
             library = load_library()
         self.library = library
-        self.store = Store(schedules_dir or REPO_DIR / "schedules")
+        self.store = Store(schedules_dir or REPO_DIR / "schedules", BUILTIN if schedules_dir is None else None)
         self.job: Job | None = None
         self.recorder = None
         self.next_id = 1
@@ -277,6 +285,14 @@ class App:
                 "when_full": m.step.get("when_full") if m.can_drop else None,
                 "trust": {f"{skill}|{wf or ''}": trust.progress(step_name(m, skill, wf))
                           for skill in m.skills for wf in choices}})
+        from .skills import SKILLS
+        for skill in sorted({s for m in self.library.values() for s in m.skills},
+                            key=SKILLS.index):       # schedules only: "auto" entries
+            out.append({"id": f"auto:{skill}", "auto": True, "name": "auto: best for my level",
+                        "skills": [skill], "members": False, "levels": [1, 99],
+                        "can_drop": True, "when_full": "bank",
+                        "trust": {f"{skill}|{wf}": "picks the best one that runs"
+                                  for wf in ("bank", "drop")}})
         return out
 
     def schedules(self) -> dict:

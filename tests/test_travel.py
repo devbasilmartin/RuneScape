@@ -231,3 +231,19 @@ def test_point_at_reads_the_mouse_after_the_countdown(monkeypatch):
     def sleep(s):
         controls.pos = next(moves, controls.pos)
     assert point_at(controls, "the cows", seconds=2, sleep=sleep) == (300, 200)
+
+
+def test_the_world_maps_area_is_where_the_picture_moved_when_dragged():
+    import numpy as np
+    from skillbot.layout import Rect
+    from skillbot.places import MARGIN, measure_view
+    rng = np.random.default_rng(1)
+    before = np.full((503, 765, 3), 70, np.uint8)
+    terrain = rng.integers(0, 255, (400, 600, 3), np.uint8)
+    before[50:350, 30:480] = terrain[:300, :450]
+    after = before.copy()
+    after[50:350, 30:480] = terrain[30:330, 40:490]           # dragged
+    after[60:80, 440:470] = before[60:80, 440:470]            # a button that stays put
+    assert measure_view(before, after) == Rect(30 + MARGIN, 50 + MARGIN, 449 - 2 * MARGIN,
+                                               299 - 2 * MARGIN)
+    assert measure_view(before, before) is None

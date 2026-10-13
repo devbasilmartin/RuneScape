@@ -181,3 +181,68 @@ def colors_text(registry: Registry, tolerance: int) -> str:
     lines.append(f"free colors for new world highlights ({len(free)}): " +
                  ", ".join("#{:02X}{:02X}{:02X}".format(*c) for c in free[:24]))
     return "\n".join(lines)
+
+
+def _walk(node, found: dict) -> None:
+    """Collect what a library step needs taught or marked: taught clicks, menu words,
+    marker names, places."""
+    if isinstance(node, dict):
+        if "taught" in node:
+            found["taught"].add(node["taught"])
+        if isinstance(node.get("right_option"), str):
+            found["menus"][node["right_option"]] = node.get("right_row")
+        for key in ("spell", "cast", "leave_spell"):
+            if isinstance(node.get(key), str):
+                found["taught"].add(node[key])
+        for key in ("visible", "not_visible", "click", "until", "target"):
+            if isinstance(node.get(key), str):
+                found["markers"].add(node[key])
+        for key in ("travel", "location", "bank_location"):
+            if isinstance(node.get(key), str):
+                found["places"].add(node[key])
+        for v in node.values():
+            _walk(v, found)
+    elif isinstance(node, list):
+        for v in node:
+            _walk(v, found)
+
+
+def method_checks(cfg: Config, method, img, registry: Registry, clicks: dict, menus,
+                  places: dict, scale) -> list[Check]:
+    """What a library method needs beyond markers on screen: the account, taught clicks
+    and menus, its places and the world map's scale."""
+    found = {"taught": set(), "menus": {}, "markers": set(), "places": set()}
+    _walk(method.step, found)
+    if method.location:
+        found["places"].add(method.location)
+    checks = []
+    if cfg.account == "f2p" and method.members:
+        checks.append(Check("account", FAIL, "members method, and config says account: f2p"))
+    for name in sorted(found["taught"]):
+        checks.append(Check(f"taught {name}", PASS if name in clicks else FAIL,
+                            "taught" if name in clicks else
+                            "not taught yet: Learn → Teach a click"))
+    for word, row in sorted(found["menus"].items()):
+        if menus.knows(word):
+            checks.append(Check(f"menu {word!r}", PASS, "taught: found by its text"))
+        else:
+            checks.append(Check(f"menu {word!r}", WARN,
+                                f"not taught: clicking row {row} blind (Learn → Teach a menu)"))
+    for name in sorted(found["places"]):
+        if name not in places:
+            checks.append(Check(f"place {name!r}", WARN, "not in library/places/f2p.yaml: "
+                                "walk there yourself"))
+    if found["places"] and scale is None:
+        checks.append(Check("world map", WARN, "not measured: Setup → Calibrate map "
+                                                "(needed to travel by itself)"))
+    tol, region = cfg.color_tolerance, cfg.layout.viewport
+    for name in sorted(found["markers"]):
+        if name not in registry.entries or registry.entries[name].category == "item":
+            continue
+        color = registry.resolve(name)
+        seen = vision.find_blobs(img, color, tol, region=region)
+        checks.append(Check(f"marker {name}", PASS if seen else WARN,
+                            f"{describe(color, registry)} visible" if seen else
+                            f"{describe(color, registry)} not visible from here (fine if it's "
+                            "somewhere else in the loop)"))
+    return checks

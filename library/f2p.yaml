@@ -602,7 +602,7 @@ essence_varrock:
         do: [{bank: true}, {travel: "varrock aubury", until: aubury}]
       - name: teleport to the mine     # Aubury's menu: Talk-to, Trade, Teleport
         when: {visible: aubury, not_visible: essence_rock}
-        do: [{click: aubury, right_option: 3}, {wait_for: {visible: essence_rock}, timeout: 15}]
+        do: [{click: aubury, right_option: Teleport, right_row: 3}, {wait_for: {visible: essence_rock}, timeout: 15}]
       - name: mine
         when: {visible: essence_rock}
         do: [{click: essence_rock}, {wait_for: {full: true}, timeout: 150}, {progress: 1}]
@@ -631,6 +631,87 @@ tan_cowhides:
         do: [{bank: true}, {travel: "al kharid tanner", until: tanner}]
       - name: tan them                 # Ellis: Talk-to, Trade; leather button: Tan 1/5/10/X/All
         when: {has: cowhide}
-        do: [{click: tanner, right_option: 2}, {wait: [1.5, 2]},
-             {click: {taught: tan_soft_leather}, right_option: 5},
+        do: [{click: tanner, right_option: Trade, right_row: 2}, {wait: [1.5, 2]},
+             {click: {taught: tan_soft_leather}, right_option: Tan All, right_row: 5},
              {wait_for: {lacks: cowhide}, timeout: 6}, {key: esc}, {progress: 1}]
+
+# --- Prayer: bury bones from the bank at Draynor (the bank is on the ground floor). Bank
+# tab `prayer`: bones in slot 0, big bones in slot 1 (from cows and hill giants). ---
+bury_bones:
+  name: "bury bones (Draynor bank)"
+  skills: [prayer]
+  levels: [1, 99]
+  xp_per_hour: 20000
+  reliability: 5
+  location: "draynor bank"
+  trade: {inputs: {bones: 4000}}
+  step:
+    task: routine
+    items: [bones]
+    bank_location: "draynor bank"
+    bank_tab: prayer
+    withdraw: [{slot: 0, item: bones, quantity: all}]
+    routine:
+      - name: get bones
+        when: {lacks: bones}
+        exhausted_if: {lacks: bones}
+        do: [{bank: true}]
+      - name: bury
+        when: {has: bones}
+        until_fail: true
+        max: 28
+        do: [{click: {item: bones}}, {wait: [1.0, 1.2]}, {progress: 1}]
+
+bury_big_bones:
+  name: "bury big bones (Draynor bank)"
+  skills: [prayer]
+  levels: [1, 99]
+  xp_per_hour: 50000
+  reliability: 5
+  location: "draynor bank"
+  trade: {inputs: {big_bones: 3300}}
+  step:
+    task: routine
+    items: [big_bones]
+    bank_location: "draynor bank"
+    bank_tab: prayer
+    withdraw: [{slot: 1, item: big_bones, quantity: all}]
+    routine:
+      - name: get big bones
+        when: {lacks: big_bones}
+        exhausted_if: {lacks: big_bones}
+        do: [{bank: true}]
+      - name: bury
+        when: {has: big_bones}
+        until_fail: true
+        max: 28
+        do: [{click: {item: big_bones}}, {wait: [1.0, 1.2]}, {progress: 1}]
+
+# --- Crafting: gold jewellery at the Al Kharid furnace (a ring or amulet mould kept in the
+# inventory, tagged). Teach the jewellery menu's ring and amulet buttons once. Bank tab
+# `crafting`: gold bars in slot 2. ---
+craft_gold_rings:
+  name: "gold rings (Al Kharid)"
+  skills: [crafting]
+  levels: [5, 8]
+  xp_per_hour: 20000
+  reliability: 4
+  location: "al kharid furnace"
+  trade: {inputs: {gold_bar: 1300}}
+  step: {task: process, target: furnace, items: [gold_bar], use_item: gold_bar,
+         keep: [ring_mould], confirm: [{click: craft_gold_ring}], bank_tab: crafting,
+         bank_location: "al kharid bank",
+         withdraw: [{slot: 2, item: gold_bar, quantity: all}]}
+
+craft_gold_amulets:
+  name: "gold amulets (u) (Al Kharid)"
+  skills: [crafting]
+  levels: [8, 20]
+  xp_per_hour: 40000
+  reliability: 4
+  location: "al kharid furnace"
+  trade: {inputs: {gold_bar: 1300}}
+  step: {task: process, target: furnace, items: [gold_bar], use_item: gold_bar,
+         keep: [amulet_mould], confirm: [{click: craft_gold_amulet}], bank_tab: crafting,
+         bank_location: "al kharid bank",
+         withdraw: [{slot: 2, item: gold_bar, quantity: all}]}

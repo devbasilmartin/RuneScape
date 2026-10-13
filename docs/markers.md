@@ -33,11 +33,11 @@ Used by: fire runes (Al Kharid)
 
 ## al kharid furnace
 
-Used by: smelt bronze bars (Al Kharid); smelt iron bars (Al Kharid)
+Used by: gold amulets (u) (Al Kharid); gold rings (Al Kharid); smelt bronze bars (Al Kharid); smelt iron bars (Al Kharid)
 
 - [ ] Object Marker on Furnace → `furnace` (#C0FF40)
 - [ ] `bank` (Object Marker on the booth) at al kharid bank
-- automatic: `copper_ore`, `iron_ore`, `tin_ore`
+- automatic: `amulet_mould`, `copper_ore`, `gold_bar`, `iron_ore`, `ring_mould`, `tin_ore`
 
 ## al kharid palace
 
@@ -146,11 +146,11 @@ Used by: ensouled heads (Arceuus reanimation)
 
 ## draynor bank
 
-Used by: cook beef (Draynor fire); cook salmon (Draynor fire); cook shrimps (Draynor fire); cook trout (Draynor fire)
+Used by: bury big bones (Draynor bank); bury bones (Draynor bank); cook beef (Draynor fire); cook salmon (Draynor fire); cook shrimps (Draynor fire); cook trout (Draynor fire)
 
 - [ ] Object Marker on Range / Cooking range / Clay oven → `range` (#FF4080)
 - [ ] `bank` (Object Marker on the booth) at draynor bank
-- automatic: `raw_beef`, `raw_salmon`, `raw_shrimps`, `raw_trout`
+- automatic: `big_bones`, `bones`, `raw_beef`, `raw_salmon`, `raw_shrimps`, `raw_trout`
 
 ## draynor fishing
 
@@ -193,7 +193,7 @@ Used by: willows (Draynor)
 
 Used by: hill giants (Edgeville dungeon)
 
-- [ ] Object Marker on Bank booth / Bank chest / Bank / Grand Exchange booth → `bank` (#FF00FF)
+- [ ] `bank` (Object Marker on the booth) at edgeville bank
 - automatic: `big_bones`, `enemy`, `loot`, `trout`
 
 ## falador air ruins
