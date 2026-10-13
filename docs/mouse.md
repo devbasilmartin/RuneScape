@@ -76,3 +76,37 @@ willows:
 ```
 
 The log is `data/mouse_outcomes.jsonl`, one line per click, so it's easy to analyse further.
+
+## Tuning styles in the mouse UI
+
+The humanized_input library has its own control panel: sliders for every setting, sample
+paths drawn live on test targets (including a walking one), hit rates and timings. The bot
+and the UI share one folder of styles, `~/skillbot/mouse_styles/`.
+
+Once, in a VM terminal:
+
+```sh
+cd ~/skillbot
+.venv/bin/pip install "git+https://github.com/devbasilmartin/Humanized-input@ccr-cf7d2098-mwb8ib"
+.venv/bin/python -m humanized_input.styles --dir mouse_styles starter
+```
+
+and in `config.yaml`:
+
+```yaml
+mouse:
+  enabled: true
+  styles: mouse_styles        # the folder (next to config.yaml)
+  pick: round-robin
+```
+
+Open the UI (port 8766, because the Skillbot panel uses 8765):
+
+```sh
+cd ~/skillbot && .venv/bin/python -m humanized_input.ui --dir mouse_styles --port 8766
+```
+
+Edit, duplicate or delete styles there and save. The bot reads the folder when a run
+starts, so restart the run after changing styles. After a run,
+`python -m skillbot mouse-summary` shows which styles actually landed on cows; delete the
+losers in the UI and tweak the winners.

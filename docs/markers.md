@@ -280,7 +280,7 @@ Used by: bagged plants (garden); mahogany tables (dining room); oak dungeon door
 
 ## lumbridge cows
 
-Used by: cows (Lumbridge)
+Used by: cows (Lumbridge): bury bones; cows (Lumbridge): kill only
 
 - [ ] `bank` (Object Marker on the booth) at lumbridge bank
 - automatic: `anchovies`, `bones`, `cooked_meat`, `cow`, `cowhide`, `loot`, `raw_beef`, `shrimps`, `trout`

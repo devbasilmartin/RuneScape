@@ -154,14 +154,53 @@ def test_magic_casts_the_spell_before_each_attack():
     assert fake.clicks[-1][0] != (700, 400)
 
 
+def side_panel_tabs(fake):
+    """The combat tab shows style buttons over the inventory area; inventory brings it back."""
+    saved = {}
+
+    def click(f, pt):
+        r = LAYOUT.slot(0)
+        if tuple(pt) == LAYOUT.tabs["combat"] and not saved:
+            saved["inv"] = f.img[r.y:r.y + 200, r.x:r.x + 150].copy()
+            f.img[r.y:r.y + 200, r.x:r.x + 150] = (90, 80, 70)
+        elif tuple(pt) == LAYOUT.tabs["inventory"] and saved:
+            f.img[r.y:r.y + 200, r.x:r.x + 150] = saved.pop("inv")
+    fake.on_click.append(click)
+
+
 def test_selects_attack_style_once():
     game, fake, field = setup()
+    side_panel_tabs(fake)
     task = make_task(game, combat_step(style=2, kills_per_batch=2))
     task.run_batch()
     task.run_batch()
     points = [p for p, _ in fake.clicks]
     assert points.count(LAYOUT.combat_styles[2]) == 1
     assert points.index(LAYOUT.tabs["combat"]) < points.index(LAYOUT.combat_styles[2])
+
+
+def test_no_style_click_when_the_combat_tab_did_not_open():
+    """The style buttons are where inventory slots are: never click blind (the tinderbox)."""
+    game, fake, field = setup()
+    task = make_task(game, combat_step(style=2, kills_per_batch=1))
+    task.run_batch()
+    assert LAYOUT.combat_styles[2] not in [p for p, _ in fake.clicks]
+
+
+def test_re_aims_at_a_cow_that_walked():
+    game, fake, field = setup(cows=[(230, 140, 40, 30)])
+    orig = fake.move
+
+    def move(pt):                       # the cow walks 25 px while the mouse travels
+        orig(pt)
+        fake.img[140:170, 230:270] = BG
+        outline(fake.img, 255, 140, 40, 30, COW)
+        field.cows = {(255, 140, 40, 30): "idle"}
+    fake.move = move
+    task = make_task(game, combat_step(kills_per_batch=1))
+    assert task.attack(fake.grab()) is not None
+    x, y = fake.clicks[-1][0]
+    assert 255 <= x < 295 and 140 <= y < 170
 
 
 def test_ignores_loot_it_cannot_pick_up():

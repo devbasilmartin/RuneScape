@@ -97,6 +97,29 @@ class Game:
         self.controls.click(pt)
         return True
 
+    def click_moving(self, img, blob, color, still_free=lambda img, b: True) -> bool:
+        """Click something that walks (an NPC): move the mouse to it, look again, and click
+        where it is now. A cow can walk half its width while the mouse travels."""
+        if self.mouse is not None or not hasattr(self.controls, "move"):
+            return self.click_blob(img, blob)
+        danger = self.danger_zones(img)
+        pt = self.safe_point(blob.rect, danger)
+        if pt is None:
+            return False
+        self.controls.move(pt)
+        now = self.grab()
+        near = [b for b in self.blobs(now, color) if still_free(now, b)
+                and (b.center[0] - pt[0]) ** 2 + (b.center[1] - pt[1]) ** 2 <= 40 ** 2]
+        if not near:
+            return False                 # it's gone, or someone else is fighting it
+        blob = min(near, key=lambda b: (b.center[0] - pt[0]) ** 2 + (b.center[1] - pt[1]) ** 2)
+        pt = self.safe_point(blob.rect, self.danger_zones(now))
+        if pt is None:
+            return False
+        self.keep_running()
+        self.controls.click(pt)
+        return True
+
     def click_styled(self, blob, danger) -> bool:
         """Mouse-style testing: a planned path to a point inside the blob's outline.
         False (nothing clicked) if the aim is over a random event: the caller falls back

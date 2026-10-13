@@ -34,12 +34,12 @@ def test_annotate_marks_the_mouse_and_adds_a_strip():
 
 def test_records_parts_at_a_steady_rate(tmp_path, monkeypatch):
     monkeypatch.setattr(recorder, "PART_SECONDS", 0.5)
-    rec = record(tmp_path / "rec", 1.6)
+    rec = record(tmp_path / "rec", 2.6)
     assert not rec.running and not rec.error
     info = json.loads((tmp_path / "rec" / "info.json").read_text())
     assert info["fps"] == 10 and len(info["parts"]) >= 3
-    for part in info["parts"][:-1]:          # half a second each at 10 fps
-        assert 4 <= part["frames"] <= 7
+    for part in info["parts"][1:-1]:         # half a second each at 10 fps (the first one
+        assert 4 <= part["frames"] <= 7      # can be short while the video file opens)
     for p in info["parts"]:
         assert (tmp_path / "rec" / p["file"]).stat().st_size > 0
 

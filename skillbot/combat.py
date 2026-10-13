@@ -84,11 +84,23 @@ class CombatTask(Task):
 
     # ---- actions -------------------------------------------------------------------------
     def select_style(self) -> None:
+        """Pick the step's attack style, but only once the combat tab is really open: the
+        style buttons sit where inventory slots are, so a missed tab click would click an
+        item instead (and use it on the next thing clicked)."""
         g = self.game
         if self.step.style is not None and not self.style_set:
+            lay = g.layout
+            first, last = lay.slot(0), lay.slot(27)
+            panel = Rect(first.x, first.y, last.x + last.w - first.x, last.y + last.h - first.y)
+            before = panel.crop(g.grab()).astype(np.int16)
             g.open_tab("combat")
-            g.controls.click(g.layout.combat_styles[self.step.style])
-            g.wait(0.4, 0.7)
+            after = panel.crop(g.grab()).astype(np.int16)
+            if np.abs(after - before).mean() < 4:
+                log.warning("%s: the combat tab didn't open; leaving the attack style as it "
+                            "is", self.step.name)
+            else:
+                g.controls.click(lay.combat_styles[self.step.style])
+                g.wait(0.4, 0.7)
             g.open_tab("inventory")
         self.style_set = True
 
@@ -156,8 +168,9 @@ class CombatTask(Task):
             g.open_tab("magic")
             g.controls.click(self.step.cast)
             g.wait(0.2, 0.4)
-        if not g.click_blob(img, blob):
-            return None                  # a random event is standing on it
+        if not g.click_moving(img, blob, self.step.target,
+                              still_free=lambda im, b: not self.has_health_bar(im, b)):
+            return None                  # it walked off, or a random event is standing on it
         if self.step.cast:
             g.wait(0.3, 0.5)
             g.open_tab("inventory")

@@ -72,16 +72,28 @@ burn_willows:
     withdraw: [{slot: 0, item: willow_logs, quantity: all}]
 
 cows_lumbridge:
-  name: "cows (Lumbridge)"
+  name: "cows (Lumbridge): kill only"
   skills: [attack, strength, defence]
   levels: [1, 40]
-  xp_per_hour: 10000
-  profit_per_hour: 5000
+  xp_per_hour: 11000
   reliability: 4
   location: "lumbridge cows"
-  trade: {inputs: {trout: 20}, outputs: {cowhide: 150}}
   step:
-    bank_location: "lumbridge bank"
+    task: combat
+    target: cow
+    food: [cooked_meat, shrimps, anchovies, trout]     # eaten if you carry any
+    eat_below: 0.5
+    when_out_of_food: stop
+
+cows_bones_lumbridge:
+  name: "cows (Lumbridge): bury bones"
+  skills: [attack, strength, defence, prayer]
+  levels: [1, 40]
+  xp_per_hour: 9000
+  profit_per_hour: 2000
+  reliability: 4
+  location: "lumbridge cows"
+  step:
     task: combat
     target: cow
     loot: loot
@@ -89,9 +101,8 @@ cows_lumbridge:
     bury: [bones]
     food: [cooked_meat, shrimps, anchovies, trout]
     eat_below: 0.5
-    bank_tab: food
-    withdraw: [{slot: 0, item: trout, quantity: x}]
-    when_full: bank
+    bank_location: "lumbridge bank"
+    when_full: drop
 
 earth_runes_varrock:
   name: "earth runes (Varrock)"

@@ -33,6 +33,10 @@ class Controls:
         time.sleep(self.rng.uniform(0.03, 0.08))
         self._pg.click(button=button)
 
+    def move(self, pt) -> None:
+        x, y = self.screen.to_screen(pt)
+        self._pg.moveTo(x, y, duration=self.rng.uniform(0.12, 0.3), tween=self._pg.easeOutQuad)
+
     def position(self) -> tuple[int, int]:
         """The mouse position in canvas coordinates."""
         return self.screen.to_canvas(self._pg.position())

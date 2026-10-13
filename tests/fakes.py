@@ -124,6 +124,10 @@ class FakeClient:
         for fn in list(self.on_click):
             fn(self, pt)
 
+    def move(self, pt):
+        self.pointer = tuple(pt)
+        self.wait(0.2)
+
     def drag(self, start, end):
         self.drags = getattr(self, "drags", []) + [(tuple(start), tuple(end))]
         for fn in list(getattr(self, "on_drag", [])):
