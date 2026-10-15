@@ -261,3 +261,64 @@ def test_auto_needs_a_skill_and_builtin_schedules_are_listed(tmp_path):
     assert "f2p all skills" in store.names()
     sched = store.load("f2p all skills", load_library())
     assert {e.skill for e in sched.entries} >= {"woodcutting", "prayer", "runecraft"}
+
+
+def test_quest_entries(world, tmp_path, monkeypatch):
+    from skillbot import questbook
+    from skillbot.goals import QuestLog
+    from skillbot.schedule import BUILTIN, QUEST
+    planner, fake, notes = world
+    planner.game.cfg.data_dir = tmp_path
+    sched = Schedule.from_dict({"entries": [{"quest": "cook's assistant", "minutes": 20},
+                                            {"quest": "Rune Mysteries"}]}, LIB)
+    assert sched.entries[0].method == QUEST and sched.entries[0].quest == "Cook's Assistant"
+    assert sched.to_dict()["entries"] == [{"quest": "Cook's Assistant", "minutes": 20.0},
+                                          {"quest": "Rune Mysteries"}]
+    with pytest.raises(ValueError, match="no quest"):
+        Schedule.from_dict({"entries": [{"quest": "Dragon Slayer III"}]}, LIB)
+
+    ran = []
+
+    class Follow(Task):
+        def run_batch(self):
+            ran.append(self.step.name)
+            if self.step.name == "quest: Rune Mysteries":
+                tab["rune mysteries"] = questbook.DONE
+            self.game.wait(60)
+            return "exhausted"                # Quest Helper shows nothing more
+    monkeypatch.setitem(TASK_TYPES, "quest", Follow)
+    tab = {}
+    monkeypatch.setattr(questbook, "read_tab", lambda game, book: dict(tab))
+    book = questbook.MenuBook(tmp_path / "quest_words.json")
+    book.words["rune mysteries"] = []
+    book.save()
+    for _ in range(2):                        # the item note comes once per run
+        assert run(planner, {"entries": [{"quest": "Cook's Assistant"},
+                                          {"quest": "Rune Mysteries"}]}) == DONE
+    assert ran == ["quest: Rune Mysteries"]   # cook's: no items yet; mysteries: then done
+    assert QuestLog(tmp_path / "quests.json").has("Rune Mysteries")
+    assert sum("Cook's Assistant" in n and "quest-ready" in n for n in notes) == 1
+    assert any("quest complete: Rune Mysteries" in n for n in notes)
+
+    QuestLog(tmp_path / "quests_ready.json").add("Cook's Assistant")
+    assert run(planner, {"entries": [{"quest": "Cook's Assistant"}]}) == DONE
+    assert ran[-1] == "quest: Cook's Assistant"
+    assert any("quest-done" in n for n in notes)       # its name isn't taught: you say
+
+    store = Store(tmp_path, BUILTIN)
+    assert len(store.load("f2p quests", LIB).entries) >= 8
+    assert store.load("f2p all skills", __import__("skillbot.library").library
+                      .load_library()).entries[2].quest == "Rune Mysteries"
+
+
+def test_methods_needing_a_quest_wait_for_it(tmp_path):
+    from skillbot.goals import QuestLog
+    from skillbot.schedule import auto_candidates
+    lib = {"air": Method.from_dict("air", {"skills": ["runecraft"], "levels": [1, 9],
+                                           "xp_per_hour": 5, "members": False,
+                                           "requires": {"quests": ["Rune Mysteries"]},
+                                           "step": {"task": "gather", "target": "tree"}})}
+    done = QuestLog(tmp_path / "q.json")
+    assert auto_candidates(lib, "runecraft", {}, "f2p", done) == []
+    done.add("Rune Mysteries")
+    assert [m.id for m in auto_candidates(lib, "runecraft", {}, "f2p", done)] == ["air"]

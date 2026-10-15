@@ -62,3 +62,7 @@ The panel's **I'm watching** box (or `--supervised`): new activities run too, an
 stops at the first error. **Unattended**, an activity that hasn't yet run 2 hours cleanly
 while watched is skipped, like one out of supplies. Each activity shows its status: new,
 trial or trusted (see `skillbot/trust.py`).
+
+## Quest lines
+
+`- {quest: "Rune Mysteries", minutes: 40}` does a quest with Quest Helper. It is skipped once the quest is finished, or until its items are ready. See [quests.md](quests.md).

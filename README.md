@@ -191,6 +191,7 @@ chose, the usable method that is most reliable, then most profitable, then faste
 ```sh
 python -m skillbot plan --explain        # what it would train next, and why each method is or isn't usable
 python -m skillbot quest-done "Rune Mysteries"   # methods needing a quest unlock once it's marked done
+python -m skillbot quests                        # the quest list: done, ready, what each needs (docs/quests.md)
 ```
 
 A method is usable when your levels are in its range, its quests are done, its Inventory

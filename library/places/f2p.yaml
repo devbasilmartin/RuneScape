@@ -61,3 +61,17 @@ edgeville hill giants:                           # the brass key house west of t
     - {click: door, wait: 3}
 grand exchange bank:  {tile: [3164, 3489]}
 falador bank:         {tile: [3013, 3356]}       # the east bank
+
+# Quest starts (library/quests/f2p.yaml): near enough for Quest Helper's highlight to show.
+lumbridge castle:     {tile: [3210, 3220]}       # the Duke is upstairs; Quest Helper shows the stairs
+lumbridge church:     {tile: [3243, 3208]}
+lumbridge veos:       {tile: [3228, 3241]}       # Veos, by the pub north of the castle
+fred's farm:          {tile: [3189, 3273]}
+wizards' tower:       {tile: [3109, 3167]}
+doric's house:        {tile: [2951, 3450]}
+falador castle:       {tile: [2977, 3343]}
+rimmington:           {tile: [2967, 3205]}
+goblin village:       {tile: [2957, 3511]}
+varrock square:       {tile: [3212, 3424]}
+draynor manor:        {tile: [3109, 3330]}
+draynor village:      {tile: [3095, 3266]}

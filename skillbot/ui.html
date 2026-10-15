@@ -77,7 +77,7 @@
       <button class="danger" id="stop">Stop</button>
       <button data-act="pause">Pause</button><button data-act="resume">Resume</button>
       <div class="hint">Moving the mouse into a screen corner also stops the bot.</div>
-      <button data-act="plan">What's next?</button><button data-act="accounts">Accounts</button><button data-act="summary" title="The last 24 hours: levels, what it did, eating and fleeing, errors, why it stopped">Last 24h</button>
+      <button data-act="plan">What's next?</button><button data-act="accounts">Accounts</button><button data-act="quests" title="Every listed quest: done, ready, or what it still needs">Quests</button><button data-act="quest_follow" title="Follow Quest Helper through the quest picked under Learn, while you watch">Do quest</button><button data-act="quest_ready" title="You've got the picked quest's items: schedules may start it">Items ready</button><button data-act="quest_done" title="Mark the picked quest finished">Quest done</button><button data-act="summary" title="The last 24 hours: levels, what it did, eating and fleeing, errors, why it stopped">Last 24h</button>
     </section>
     <section>
       <h2>Check</h2>
@@ -143,6 +143,10 @@
           <option value="craft_gold_amulet">jewellery menu: gold amulet</option>
         </select>
         <button data-act="teach_click" title="Open that menu in game first, then hover the button and click Just Enter">Teach a click</button>
+      </div>
+      <div class="row">
+        <select id="questsel" title="Quests from library/quests/f2p.yaml"></select>
+        <button data-act="teach_quest" title="Open the quest tab in game, click this, hover the quest's name and click Just Enter: the bot then sees by itself when it's finished">Teach a quest</button>
       </div>
       <div class="row">
         <input id="menuopts" placeholder="Talk-to,Trade,Teleport" title="The right-click menu's rows, top to bottom, as the game shows them (leave out Walk here, Examine, Cancel at the end if you like)">
@@ -270,6 +274,7 @@ document.querySelectorAll("[data-act]").forEach((b) => b.onclick = () => {
   if (act === "runelite_profile") params.export = $("#export").value;
   if (act === "teach_click") params.name = $("#clicksel").value;
   if (act === "teach_menu") params.options = $("#menuopts").value;
+  if (act.startsWith("quest_") || act === "teach_quest") params.name = $("#questsel").value;
   start(act, params);
 });
 $("#stop").onclick = () => post("/api/stop");
@@ -334,6 +339,7 @@ $("#q-skill").onchange = $("#q-full").onchange = () => quickUpdate(false);
 $("#q-start").onclick = () => {
   const m = methodsById[$("#q-method").value];
   if (m.auto) { $("#msg").textContent = "auto is for schedules: pick an activity"; return; }
+  if (m.quest) { $("#msg").textContent = "quests: pick it under Learn and click Do quest"; return; }
   start("run_activity", {method: m.id, minutes: $("#q-minutes").value, until_level: $("#q-level").value,
     when_full: m.can_drop ? $("#q-full").value : "", skill: m.skills.length > 1 ? $("#q-skill").value : "",
     watching: watching()});
@@ -351,6 +357,10 @@ function rowHtml(i) {
 function readRows() {
   return [...document.querySelectorAll("#s-rows tr")].map((tr) => {
     const m = methodsById[tr.querySelector(".r-method").value];
+    if (m.quest) {
+      const min = tr.querySelector(".r-minutes").value.trim();
+      return min ? {quest: m.quest, minutes: Number(min)} : {quest: m.quest};
+    }
     const e = {method: m.auto ? "auto" : m.id};
     if (m.auto) e.skill = m.skills[0];
     const min = tr.querySelector(".r-minutes").value.trim(), lvl = tr.querySelector(".r-level").value.trim();
@@ -365,7 +375,8 @@ function renderRows(entries) {
   $("#s-rows").innerHTML = entries.map((_, i) => rowHtml(i)).join("");
   document.querySelectorAll("#s-rows tr").forEach((tr, i) => {
     const e = entries[i];
-    const m = methodsById[e.method === "auto" ? `auto:${e.skill}` : e.method] || state.methods[0];
+    const m = methodsById[e.quest ? `quest:${e.quest}` : e.method === "auto" ? `auto:${e.skill}` : e.method]
+      || state.methods[0];
     const msel = tr.querySelector(".r-method"); msel.value = m.id;
     const refresh = (fromMethod) => {
       const mm = methodsById[msel.value];
@@ -520,6 +531,8 @@ function render() {
     $("#recstate").classList.toggle("err", !!rec.error);
   }
   fillSelect($("#stepsel"), state.steps, false);
+  fillSelect($("#questsel"), state.steps.filter((s) => s.startsWith("quest: "))
+    .map((s) => s.slice(7)), false);
   fillSelect($("#export"), state.exports, true, exportLabel);
   renderRun();
 

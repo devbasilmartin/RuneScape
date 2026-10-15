@@ -324,6 +324,10 @@ def cmd_check_setup(cfg: Config, args) -> None:
     library = load_library()
     method = library.get(args.step) or next(
         (m for m in library.values() if m.name.lower() == args.step.lower()), None)
+    from .questbook import find, load_quests
+    quest = find(load_quests(), args.step.removeprefix("quest: "))
+    if method is None and quest is not None:
+        raise SystemExit(report(quest_checks(cfg, quest, img, registry)))
     if method is None:
         raise SystemExit(report(check_setup(cfg, find_step(cfg, args.step), img, registry)))
     from .menu import MenuBook
@@ -336,6 +340,40 @@ def cmd_check_setup(cfg: Config, args) -> None:
         cfg, method, img, registry, clicks, MenuBook(cfg.data_dir / "menu_words.json"),
         load_places(registry.resolve), load_scale(cfg.data_dir))
     raise SystemExit(report(checks))
+
+
+def quest_checks(cfg: Config, quest, img, registry) -> list:
+    """Check step for a quest: can it start, Quest Helper's colors, the quest tab."""
+    import json
+    from .goals import QuestLog
+    from .menu import MenuBook
+    from .places import load_places
+    from .questbook import problems
+    from .doctor import FAIL, PASS, WARN, Check
+    progress = cfg.data_dir / "progress.json"
+    levels = json.loads(progress.read_text()).get("levels", {}) if progress.exists() else {}
+    checks = []
+    if QuestLog(cfg.data_dir / "quests.json").has(quest.name):
+        checks.append(Check("quest", PASS, "already finished"))
+    for why in problems(quest, levels, cfg.account,
+                        QuestLog(cfg.data_dir / "quests_ready.json")):
+        checks.append(Check("quest", FAIL if "bring" not in why else WARN, why))
+    for text in quest.needs_you:
+        checks.append(Check("needs you", WARN, text))
+    if quest.start and quest.start not in load_places(registry.resolve):
+        checks.append(Check(f"place {quest.start!r}", WARN, "unknown: walk there yourself"))
+    seen = any(vision.find_blobs(img, registry.resolve(n), cfg.color_tolerance,
+                                 region=cfg.layout.viewport)
+               for n in ("quest_target", "quest_dialog"))
+    checks.append(Check("Quest Helper", PASS if seen else WARN,
+                        "a highlight in the bot's quest colors is visible" if seen else
+                        "nothing in quest_target/quest_dialog colors on screen: Quest Helper "
+                        "on, quest selected, colors set (docs/quests.md)?"))
+    taught = quest.name.lower() in MenuBook(cfg.data_dir / "quest_words.json").words
+    checks.append(Check("quest tab", PASS if taught else WARN,
+                        "name taught: the bot sees when it's finished" if taught else
+                        "name not taught: Learn → Teach a quest (else mark it done yourself)"))
+    return checks
 
 
 def cmd_colors(cfg: Config, args) -> None:
@@ -571,12 +609,21 @@ def cmd_plan(cfg: Config, args) -> None:
 
 def cmd_quest(cfg: Config, args) -> None:
     """Follow Quest Helper through a quest, supervised (you're watching)."""
+    from dataclasses import replace
+    from .colors import Registry
     from .config import Step
     from .planner import Planner
+    from .questbook import find, load_quests
+    from .schedule import quest_step
     game = live_game(cfg)
     levels = Levels.load(game, SkillReader.load(cfg.layout, cfg.data_dir), cfg.data_dir)
-    step = Step.from_dict({"name": args.name, "skill": "attack", "task": "quest",
-                           "until_level": 99, "idle_timeout": args.idle})
+    quest = find(load_quests(), args.name)
+    if quest is not None:              # a listed quest: walk to its start first
+        game.nav = make_navigator(cfg, game)
+        step = replace(quest_step(quest, Registry.load(cfg.colors_file)), idle_timeout=args.idle)
+    else:
+        step = Step.from_dict({"name": args.name, "skill": "attack", "task": "quest",
+                               "until_level": 99, "idle_timeout": args.idle})
     planner = Planner(game, levels, supervised=True)
     try:
         while planner.run_step(step) > 0:
@@ -731,6 +778,64 @@ def cmd_quest_done(cfg: Config, args) -> None:
     print(f"marked done: {args.name}")
 
 
+def cmd_quest_ready(cfg: Config, args) -> None:
+    """You've got a quest's items: schedules may start it now."""
+    from .goals import QuestLog
+    from .questbook import find, load_quests
+    quest = find(load_quests(), args.name)
+    if quest is None:
+        raise SystemExit(f"no quest {args.name!r} in library/quests/f2p.yaml")
+    QuestLog(cfg.data_dir / "quests_ready.json").add(quest.name)
+    print(f"ready: {quest.name} (items: {', '.join(quest.items) or 'none'})")
+
+
+def cmd_quests(cfg: Config, args) -> None:
+    """Every listed quest: finished, ready to start, or what it still needs."""
+    print(quests_text(cfg))
+
+
+def quests_text(cfg: Config) -> str:
+    import json
+    from .goals import QuestLog
+    from .menu import MenuBook
+    from .questbook import load_quests, problems
+    progress = cfg.data_dir / "progress.json"
+    levels = json.loads(progress.read_text()).get("levels", {}) if progress.exists() else {}
+    done = QuestLog(cfg.data_dir / "quests.json")
+    ready = QuestLog(cfg.data_dir / "quests_ready.json")
+    taught = MenuBook(cfg.data_dir / "quest_words.json").words
+    lines = []
+    for quest in load_quests().values():
+        if done.has(quest.name):
+            lines.append(f"done      {quest.name}")
+            continue
+        why = problems(quest, levels, cfg.account, ready)
+        lines.append(f"{'waiting' if why else 'ready':9} {quest.name}: {quest.rewards}")
+        for text in why + [f"you: {n}" for n in quest.needs_you]:
+            lines.append(f"            {text}")
+        if quest.name.lower() not in taught:
+            lines.append("            name not taught (Learn → Teach a quest): "
+                         "mark it done yourself when finished")
+    return "\n".join(lines)
+
+
+def cmd_teach_quest(cfg: Config, args) -> None:
+    """Show the bot a quest's name in the quest tab, so it can tell when it's finished."""
+    from .menu import MenuBook
+    from .questbook import find, load_quests, teach
+    quest = find(load_quests(), args.name)
+    name = quest.name if quest else args.name
+    game = live_game(cfg)
+    print("Open the quest tab in game.")
+    x, y = point_at(game.controls, f"the name {name!r} in the quest tab")
+    book = MenuBook(cfg.data_dir / "quest_words.json")
+    try:
+        state = teach(game.screen.grab(), game.layout.quest_list, book, name, y)
+    except ValueError as e:
+        raise SystemExit(str(e))
+    print(f"learned {name!r}: it reads {state} (data/quest_words.json)")
+
+
 def cmd_trust(cfg: Config, args) -> None:
     from .planner import TASK_TYPES
     from .trust import TrustStore, fingerprint
@@ -782,7 +887,9 @@ def cmd_ui(cfg: Config, args) -> None:
     library = load_library()
     methods = sorted(m for m, v in library.items()
                      if cfg.account != "f2p" or not v.members)
-    serve(App(cfg.data_dir, [s.name for s in cfg.plan] + methods), args.port,
+    from .questbook import load_quests
+    quests = [f"quest: {q}" for q in load_quests()]
+    serve(App(cfg.data_dir, [s.name for s in cfg.plan] + methods + quests), args.port,
           not args.no_browser)
 
 
@@ -1063,6 +1170,11 @@ def main(argv=None) -> None:
     c.add_argument("name", nargs="?")
     c = sub.add_parser("quest-done", help="mark a quest as completed (unlocks methods)")
     c.add_argument("name")
+    c = sub.add_parser("quest-ready", help="you've got a quest's items: schedules may start it")
+    c.add_argument("name")
+    sub.add_parser("quests", help="the quest list: done, ready, or what each still needs")
+    c = sub.add_parser("teach-quest", help="teach a quest's name in the quest tab (hover it)")
+    c.add_argument("name")
     c = sub.add_parser("trust", help="trust level of each plan step (or set one)")
     c.add_argument("step", nargs="?", help="step name or number to set")
     c.add_argument("level", nargs="?", choices=["experimental", "trial", "trusted"])
@@ -1095,7 +1207,7 @@ def main(argv=None) -> None:
      "learn-energy": cmd_learn_energy, "learn-digits": cmd_learn_digits, "levels": cmd_levels,
      "debug": cmd_debug, "doctor": cmd_doctor, "supervise": cmd_supervise, "discord": cmd_discord, "ask": cmd_ask,
      "add-destination": cmd_add_destination, "travel": cmd_travel,
-     "trust": cmd_trust, "plan": cmd_plan, "sold": cmd_sold, "prices": cmd_prices, "quest-done": cmd_quest_done, "quest": cmd_quest, "logout": cmd_logout, "mouse-summary": cmd_mouse_summary, "marker-list": cmd_marker_list, "runelite-profile": cmd_runelite_profile, "accounts": cmd_accounts, "switch": cmd_switch, "rotation": cmd_rotation, "slayer-task": cmd_slayer_task, "learn-slayer": cmd_learn_slayer, "setup": cmd_setup, "check-setup": cmd_check_setup, "colors": cmd_colors,
+     "trust": cmd_trust, "plan": cmd_plan, "sold": cmd_sold, "prices": cmd_prices, "quest-done": cmd_quest_done, "quest-ready": cmd_quest_ready, "quests": cmd_quests, "teach-quest": cmd_teach_quest, "quest": cmd_quest, "logout": cmd_logout, "mouse-summary": cmd_mouse_summary, "marker-list": cmd_marker_list, "runelite-profile": cmd_runelite_profile, "accounts": cmd_accounts, "switch": cmd_switch, "rotation": cmd_rotation, "slayer-task": cmd_slayer_task, "learn-slayer": cmd_learn_slayer, "setup": cmd_setup, "check-setup": cmd_check_setup, "colors": cmd_colors,
      "profile": cmd_profile, "pause": cmd_pause, "ui": cmd_ui,
      "screenshot": cmd_screenshot, "share": cmd_share, "record": cmd_record,
      "frames": cmd_frames,

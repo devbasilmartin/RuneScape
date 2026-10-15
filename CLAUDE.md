@@ -82,6 +82,8 @@ in `library/places/f2p.yaml`) walks between banks and activities. `account: f2p`
 (`skillbot/blackbox.py`, `data/incidents/`, included in Send to PC). Right-click menus are
 picked by their text once taught (`skillbot/menu.py`, `teach-menu`; `Game.choose`). The
 built-in schedule `library/schedules/f2p all skills.yaml` uses `method: auto` entries.
+Quests (`docs/quests.md`): `library/quests/f2p.yaml`, `quest:` lines in schedules, the quest
+tab read by taught names (`skillbot/questbook.py`, `teach-quest`).
 None of these is tried on the real client yet.
 
 Next (`docs/modes-plan.md`): try the F2P methods (`docs/f2p-methods.md`) on the real

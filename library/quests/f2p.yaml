@@ -1,0 +1,79 @@
+# F2P quests the bot can follow with Quest Helper (docs/quests.md), easiest first.
+#
+#   start:     a place in library/places/f2p.yaml near the first NPC (the bot walks there)
+#   levels:    levels you need (the bot won't start below them)
+#   items:     what to bring; getting them is your job (then `quest-ready NAME`)
+#   needs_you: steps the bot can't do: it stops there and tells you
+#   rewards:   for your information
+# A quest with no items starts by itself; one with items waits for `quest-ready`.
+
+"Cook's Assistant":
+  start: lumbridge kitchen
+  items: [egg, bucket of milk, pot of flour]
+  rewards: 300 Cooking XP, 1 quest point
+
+"Sheep Shearer":
+  start: fred's farm
+  items: [20 balls of wool]
+  rewards: 150 Crafting XP, 60 coins, 1 quest point
+
+"Rune Mysteries":
+  start: lumbridge castle
+  rewards: air talisman, Runecraft unlocked, 1 quest point
+  needs_you: ["the Duke is upstairs in Lumbridge Castle; walks to the Wizards' Tower and Varrock"]
+
+"The Restless Ghost":
+  start: lumbridge church
+  rewards: 1,125 Prayer XP, 1 quest point
+  needs_you: ["a level 13 skeleton attacks when you take the skull (bring food; the HP guard eats)"]
+
+"X Marks the Spot":
+  start: lumbridge veos
+  items: [spade]
+  rewards: antique lamp (300 XP), 300 coins, 1 quest point
+
+"Doric's Quest":
+  start: doric's house
+  items: [6 clay, 4 copper ore, 2 iron ore]
+  rewards: 1,300 Mining XP, 180 coins, Doric's anvils, 1 quest point
+
+"Imp Catcher":
+  start: wizards' tower
+  items: [black bead, white bead, red bead, yellow bead]
+  rewards: 875 Magic XP, amulet of accuracy, 1 quest point
+
+"Witch's Potion":
+  start: rimmington
+  items: [onion, eye of newt, burnt meat]
+  rewards: 325 Magic XP, 1 quest point
+  needs_you: ["the rat for its tail: the bot clicks it if Quest Helper highlights it"]
+
+"Romeo & Juliet":
+  start: varrock square
+  items: [cadava berries]
+  rewards: 5 quest points
+
+"Goblin Diplomacy":
+  start: goblin village
+  items: [3 goblin mail, orange dye, blue dye]
+  rewards: 200 Crafting XP, gold bar, 5 quest points
+
+"The Knight's Sword":
+  start: falador castle
+  levels: {mining: 10}
+  items: [redberry pie, 2 iron bars, pickaxe, food]
+  rewards: 12,725 Smithing XP, 1 quest point
+  needs_you:
+    - "taking the portrait from Sir Vyvin's cupboard while he isn't looking"
+    - "the Ice Dungeon: ice warriors and ice giants on the way to the blurite"
+
+"Vampyre Slayer":
+  start: draynor village
+  items: [hammer, garlic, food]
+  rewards: 4,825 Attack XP, 3 quest points
+  needs_you: ["the fight with Count Draynor (level 34)"]
+
+"Ernest the Chicken":
+  start: draynor manor
+  rewards: 300 coins, 4 quest points
+  needs_you: ["the lever puzzle in the manor basement"]

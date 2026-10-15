@@ -8,7 +8,7 @@ profiles/
 goals.yaml
 rotation.yaml
 calibrate.png
-schedules/
+/schedules/
 screen.png
 skills-check.png
 energy-check.png

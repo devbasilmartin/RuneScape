@@ -55,9 +55,11 @@ class Layout:
 
     # side panel tab buttons
     tabs: dict = field(default_factory=lambda: {
-        "combat": (538, 186), "skills": (571, 186), "inventory": (637, 186),
+        "combat": (538, 186), "skills": (571, 186), "quest": (604, 186), "inventory": (637, 186),
         "magic": (736, 186), "logout": (637, 484)})
-    logout_button: tuple[int, int] = (641, 432)     # "Click here to logout" in the logout tab
+    logout_button: tuple[int, int] = (641, 432)
+    # the quest tab's list of names (not measured on a real client yet)
+    quest_list: Rect = field(default_factory=lambda: Rect(548, 230, 180, 230))     # "Click here to logout" in the logout tab
 
     # combat options tab: the four attack style buttons, in game order
     combat_styles: tuple = ((603, 270), (683, 270), (603, 322), (683, 322))
@@ -122,7 +124,7 @@ class Layout:
         for key, value in list(d.items()):
             if key not in names:
                 raise ValueError(f"unknown layout key: {key}")
-            if key in ("viewport", "hp_bar", "run_energy_box", "chatbox", "slayer_box"):
+            if key in ("viewport", "hp_bar", "run_energy_box", "chatbox", "slayer_box", "quest_list"):
                 d[key] = Rect(*value)
             elif key in ("tabs", "bank_quantity"):
                 d[key] = {**getattr(cls(), key), **{str(k): tuple(v) for k, v in value.items()}}

@@ -14,6 +14,8 @@ schedules/<name>.yaml (shared by every account):
       - method: auto              # the best method for the skill at your level right now
         skill: mining             # (moves up the ladder as you level; tries the next best
         minutes: 45               #  when one can't run: out of supplies, not trusted yet)
+      - quest: Rune Mysteries     # a quest from library/quests/f2p.yaml, followed with Quest
+                                  # Helper; skipped once finished or when it can't start
 
 Rules: the method's own upper level is ignored (manual: keep doing it), its lower level
 is enforced. An entry that can't start or runs out early is skipped with a notification
@@ -36,6 +38,7 @@ NEVER = 100                     # until_level that no skill reaches: "keep doing
 NAME = re.compile(r"^[A-Za-z0-9 _-]{1,40}$")
 DONE = "schedule complete"
 AUTO = "auto"
+QUEST = "quest"
 TIME_UP = "schedule time is up"
 
 
@@ -46,8 +49,11 @@ class Entry:
     until_level: int | None = None
     when_full: str | None = None        # None: the method's own choice
     skill: str | None = None            # for methods training several skills (cows)
+    quest: str | None = None            # method "quest": the quest's name
 
     def to_dict(self) -> dict:
+        if self.method == QUEST:
+            return {"quest": self.quest, **({"minutes": self.minutes} if self.minutes else {})}
         d = {"method": self.method}
         for key in ("minutes", "until_level", "when_full", "skill"):
             value = getattr(self, key)
@@ -79,6 +85,17 @@ class Schedule:
         entries = []
         for i, raw in enumerate(d.get("entries") or [], 1):
             raw = dict(raw)
+            if "quest" in raw:
+                from .questbook import find, load_quests
+                extra = set(raw) - {"quest", "minutes"}
+                if extra:
+                    raise ValueError(f"entry {i}: a quest entry takes only quest and minutes")
+                quest = find(load_quests(), raw["quest"])
+                if quest is None:
+                    raise ValueError(f"entry {i}: no quest {raw['quest']!r} in "
+                                     "library/quests/f2p.yaml")
+                entries.append(Entry(QUEST, float(raw.get("minutes") or 0), quest=quest.name))
+                continue
             extra = set(raw) - {"method", "minutes", "until_level", "when_full", "skill"}
             if extra:
                 raise ValueError(f"entry {i}: unknown keys {sorted(extra)}")
@@ -199,7 +216,8 @@ def run_schedule(planner, schedule: Schedule, library: dict, registry, spells,
     With ``resume`` (a file), the entry being run is remembered, so a run stopped part way
     (an account handover, a restart) starts again at that entry instead of the first."""
     g = planner.game
-    skills = {e.skill or library[e.method].skills[0] for e in schedule.entries}
+    skills = {e.skill or library[e.method].skills[0] for e in schedule.entries
+              if e.method != QUEST}
     planner._guard(lambda: planner.resync(sorted(skills, key=SKILLS.index)))
     end = g.now() + schedule.hours * 3600 if schedule.repeat == "hours" else None
     key = json.dumps(schedule.to_dict(), sort_keys=True)
@@ -217,7 +235,9 @@ def run_schedule(planner, schedule: Schedule, library: dict, registry, spells,
             if end is not None and g.now() >= end:
                 return _finish(planner, TIME_UP, resume)
             where = f"{label} {i}/{len(schedule.entries)}"
-            if entry.method == AUTO:
+            if entry.method == QUEST:
+                worked |= _run_quest(planner, entry, registry, end, where)
+            elif entry.method == AUTO:
                 worked |= _run_auto(planner, entry, library, registry, spells, end, where)
             else:
                 worked |= _run_entry(planner, entry, library[entry.method], registry, spells,
@@ -243,7 +263,7 @@ def _run_entry(planner, entry: Entry, method, registry, spells, end, where) -> b
     if planner.done(step):
         log.info("%s: %s already at %s %d", where, method.name, step.skill, step.until_level)
         return False
-    why = method.blocked(g.cfg.account, planner.levels.levels)
+    why = method.blocked(g.cfg.account, planner.levels.levels) or _needs_quest(planner, method)
     if why:
         planner.notify(f"{where}: skipping {method.name}: {why}")
         return False
@@ -266,7 +286,8 @@ def _run_entry(planner, entry: Entry, method, registry, spells, end, where) -> b
     return batches > 0
 
 
-def auto_candidates(library: dict, skill: str, levels: dict, account: str) -> list:
+def auto_candidates(library: dict, skill: str, levels: dict, account: str,
+                    quests=None) -> list:
     """Methods for ``skill`` usable at these levels, best XP first: in their level range
     (the upper level is where the next one takes over), allowed for the account, and
     giving XP (tanning, essence mining are only supplies)."""
@@ -274,7 +295,8 @@ def auto_candidates(library: dict, skill: str, levels: dict, account: str) -> li
     found = [m for m in library.values()
              if skill in m.skills and m.xp_per_hour > 0
              and m.levels[0] <= level < max(m.levels[1], m.levels[0] + 1)
-             and not m.blocked(account, levels)]
+             and not m.blocked(account, levels)
+             and (quests is None or all(quests.has(q) for q in m.requires_quests))]
     return sorted(found, key=lambda m: (-m.xp_per_hour, m.id))
 
 
@@ -284,7 +306,8 @@ def _run_auto(planner, entry: Entry, library, registry, spells, end, where) -> b
     levels = planner.levels.levels
     if levels.get(entry.skill, 1) >= (entry.until_level or NEVER):
         return False
-    tried = auto_candidates(library, entry.skill, levels, planner.game.cfg.account)
+    tried = auto_candidates(library, entry.skill, levels, planner.game.cfg.account,
+                            _quest_log(planner))
     if not tried:
         log.info("%s: no method for %s %d", where, entry.skill, levels.get(entry.skill, 1))
     for method in tried:
@@ -298,6 +321,70 @@ def _run_auto(planner, entry: Entry, library, registry, spells, end, where) -> b
         except ValueError as err:          # e.g. a spell that hasn't been taught
             log.info("%s: %s can't run: %s", where, method.name, err)
     return False
+
+
+def _quest_log(planner, name: str = "quests.json"):
+    from .goals import QuestLog
+    return QuestLog(Path(planner.game.cfg.data_dir) / name)
+
+
+def _needs_quest(planner, method) -> str | None:
+    done = _quest_log(planner)
+    missing = [q for q in method.requires_quests if not done.has(q)]
+    return f"needs the quest {missing[0]}" if missing else None
+
+
+def quest_step(quest, registry, minutes: float = 0):
+    from .config import Step
+    return Step.from_dict({"name": f"quest: {quest.name}", "skill": "attack", "task": "quest",
+                           "until_level": 99, "location": quest.start,
+                           "target": tuple(registry.resolve("quest_target")),
+                           "max_minutes": minutes})
+
+
+def _run_quest(planner, entry: Entry, registry, end, where) -> bool:
+    """A quest entry: skipped when finished (the quest tab is read before and after) or
+    when it can't start; otherwise followed until Quest Helper shows nothing to do."""
+    from .menu import MenuBook
+    from .questbook import DONE, find, load_quests, problems, read_tab
+    g = planner.game
+    quest = find(load_quests(), entry.quest)
+    done = _quest_log(planner)
+    if quest is None or done.has(quest.name):
+        return False
+    told = planner.__dict__.setdefault("quests_told", set())
+    why = problems(quest, planner.levels.levels, g.cfg.account,
+                   _quest_log(planner, "quests_ready.json"))
+    if why:
+        if quest.name not in told:            # once per run, not every pass
+            told.add(quest.name)
+            planner.notify(f"{where}: skipping {quest.name}: {'; '.join(why)}")
+        return False
+    book = MenuBook(Path(g.cfg.data_dir) / "quest_words.json")
+    key = quest.name.lower()
+
+    def finished() -> bool:
+        if key not in book.words:
+            return False
+        state = planner._guard(lambda: read_tab(g, book)) or {}
+        return state.get(key) == DONE
+
+    if finished():
+        done.add(quest.name)
+        log.info("%s: %s is already finished (quest tab)", where, quest.name)
+        return False
+    step = quest_step(quest, registry, entry.minutes)
+    if not planner.allowed(step):
+        return False
+    log.info("%s: quest %s", where, quest.name)
+    planner.run_step(step, end)
+    if finished():
+        done.add(quest.name)
+        planner.notify(f"{where}: quest complete: {quest.name} ({quest.rewards})")
+    elif key not in book.words:
+        planner.notify(f"{where}: {quest.name} stopped. Finished? `quest-done \"{quest.name}\"` "
+                       "(or teach its name: Learn → Teach a quest, and the bot checks itself)")
+    return True
 
 
 def _resume_at(path: Path | None, key: str, n: int) -> int:

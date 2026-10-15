@@ -66,6 +66,15 @@ def actions(steps: list[str], exports: list[str], library: dict | None = None,
             raise ValueError('type the menu rows top to bottom, e.g. "Talk-to,Trade,Teleport"')
         return sb + ["teach-menu", options]
 
+    def quest(command):
+        def make(p):
+            from .questbook import find, load_quests
+            q = find(load_quests(), p.get("name"))
+            if q is None:
+                raise ValueError("pick a quest from the list")
+            return sb + command + [q.name]
+        return make
+
     def step(p):
         if p.get("step") not in steps:
             raise ValueError("pick a step from the list")
@@ -101,9 +110,12 @@ def actions(steps: list[str], exports: list[str], library: dict | None = None,
         "plan": sb + ["plan"],
         "summary": sb + ["summary"],
         "accounts": sb + ["accounts"],
+        "quests": sb + ["quests"],
     }
     out = {name: (lambda p, argv=argv: argv) for name, argv in plain.items()}
-    out.update(check_setup=step, runelite_profile=profile, calibrate_origin=origin,
+    out.update(quest_follow=quest(["quest"]), quest_ready=quest(["quest-ready"]),
+               quest_done=quest(["quest-done"]), teach_quest=quest(["teach-quest"]),
+               check_setup=step, runelite_profile=profile, calibrate_origin=origin,
                run_activity=activity, run_schedule=schedule)
     return out
 
@@ -293,6 +305,12 @@ class App:
                         "can_drop": True, "when_full": "bank",
                         "trust": {f"{skill}|{wf}": "picks the best one that runs"
                                   for wf in ("bank", "drop")}})
+        from .questbook import load_quests
+        for name in load_quests():                   # schedules only: quest entries
+            out.append({"id": f"quest:{name}", "quest": name, "name": f"quest: {name}",
+                        "skills": ["quests"], "members": False, "levels": [1, 99],
+                        "can_drop": False, "when_full": None,
+                        "trust": {"quests|": "skipped once finished"}})
         return out
 
     def schedules(self) -> dict:

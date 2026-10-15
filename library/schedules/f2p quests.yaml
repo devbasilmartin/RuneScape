@@ -1,0 +1,15 @@
+# The F2P quests the bot can mostly do by itself, easiest first, once each. Finished ones
+# are skipped; ones needing items wait for `quest-ready` (panel: Items ready). The rest,
+# with fights and puzzles, are in library/quests/f2p.yaml for Do quest while you watch.
+repeat: once
+entries:
+  - {quest: "Cook's Assistant", minutes: 30}
+  - {quest: "Sheep Shearer", minutes: 30}
+  - {quest: "Rune Mysteries", minutes: 40}
+  - {quest: "The Restless Ghost", minutes: 40}
+  - {quest: "X Marks the Spot", minutes: 30}
+  - {quest: "Doric's Quest", minutes: 30}
+  - {quest: "Imp Catcher", minutes: 30}
+  - {quest: "Witch's Potion", minutes: 30}
+  - {quest: "Romeo & Juliet", minutes: 40}
+  - {quest: "Goblin Diplomacy", minutes: 30}

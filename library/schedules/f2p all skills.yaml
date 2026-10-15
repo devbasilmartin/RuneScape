@@ -1,0 +1,31 @@
+# Every F2P skill from level 1, 45 minutes each, round and round. Each entry is "auto":
+# the best method for that skill at your level right now (cows → Al-Kharid warriors →
+# hill giants, trees → oaks → willows, ...), the next best when one can't run (out of
+# supplies, not trusted yet), nothing at 99. Gathering banks, so the logs, fish and ore
+# feed firemaking, cooking and smithing after it. Quest lines come first: each is done
+# once (skipped when finished, or until you've brought its items: `quest-ready`), and
+# Rune Mysteries opens Runecraft. Save it under another name in the panel to change it.
+repeat: forever
+entries:
+  - {quest: "Cook's Assistant", minutes: 30}
+  - {quest: "Sheep Shearer", minutes: 30}
+  - {quest: "Rune Mysteries", minutes: 40}
+  - {quest: "The Restless Ghost", minutes: 40}
+  - {quest: "X Marks the Spot", minutes: 30}
+  - {quest: "Doric's Quest", minutes: 30}
+  - {quest: "Imp Catcher", minutes: 30}
+  - {quest: "Witch's Potion", minutes: 30}
+  - {method: auto, skill: woodcutting, minutes: 45, when_full: bank}
+  - {method: auto, skill: firemaking, minutes: 30}
+  - {method: auto, skill: fishing, minutes: 45, when_full: bank}
+  - {method: auto, skill: cooking, minutes: 30}
+  - {method: auto, skill: mining, minutes: 45, when_full: bank}
+  - {method: auto, skill: smithing, minutes: 30}
+  - {method: auto, skill: attack, minutes: 45, when_full: drop}
+  - {method: auto, skill: strength, minutes: 45, when_full: drop}
+  - {method: auto, skill: defence, minutes: 45, when_full: drop}
+  - {method: auto, skill: ranged, minutes: 30, when_full: drop}
+  - {method: auto, skill: magic, minutes: 30, when_full: drop}
+  - {method: auto, skill: prayer, minutes: 20}
+  - {method: auto, skill: crafting, minutes: 30}
+  - {method: auto, skill: runecraft, minutes: 30}
