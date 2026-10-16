@@ -8,6 +8,8 @@ and quest_item (inventory items to use). Each action the bot takes, in order:
 2. a highlighted chat option → click that line
 3. a highlighted inventory item → click it, then the highlighted target if there is one
 4. a highlighted NPC/object → click it (walking there if needed)
+5. nothing highlighted but a Shortest Path line drawn (Quest Helper's "Use Shortest Path"
+   setting sets it to the next step) → walk one stretch along it
 
 With nothing highlighted for `idle_timeout` seconds it stops the step and tells you:
 either a step it can't do (a puzzle, a fight, text-only instructions) or the quest is
@@ -33,6 +35,7 @@ class QuestTask(Task):
         self.option = reg.resolve("quest_dialog")
         self.item = reg.resolve("quest_item")
         self.stats.update(actions=0)
+        self.last_stride, self.same_stride = None, 0
 
     def dialog_line(self, img):
         """Centre of the highlighted chat option, or None."""
@@ -73,7 +76,26 @@ class QuestTask(Task):
         if g.click_nearest(img, self.target):
             g.wait(1.5, 2.5)
             return True
-        return False
+        return self.walk_path(img)
+
+    def walk_path(self, img) -> bool:
+        """One stride along Shortest Path's line; False when there's none, or it stopped
+        getting shorter (a door, or an old path left drawn)."""
+        nav = getattr(self.game, "nav", None)
+        end = nav.far_end(img) if nav is not None else None
+        if end is None:
+            return False
+        if self.last_stride is not None and abs(end[0] - self.last_stride[0]) + \
+                abs(end[1] - self.last_stride[1]) < 4:
+            self.same_stride += 1
+            if self.same_stride >= 4:
+                return False
+        else:
+            self.same_stride = 0
+        self.last_stride = end
+        self.game.controls.click(end)
+        self.game.wait(*nav.stride_wait)
+        return True
 
     def run_batch(self) -> str:
         g, step = self.game, self.step

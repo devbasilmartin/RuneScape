@@ -86,7 +86,7 @@ Quests (`docs/quests.md`): `library/quests/f2p.yaml`, `quest:` lines in schedule
 tab read by taught names (`skillbot/questbook.py`, `teach-quest`).
 None of these is tried on the real client yet.
 
-Next (`docs/modes-plan.md`): try the F2P methods (`docs/f2p-methods.md`) on the real
+Weekend test order: `docs/weekend.md`. Next (`docs/modes-plan.md`): try the F2P methods (`docs/f2p-methods.md`) on the real
 client. **F2P only for
 now**: no new members work until the owner says so.
 

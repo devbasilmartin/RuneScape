@@ -31,6 +31,7 @@ The quest list is `library/quests/f2p.yaml`. For each quest it gives:
    3. Hover the quest's name in the tab and click **Just Enter**.
 
    Do this for each quest you'll run. If the bot doesn't know a quest's name, you mark the quest done yourself (Quest done).
+4. In Quest Helper's settings, turn on **Use Shortest Path**. Quest Helper then draws a route to the next step, and when nothing is highlighted the bot walks along it. Without it, the bot stops when the next NPC is off screen.
 
 ## Do a quest while you watch
 

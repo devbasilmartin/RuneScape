@@ -60,3 +60,27 @@ def test_follows_quest_helper_until_nothing_is_highlighted():
                                                 task="quest", idle_timeout=10)))
     assert task.run_batch() == "exhausted"          # finished: asks you to confirm
     assert quest.stage == "done" and task.stats["actions"] >= 5
+
+
+def test_walks_along_shortest_path_when_nothing_is_highlighted():
+    game, fake = make_game(config())
+    fake.img[:] = BG
+    ends = iter([(600, 60), (610, 50), (620, 40)])
+
+    class Nav:
+        stride_wait = (1, 1)
+        here = None
+
+        def far_end(self, img):
+            Nav.here = next(ends, Nav.here)      # the path stops getting shorter
+            return Nav.here
+    game.nav = Nav()
+    task = make_task(game, Step.from_dict(dict(name="q", skill="attack", task="quest")))
+    clicks = []
+    fake.on_click.append(lambda f, pt: clicks.append(pt))
+    steps = 0
+    while task.act():
+        steps += 1
+        assert steps < 20
+    assert clicks[:3] == [(600, 60), (610, 50), (620, 40)]
+    assert len(clicks) == 6                       # 3 more at the same spot, then gives up
